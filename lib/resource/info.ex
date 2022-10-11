@@ -1,6 +1,11 @@
 defmodule AshPaperTrail.Resource.Info do
   @moduledoc "Introspection helpers for `AshPaperTrail.Resource`"
 
+  @spec reference_source?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
+  def reference_source?(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:versions], :reference_source?, true)
+  end
+
   @spec on_actions(Spark.Dsl.t() | Ash.Resource.t()) :: [atom]
   def on_actions(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:versions], :on_actions, nil) ||

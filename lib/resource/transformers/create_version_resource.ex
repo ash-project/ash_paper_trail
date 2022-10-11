@@ -7,8 +7,8 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
   def transform(dsl_state) do
     version_module = AshPaperTrail.Resource.Info.version_resource(dsl_state)
     module = Transformer.get_persisted(dsl_state, :module)
-
     to_skip = AshPaperTrail.Resource.Info.ignore_attributes(dsl_state)
+    reference_source? = AshPaperTrail.Resource.Info.reference_source?(dsl_state)
 
     attributes =
       dsl_state
@@ -23,6 +23,13 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
          apply(AshPostgres, :repo, [dsl_state])}
       else
         {false, nil, nil}
+      end
+
+    {ets?, private?} =
+      if data_layer == Ash.DataLayer.Ets do
+        {true, Ash.DataLayer.Ets.Info.private?(dsl_state)}
+      else
+        {false, nil}
       end
 
     multitenant? = not is_nil(Ash.Resource.Info.multitenancy_strategy(dsl_state))
@@ -67,14 +74,38 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
         end
 
         if unquote(postgres?) do
+          table = unquote(table)
+          repo = unquote(repo)
+          reference_source? = unquote(reference_source?)
+
           Code.eval_quoted(
             quote do
               postgres do
-                table(table <> "_versions")
-                repo(repo)
+                table(unquote(table) <> "_versions")
+                repo(unquote(repo))
+
+                if unquote(reference_source?) do
+                  references do
+                    reference(:version_source, ignore?: true)
+                  end
+                end
               end
             end,
-            [table: unquote(table), repo: unquote(repo)],
+            [],
+            __ENV__
+          )
+        end
+
+        if unquote(ets?) do
+          private? = unquote(private?)
+
+          Code.eval_quoted(
+            quote do
+              ets do
+                private?(unquote(private?))
+              end
+            end,
+            [],
             __ENV__
           )
         end
@@ -101,6 +132,9 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
               always_select?(attr.always_select?)
             end
           end
+
+          create_timestamp :version_inserted_at
+          update_timestamp :version_updated_at
         end
 
         actions do

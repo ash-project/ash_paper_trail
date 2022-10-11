@@ -28,6 +28,17 @@ defmodule AshPaperTrail.Resource do
         doc: """
         A module that defines a `using` macro that will be mixed into the version resource.
         """
+      ],
+      reference_source?: [
+        type: :boolean,
+        default: true,
+        doc: """
+        Wether or not to create a foreign key reference from the version to the source.
+        This should be set to `false` if you are allowing actual deletion of data. Pair
+        this extension with `AshArchival` to get soft destroys and referential integrity.
+
+        Only relevant for resources using the AshPostgres data layer.
+        """
       ]
     ]
   }

@@ -5,7 +5,7 @@ defmodule AshPaperTrail.Resource.Transformers.VersionOnChange do
 
   def transform(dsl_state) do
     case Transformer.build_entity(Ash.Resource.Dsl, [:changes], :change,
-           change: AshPaperTrail.Extensions.Versioned.Changes.CreateNewVersion,
+           change: AshPaperTrail.Resource.Changes.CreateNewVersion,
            on: [:update, :create, :destroy]
          ) do
       {:ok, change} ->
