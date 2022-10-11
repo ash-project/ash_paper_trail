@@ -7,6 +7,10 @@ defmodule AshPaperTrail.Test.Post do
     private? true
   end
 
+  paper_trail do
+    attributes_as_attributes [:subject, :body]
+  end
+
   code_interface do
     define_for AshPaperTrail.Test.Api
 

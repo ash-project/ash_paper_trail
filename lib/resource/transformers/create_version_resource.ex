@@ -9,18 +9,20 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     module = Transformer.get_persisted(dsl_state, :module)
     to_skip = AshPaperTrail.Resource.Info.ignore_attributes(dsl_state)
     reference_source? = AshPaperTrail.Resource.Info.reference_source?(dsl_state)
+    version_extensions = AshPaperTrail.Resource.Info.version_extensions(dsl_state)
+    attributes_as_attributes = AshPaperTrail.Resource.Info.attributes_as_attributes(dsl_state)
 
     attributes =
       dsl_state
       |> Ash.Resource.Info.attributes()
       |> Enum.reject(&(&1.name in to_skip))
+      |> Enum.filter(&(&1.name in attributes_as_attributes))
 
-    data_layer = Ash.DataLayer.data_layer(dsl_state)
+    data_layer = version_extensions[:data_layer] || Ash.DataLayer.data_layer(dsl_state)
 
     {postgres?, table, repo} =
       if data_layer == AshPostgres.DataLayer do
-        {true, apply(AshPostgres, :table, [dsl_state]) <> "_versions",
-         apply(AshPostgres, :repo, [dsl_state])}
+        {true, apply(AshPostgres, :table, [dsl_state]), apply(AshPostgres, :repo, [dsl_state])}
       else
         {false, nil, nil}
       end
@@ -54,7 +56,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
       version_module,
       quote do
         use Ash.Resource,
-          data_layer: unquote(data_layer)
+            unquote(Keyword.put(version_extensions, :data_layer, data_layer))
 
         case unquote(Macro.escape(mixin)) do
           {m, f, a} ->
@@ -84,7 +86,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
                 table(unquote(table) <> "_versions")
                 repo(unquote(repo))
 
-                if unquote(reference_source?) do
+                unless unquote(reference_source?) do
                   references do
                     reference(:version_source, ignore?: true)
                   end
@@ -133,6 +135,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
             end
           end
 
+          attribute :changes, :map
           create_timestamp :version_inserted_at
           update_timestamp :version_updated_at
         end

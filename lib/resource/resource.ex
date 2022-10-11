@@ -3,8 +3,8 @@ defmodule AshPaperTrail.Resource do
   Documentation for `AshPaperTrail.Resource`.
   """
 
-  @versioned %Spark.Dsl.Section{
-    name: :versions,
+  @paper_trail %Spark.Dsl.Section{
+    name: :paper_trail,
     describe: """
     A section for configuring how versioning is derived for the resource.
     """,
@@ -14,6 +14,13 @@ defmodule AshPaperTrail.Resource do
         default: [],
         doc: """
         A list of attributes that should be ignored. `created_at`, `updated_at` and the primary key are always ignored.
+        """
+      ],
+      attributes_as_attributes: [
+        type: {:list, :atom},
+        default: [],
+        doc: """
+        A set of attributes that should be set as attributes on the version resource, instead of stored in the freeform `changes` map attribute.
         """
       ],
       on_actions: [
@@ -27,6 +34,13 @@ defmodule AshPaperTrail.Resource do
         default: nil,
         doc: """
         A module that defines a `using` macro that will be mixed into the version resource.
+        """
+      ],
+      version_extensions: [
+        type: :keyword_list,
+        default: [],
+        doc: """
+        Extensions that should be used by the version resource. For example: `extensions: [AshGraphql.Resource], notifier: [Ash.Notifiers.PubSub]`
         """
       ],
       reference_source?: [
@@ -44,7 +58,7 @@ defmodule AshPaperTrail.Resource do
   }
 
   use Spark.Dsl.Extension,
-    sections: [@versioned],
+    sections: [@paper_trail],
     transformers: [
       AshPaperTrail.Resource.Transformers.RelateVersionResource,
       AshPaperTrail.Resource.Transformers.CreateVersionResource,

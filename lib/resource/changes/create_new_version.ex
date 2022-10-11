@@ -25,15 +25,20 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
           to_skip = AshPaperTrail.Resource.Info.ignore_attributes(changeset.resource)
 
-          {input, private} =
+          {input, private, changes} =
             changeset.resource
             |> Ash.Resource.Info.attributes()
             |> Enum.reject(&(&1.name in to_skip))
-            |> Enum.reduce({%{}, %{}}, fn attribute, {input, private} ->
+            |> Enum.reduce({%{}, %{}, %{}}, fn attribute, {input, private, changes} ->
               if attribute.private? do
                 {input,
                  Map.put(
                    private,
+                   attribute.name,
+                   Ash.Changeset.get_attribute(changeset, attribute.name)
+                 ),
+                 Map.put(
+                   changes,
                    attribute.name,
                    Ash.Changeset.get_attribute(changeset, attribute.name)
                  )}
@@ -42,7 +47,12 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
                    input,
                    attribute.name,
                    Ash.Changeset.get_attribute(changeset, attribute.name)
-                 ), private}
+                 ), private,
+                 Map.put(
+                   changes,
+                   attribute.name,
+                   Ash.Changeset.get_attribute(changeset, attribute.name)
+                 )}
               end
             end)
 
@@ -50,7 +60,8 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
             Map.merge(input, %{
               version_source_id:
                 Map.get(result, hd(Ash.Resource.Info.primary_key(changeset.resource))),
-              version_action_type: changeset.action.type
+              version_action_type: changeset.action.type,
+              changes: changes
             })
 
           {_, notifications} =
