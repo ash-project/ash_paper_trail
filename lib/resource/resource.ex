@@ -64,18 +64,4 @@ defmodule AshPaperTrail.Resource do
       AshPaperTrail.Resource.Transformers.CreateVersionResource,
       AshPaperTrail.Resource.Transformers.VersionOnChange
     ]
-
-  @doc false
-  def validate_capture_relationships(value) do
-    {:ok,
-     value
-     |> List.wrap()
-     |> Enum.map(fn
-       {key, value} ->
-         {key, value}
-
-       value ->
-         {value, []}
-     end)}
-  end
 end
