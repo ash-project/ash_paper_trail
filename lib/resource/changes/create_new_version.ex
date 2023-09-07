@@ -21,6 +21,9 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
              (changeset.action_type == :update && changeset.context.changed?) do
           version_resource = AshPaperTrail.Resource.Info.version_resource(changeset.resource)
 
+          version_resource_attributes =
+            version_resource |> Ash.Resource.Info.attributes() |> Enum.map(& &1.name)
+
           version_changeset = Ash.Changeset.new(version_resource)
 
           to_skip = AshPaperTrail.Resource.Info.ignore_attributes(changeset.resource)
@@ -71,7 +74,9 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
               authorize?: false,
               actor: changeset.context[:private][:actor]
             )
-            |> Ash.Changeset.force_change_attributes(private)
+            |> Ash.Changeset.force_change_attributes(
+              Map.take(private, version_resource_attributes)
+            )
             |> changeset.api.create!(return_notifications?: true)
 
           notifications
