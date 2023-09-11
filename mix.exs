@@ -36,7 +36,9 @@ defmodule AshPaperTrail.MixProject do
       {:dialyxir, ">= 0.0.0", only: :dev, runtime: false},
       {:sobelow, ">= 0.0.0", only: :dev, runtime: false},
       {:git_ops, "~> 2.5.1", only: :dev},
-      {:excoveralls, "~> 0.13.0", only: [:dev, :test]}
+      {:excoveralls, "~> 0.13.0", only: [:dev, :test]},
+      {:ash_postgres, github: "ash-project/ash_postgres", branch: "main", override: true, only: [:test]},
+
     ]
   end
 

@@ -16,4 +16,18 @@ end
 
 if Mix.env() == :test do
   config :ash, :disable_async?, true
+
+
+  config :ash_paper_trail,
+    ecto_repos: [AshPaperTrail.Test.Repo]
+
+  config :ash_paper_trail, ash_apis: [AshPaperTrail.Test.Api]
+
+  config :ash_paper_trail, AshPaperTrail.Test.Repo,
+    username: "postgres",
+    password: "postgres",
+    hostname: "localhost",
+    database: "ash_papertrail_test_db",
+    pool: Ecto.Adapters.SQL.Sandbox,
+    pool_size: 10
 end

@@ -1,11 +1,24 @@
 defmodule AshPaperTrail.Test.Post do
   use Ash.Resource,
-    data_layer: Ash.DataLayer.Ets,
+    data_layer: AshPostgres.DataLayer,
     extensions: [AshPaperTrail.Resource]
 
-  ets do
-    private? true
-  end
+
+    # TODO:
+    # We will probably need another test class that keeps the original functionality:
+    # -    data_layer: Ash.DataLayer.Ets,
+    #
+    #
+    #  ets do
+    #    private? true
+    #   end
+    #
+
+
+    postgres do
+      table "posts"
+      repo AshPaperTrail.Test.Repo
+    end
 
   paper_trail do
     attributes_as_attributes [:subject, :body]
