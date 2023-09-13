@@ -9,10 +9,13 @@ defmodule AshPaperTrail.Resource.Transformers.RelateVersionResource do
            Transformer.build_entity(Ash.Resource.Dsl, [:relationships], :has_many,
              name: :paper_trail_versions,
              destination: AshPaperTrail.Resource.Info.version_resource(dsl_state),
-             destination_attribute: :version_source_id,
-             source: Transformer.get_persisted(dsl_state, :module)
+             destination_attribute: :version_source_id
            ) do
-      {:ok, Transformer.add_entity(dsl_state, [:relationships], relationship)}
+      {:ok,
+       Transformer.add_entity(dsl_state, [:relationships], %{
+         relationship
+         | source: Transformer.get_persisted(dsl_state, :module)
+       })}
     else
       other ->
         other
