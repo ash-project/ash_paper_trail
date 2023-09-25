@@ -56,7 +56,10 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
       version_module,
       quote do
         use Ash.Resource,
-            unquote(Keyword.put(version_extensions, :data_layer, data_layer))
+            unquote(
+              Keyword.put(version_extensions, :data_layer, data_layer)
+              |> Keyword.put(:validate_api_inclusion?, false)
+            )
 
         case unquote(Macro.escape(mixin)) do
           {m, f, a} ->
@@ -72,6 +75,10 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           multitenancy do
             strategy(unquote(Ash.Resource.Info.multitenancy_strategy(dsl_state)))
             attribute(unquote(Ash.Resource.Info.multitenancy_attribute(dsl_state)))
+
+            parse_attribute(
+              unquote(Macro.escape(Ash.Resource.Info.multitenancy_parse_attribute(dsl_state)))
+            )
           end
         end
 
