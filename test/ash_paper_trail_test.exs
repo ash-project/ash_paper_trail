@@ -3,7 +3,7 @@ defmodule AshPaperTrailTest do
 
   alias AshPaperTrail.Test.{Posts, Articles}
 
-  describe "operations over resource with an Api Register" do
+  describe "operations over resource with an Api Registry" do
     test "creates work as normal" do
       assert %{subject: "subject", body: "body"} = Posts.Post.create!("subject", "body")
       assert [%{subject: "subject", body: "body"}] = Posts.Post.read!()
@@ -27,7 +27,7 @@ defmodule AshPaperTrailTest do
     end
   end
 
-  describe "operations over resource api without a registery" do
+  describe "operations over resource api without a registry" do
     test "creates work as normal" do
       assert %{subject: "subject", body: "body"} =
                Articles.Article.create!("subject", "body", tenant: "acme")
@@ -53,6 +53,11 @@ defmodule AshPaperTrailTest do
       assert :ok = Articles.Article.destroy!(post)
 
       assert [] = Articles.Article.read!(tenant: "acme")
+    end
+
+    test "existing allow mfa is called" do
+      Articles.Article.create!("subject", "body", tenant: "acme")
+      assert_received :existing_allow_mfa_called
     end
   end
 
