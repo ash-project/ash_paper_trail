@@ -4,7 +4,7 @@ defmodule AshPaperTrail do
   """
 
   def allow_resource_versions({m, f, a}, resource) do
-    apply(m, f, a) && allow_resource_versions(nil, resource)
+    apply(m, f, a) || allow_resource_versions(nil, resource)
   end
 
   @regex ~r/\.Version$/
