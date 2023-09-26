@@ -1,8 +1,8 @@
-defmodule AshPaperTrail.Test.Registry do
+defmodule AshPaperTrail.Test.Posts.Registry do
   use Ash.Registry,
     extensions: [Ash.Registry.ResourceValidations, AshPaperTrail.Registry]
 
   entries do
-    entry AshPaperTrail.Test.Post
+    entry AshPaperTrail.Test.Posts.Post
   end
 end

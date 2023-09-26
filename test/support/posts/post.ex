@@ -1,7 +1,8 @@
-defmodule AshPaperTrail.Test.Post do
+defmodule AshPaperTrail.Test.Posts.Post do
   use Ash.Resource,
     data_layer: Ash.DataLayer.Ets,
-    extensions: [AshPaperTrail.Resource]
+    extensions: [AshPaperTrail.Resource],
+    validate_api_inclusion?: false
 
   ets do
     private? true
@@ -12,7 +13,7 @@ defmodule AshPaperTrail.Test.Post do
   end
 
   code_interface do
-    define_for AshPaperTrail.Test.Api
+    define_for AshPaperTrail.Test.Posts.Api
 
     define :create, args: [:subject, :body]
     define :read
