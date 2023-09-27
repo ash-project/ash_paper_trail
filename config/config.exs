@@ -16,4 +16,5 @@ end
 
 if Mix.env() == :test do
   config :ash, :disable_async?, true
+  config :ash_paper_trail, :change_tracking_mode, :changes_only
 end

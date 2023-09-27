@@ -53,6 +53,15 @@ defmodule AshPaperTrail.Resource do
 
         Only relevant for resources using the AshPostgres data layer.
         """
+      ],
+      change_tracking_mode: [
+        type: {:one_of, [:snapshot, :changes_only]},
+        default: :snapshot,
+        doc: """
+        The mode to use for change tracking. Valid options are `:snapshot` and `:changes_only`.
+        `:snapshot` will store the entire resource in the `changes` attribute, while `:changes_only`
+        will only store the attributes that have changed.
+        """
       ]
     ]
   }
