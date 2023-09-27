@@ -9,7 +9,8 @@ defmodule AshPaperTrail.Test.Articles.Article do
   end
 
   paper_trail do
-    attributes_as_attributes [:subject, :body, :tenant]
+    attributes_as_attributes [:subject, :body]
+    change_tracking_mode :snapshot
   end
 
   code_interface do
@@ -21,20 +22,12 @@ defmodule AshPaperTrail.Test.Articles.Article do
     define :destroy
   end
 
-  multitenancy do
-    strategy :attribute
-    attribute :tenant
-    parse_attribute {AshPaperTrail.Test.Tenant, :parse_tenant, []}
-  end
-
   actions do
     defaults [:create, :read, :update, :destroy]
   end
 
   attributes do
     uuid_primary_key :id
-
-    attribute :tenant, :string
 
     attribute :subject, :string do
       allow_nil? false

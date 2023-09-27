@@ -1,5 +1,6 @@
 spark_locals_without_parens = [
   attributes_as_attributes: 1,
+  change_tracking_mode: 1,
   ignore_attributes: 1,
   mixin: 1,
   on_actions: 1,

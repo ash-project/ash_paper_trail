@@ -20,6 +20,11 @@ defmodule AshPaperTrail.Resource.Info do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :attributes_as_attributes, [])
   end
 
+  @spec change_tracking_mode(Spark.Dsl.t() | Ash.Resource.t()) :: atom
+  def change_tracking_mode(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :change_tracking_mode, [])
+  end
+
   @spec ignore_attributes(Spark.Dsl.t() | Ash.Resource.t()) :: [atom]
   def ignore_attributes(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :ignore_attributes, []) ++
