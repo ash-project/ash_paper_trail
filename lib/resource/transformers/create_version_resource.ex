@@ -130,7 +130,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
           if unquote(store_action_name?) do
             attribute :version_action_name, :atom do
-              allow_nil?(true)
+              allow_nil?(false)
             end
           end
 
