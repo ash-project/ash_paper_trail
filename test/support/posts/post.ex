@@ -11,6 +11,7 @@ defmodule AshPaperTrail.Test.Posts.Post do
   paper_trail do
     attributes_as_attributes [:subject, :body, :tenant]
     change_tracking_mode :changes_only
+    store_action_name? true
   end
 
   code_interface do
@@ -20,10 +21,16 @@ defmodule AshPaperTrail.Test.Posts.Post do
     define :read
     define :update
     define :destroy
+    define :publish
   end
 
   actions do
     defaults [:create, :read, :update, :destroy]
+
+    update :publish do
+      accept []
+      change set_attribute(:published, true)
+    end
   end
 
   multitenancy do
@@ -56,6 +63,11 @@ defmodule AshPaperTrail.Test.Posts.Post do
     attribute :tags, {:array, AshPaperTrail.Test.Posts.Tag} do
       allow_nil? false
       default []
+    end
+
+    attribute :published, :boolean do
+      allow_nil? false
+      default false
     end
   end
 end

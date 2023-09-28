@@ -9,6 +9,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     module = Transformer.get_persisted(dsl_state, :module)
     to_skip = AshPaperTrail.Resource.Info.ignore_attributes(dsl_state)
     reference_source? = AshPaperTrail.Resource.Info.reference_source?(dsl_state)
+    store_action_name? = AshPaperTrail.Resource.Info.store_action_name?(dsl_state)
     version_extensions = AshPaperTrail.Resource.Info.version_extensions(dsl_state)
     attributes_as_attributes = AshPaperTrail.Resource.Info.attributes_as_attributes(dsl_state)
 
@@ -125,6 +126,12 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           attribute :version_action_type, :atom do
             constraints(one_of: [:create, :update, :destroy])
             allow_nil?(false)
+          end
+
+          if unquote(store_action_name?) do
+            attribute :version_action_name, :atom do
+              allow_nil?(false)
+            end
           end
 
           for attr <- unquote(Macro.escape(attributes)) do
