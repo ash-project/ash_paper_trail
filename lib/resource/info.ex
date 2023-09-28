@@ -1,20 +1,6 @@
 defmodule AshPaperTrail.Resource.Info do
   @moduledoc "Introspection helpers for `AshPaperTrail.Resource`"
 
-  @spec reference_source?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
-  def reference_source?(resource) do
-    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :reference_source?, true)
-  end
-
-  @spec on_actions(Spark.Dsl.t() | Ash.Resource.t()) :: [atom]
-  def on_actions(resource) do
-    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :on_actions, nil) ||
-      resource
-      |> Ash.Resource.Info.actions()
-      |> Enum.reject(&(&1.type == :read))
-      |> Enum.map(& &1.name)
-  end
-
   @spec attributes_as_attributes(Spark.Dsl.t() | Ash.Resource.t()) :: [atom]
   def attributes_as_attributes(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :attributes_as_attributes, [])
@@ -34,6 +20,25 @@ defmodule AshPaperTrail.Resource.Info do
   @spec mixin(Spark.Dsl.t() | Ash.Resource.t()) :: mfa | nil
   def mixin(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :mixin, nil)
+  end
+
+  @spec on_actions(Spark.Dsl.t() | Ash.Resource.t()) :: [atom]
+  def on_actions(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :on_actions, nil) ||
+      resource
+      |> Ash.Resource.Info.actions()
+      |> Enum.reject(&(&1.type == :read))
+      |> Enum.map(& &1.name)
+  end
+
+  @spec reference_source?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
+  def reference_source?(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :reference_source?, true)
+  end
+
+  @spec store_action_name?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
+  def store_action_name?(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :store_action_name?, false)
   end
 
   @spec version_extensions(Spark.Dsl.t() | Ash.Resource.t()) :: Keyword.t()

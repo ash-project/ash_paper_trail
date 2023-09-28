@@ -47,7 +47,7 @@ defmodule AshPaperTrail.Resource do
         type: :boolean,
         default: true,
         doc: """
-        Wether or not to create a foreign key reference from the version to the source.
+        Whether or not to create a foreign key reference from the version to the source.
         This should be set to `false` if you are allowing actual deletion of data. Pair
         this extension with `AshArchival` to get soft destroys and referential integrity.
 
@@ -61,6 +61,14 @@ defmodule AshPaperTrail.Resource do
         The mode to use for change tracking. Valid options are `:snapshot` and `:changes_only`.
         `:snapshot` will store the entire resource in the `changes` attribute, while `:changes_only`
         will only store the attributes that have changed.
+        """
+      ],
+      store_action_name?: [
+        type: :boolean,
+        default: false,
+        doc: """
+        Whether or not to add the `version_action_name` attribute to the  version resource. This is
+        useful for auditing purposes. The `version_action_type` attribute is always stored.
         """
       ]
     ]

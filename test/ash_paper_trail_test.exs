@@ -63,6 +63,7 @@ defmodule AshPaperTrailTest do
                    ]
                  },
                  version_action_type: :create,
+                 version_action_name: :create,
                  version_source_id: ^post_id
                }
              ] =
@@ -94,6 +95,19 @@ defmodule AshPaperTrailTest do
              ] =
                Posts.Api.read!(Posts.Post.Version, tenant: "acme")
                |> Enum.sort_by(& &1.version_inserted_at)
+    end
+
+    test "the action name is stored" do
+      assert AshPaperTrail.Resource.Info.store_action_name?(Posts.Post) == true
+
+      post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+      Posts.Post.publish!(post, %{}, tenant: "acme")
+
+      [publish_version] =
+        Posts.Api.read!(Posts.Post.Version, tenant: "acme")
+        |> Enum.filter(&(&1.version_action_type == :update))
+
+      assert %{version_action_type: :update, version_action_name: :publish} = publish_version
     end
 
     test "the new version only includes changes in :changes_only mode" do
