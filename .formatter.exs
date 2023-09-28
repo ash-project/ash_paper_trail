@@ -5,6 +5,7 @@ spark_locals_without_parens = [
   mixin: 1,
   on_actions: 1,
   reference_source?: 1,
+  store_action_name?: 1,
   version_extensions: 1
 ]
 
