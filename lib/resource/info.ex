@@ -6,6 +6,15 @@ defmodule AshPaperTrail.Resource.Info do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :attributes_as_attributes, [])
   end
 
+  @spec belongs_to_actor(Spark.Dsl.t() | Ash.Resource.t()) :: [atom]
+  def belongs_to_actor(resource) do
+    Spark.Dsl.Extension.get_entities(resource, [:paper_trail])
+    |> Enum.filter(fn
+             %AshPaperTrail.Resource.BelongsToActor{} -> true
+             _ -> false
+           end)
+  end
+
   @spec change_tracking_mode(Spark.Dsl.t() | Ash.Resource.t()) :: atom
   def change_tracking_mode(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :change_tracking_mode, [])

@@ -8,10 +8,12 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     version_module = AshPaperTrail.Resource.Info.version_resource(dsl_state)
     module = Transformer.get_persisted(dsl_state, :module)
     to_skip = AshPaperTrail.Resource.Info.ignore_attributes(dsl_state)
+
+    attributes_as_attributes = AshPaperTrail.Resource.Info.attributes_as_attributes(dsl_state)
+    belongs_to_actors = AshPaperTrail.Resource.Info.belongs_to_actor(dsl_state)
     reference_source? = AshPaperTrail.Resource.Info.reference_source?(dsl_state)
     store_action_name? = AshPaperTrail.Resource.Info.store_action_name?(dsl_state)
     version_extensions = AshPaperTrail.Resource.Info.version_extensions(dsl_state)
-    attributes_as_attributes = AshPaperTrail.Resource.Info.attributes_as_attributes(dsl_state)
 
     attributes =
       dsl_state
@@ -152,6 +154,17 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           attribute :changes, :map
           create_timestamp :version_inserted_at
           update_timestamp :version_updated_at
+        end
+
+        relationships do
+          for actor_relationship <- unquote(Macro.escape(belongs_to_actors)) do
+            belongs_to actor_relationship.name, actor_relationship.destination do
+              api(actor_relationship.api)
+              define_attribute?(actor_relationship.define_attribute?)
+              allow_nil?(actor_relationship.allow_nil?)
+              attribute_type(actor_relationship.attribute_type)
+            end
+          end
         end
 
         actions do

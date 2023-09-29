@@ -20,7 +20,8 @@ defmodule AshPaperTrail.Resource do
     no_depend_modules: [:destination],
     target: AshPaperTrail.Resource.BelongsToActor,
     args: [:name, :destination],
-    schema: AshPaperTrail.Resource.BelongsToActor.schema(),
+    schema: AshPaperTrail.Resource.BelongsToActor.schema()
+    # transform: {AshPaperTrail.Resource.BelongsToActor, :transform, []}
   }
 
   @paper_trail %Spark.Dsl.Section{
@@ -98,6 +99,7 @@ defmodule AshPaperTrail.Resource do
   use Spark.Dsl.Extension,
     sections: [@paper_trail],
     transformers: [
+      AshPaperTrail.Resource.Transformers.ValidateBelongsToActor,
       AshPaperTrail.Resource.Transformers.RelateVersionResource,
       AshPaperTrail.Resource.Transformers.CreateVersionResource,
       AshPaperTrail.Resource.Transformers.VersionOnChange
