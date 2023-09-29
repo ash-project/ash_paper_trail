@@ -8,10 +8,12 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     version_module = AshPaperTrail.Resource.Info.version_resource(dsl_state)
     module = Transformer.get_persisted(dsl_state, :module)
     to_skip = AshPaperTrail.Resource.Info.ignore_attributes(dsl_state)
+
+    attributes_as_attributes = AshPaperTrail.Resource.Info.attributes_as_attributes(dsl_state)
+    belongs_to_actors = AshPaperTrail.Resource.Info.belongs_to_actor(dsl_state)
     reference_source? = AshPaperTrail.Resource.Info.reference_source?(dsl_state)
     store_action_name? = AshPaperTrail.Resource.Info.store_action_name?(dsl_state)
     version_extensions = AshPaperTrail.Resource.Info.version_extensions(dsl_state)
-    attributes_as_attributes = AshPaperTrail.Resource.Info.attributes_as_attributes(dsl_state)
 
     attributes =
       dsl_state
@@ -87,6 +89,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           table = unquote(table)
           repo = unquote(repo)
           reference_source? = unquote(reference_source?)
+          belongs_to_actors = unquote(Macro.escape(belongs_to_actors))
 
           Code.eval_quoted(
             quote do
@@ -94,9 +97,15 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
                 table(unquote(table) <> "_versions")
                 repo(unquote(repo))
 
-                unless unquote(reference_source?) do
-                  references do
+                references do
+                  unless unquote(reference_source?) do
                     reference(:version_source, ignore?: true)
+                  end
+
+                  for actor_relationship <- unquote(Macro.escape(belongs_to_actors)) do
+                    unless actor_relationship.define_attribute? do
+                      reference(actor_relationship.name, on_delete: :nothing, on_update: :update)
+                    end
                   end
                 end
               end
@@ -163,6 +172,16 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
             destination_attribute(unquote(destination_attribute))
             allow_nil?(false)
             attribute_writable?(true)
+          end
+
+          for actor_relationship <- unquote(Macro.escape(belongs_to_actors)) do
+            belongs_to actor_relationship.name, actor_relationship.destination do
+              api(actor_relationship.api)
+              define_attribute?(actor_relationship.define_attribute?)
+              allow_nil?(actor_relationship.allow_nil?)
+              attribute_type(actor_relationship.attribute_type)
+              attribute_writable?(true)
+            end
           end
         end
 

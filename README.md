@@ -84,6 +84,23 @@ This will make your version resource have `foo` and `bar` attributes (they will 
 %ThingVersion{foo: "foo", bar: "bar", changes: %{"foo" => "foo", "bar" => "bar"}}
 ```
 
+## Associating Versions with Actors
+
+You can record the actor who made the change by declaring one or more resources that can be actors.
+
+```
+paper_trail do 
+  belongs_to_actor :user, MyApp.Accounts.User, api: MyApp.Accounts
+  belongs_to_actor :news_feed, MyApp.Accounts.NewsFeed, api: MyApp.Accounts
+end
+```
+
+Each `belongs_to_actor` will create a `belongs_to` relationship with the given name destination. When creating a new version, if the actor on the action is set and matches the resource type, the version will be related to the actor. If your actors are polymorphic or varying types, declare a belongs_to_actor for each type.
+
+A reference is also created with `on_delete: :nilify` and `on_update: :update`
+
+If you need a more complex relationship or your actor is not a resource (e.g. String), the actor is always set on Version create and you can store it by adding `:on_create` `change` in a mixin.
+
 ## Multitenancy
 
 If your resource uses multitenancy, then the strategy, attribute, and parse_attribute options (if any) will be applied to the version resource. If using the attribute strategy you will need to ensure this is also an attribute on the version using the `attributes_as_attributes` option (described above) or via a mixin (described below)
