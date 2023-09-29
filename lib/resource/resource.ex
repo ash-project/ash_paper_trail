@@ -6,13 +6,16 @@ defmodule AshPaperTrail.Resource do
   @belongs_to_actor %Spark.Dsl.Entity{
     name: :belongs_to_actor,
     describe: """
-    Creates a belongs_to relationship to version resource. When creating a new version, if the actor is set and matches the 
-    resource type, the version will be related to the actor. If your actors are polymorphic or varying types, declare a 
+    Creates a belongs_to relationship for the actor resource. When creating a new version, if the actor on the action is set and 
+    matches the resource type, the version will be related to the actor. If your actors are polymorphic or varying types, declare a 
     belongs_to_actor for each type.
 
-    The relationship created will always be `allow_nil? true` and foreign key constraints (if any) will unassociate 
-    if the actor record is deleted. If you need more complex relationship, set `define_attribute? false` and add the
-    relationship via a mixin.
+    A reference is also created with `on_delete: :nilify` and `on_update: :update`
+
+    If you need more complex relationships, set `define_attribute? false` and add the relationship via a mixin.
+
+    If your actor is not a resource, add a mixin and with a change for all creates that sets the actor's to one your attributes. 
+    The actor on the version changeset is set.
     """,
     examples: [
       "belongs_to_actor :user, MyApp.Users.User, api: MyApp.Users"
@@ -21,7 +24,6 @@ defmodule AshPaperTrail.Resource do
     target: AshPaperTrail.Resource.BelongsToActor,
     args: [:name, :destination],
     schema: AshPaperTrail.Resource.BelongsToActor.schema()
-    # transform: {AshPaperTrail.Resource.BelongsToActor, :transform, []}
   }
 
   @paper_trail %Spark.Dsl.Section{

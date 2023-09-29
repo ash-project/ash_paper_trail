@@ -8,7 +8,7 @@ defmodule AshPaperTrail.Test.Accounts.User do
   end
 
   code_interface do
-    define_for AshPaperTrail.Test.Account.Api
+    define_for AshPaperTrail.Test.Accounts.Api
 
     define :create
     define :read

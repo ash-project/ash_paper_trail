@@ -1,7 +1,7 @@
 defmodule AshPaperTrailTest do
   use ExUnit.Case
 
-  alias AshPaperTrail.Test.{Posts, Articles}
+  alias AshPaperTrail.Test.{Posts, Articles, Accounts}
 
   @valid_attrs %{
     subject: "subject",
@@ -162,6 +162,67 @@ defmodule AshPaperTrailTest do
     end
   end
 
+  describe "belongs_to_actor option" do
+    test "creates a relationship on the version" do
+      assert length(AshPaperTrail.Resource.Info.belongs_to_actor(Posts.Post)) > 1
+
+      relationships_on_version = Ash.Resource.Info.relationships(Posts.Post.Version)
+
+      Enum.each(AshPaperTrail.Resource.Info.belongs_to_actor(Posts.Post), fn belongs_to_actor ->
+        name = belongs_to_actor.name
+        destination = belongs_to_actor.destination
+        attribute_type = belongs_to_actor.attribute_type
+        api = belongs_to_actor.api
+        allow_nil? = belongs_to_actor.allow_nil?
+
+        assert %Ash.Resource.Relationships.BelongsTo{
+                 name: ^name,
+                 destination: ^destination,
+                 attribute_type: ^attribute_type,
+                 source: AshPaperTrail.Test.Posts.Post.Version,
+                 api: ^api,
+                 allow_nil?: ^allow_nil?,
+                 attribute_writable?: true
+               } = Enum.find(relationships_on_version, &(&1.name == name))
+      end)
+    end
+
+    test "sets a relationship on the versions" do
+      user = Accounts.User.create!(%{name: "bob"})
+      user_id = user.id
+
+      news_feed = Accounts.NewsFeed.create!(%{organization: "ap"})
+      news_feed_id = news_feed.id
+
+      post = Posts.Post.create!(@valid_attrs, tenant: "acme", actor: news_feed)
+      Posts.Post.publish!(post, tenant: "acme", actor: user)
+      post_id = post.id
+
+      assert(
+        [
+          %{
+            subject: "subject",
+            body: "body",
+            version_action_type: :create,
+            version_source_id: ^post_id,
+            user_id: nil,
+            news_feed_id: ^news_feed_id
+          },
+          %{
+            subject: "subject",
+            body: "body",
+            version_action_type: :update,
+            version_source_id: ^post_id,
+            user_id: ^user_id,
+            news_feed_id: nil
+          }
+        ] =
+          Posts.Api.read!(Posts.Post.Version, tenant: "acme")
+          |> Enum.sort_by(& &1.version_inserted_at)
+      )
+    end
+  end
+
   describe "operations over resource with an Api Registry (Not Recommended)" do
     test "creates work as normal" do
       assert %{subject: "subject", body: "body"} = Articles.Article.create!("subject", "body")
@@ -185,31 +246,6 @@ defmodule AshPaperTrailTest do
       assert :ok = Articles.Article.destroy!(post)
 
       assert [] = Articles.Article.read!()
-    end
-  end
-
-  describe "belongs_to_actor option" do
-    test "creates a relationship on the version" do
-      assert length(AshPaperTrail.Resource.Info.belongs_to_actor(Posts.Post)) > 1
-
-      relationships_on_version = Ash.Resource.Info.relationships(Posts.Post.Version)
-
-      Enum.each(AshPaperTrail.Resource.Info.belongs_to_actor(Posts.Post), fn belongs_to_actor ->
-        name = belongs_to_actor.name
-        destination = belongs_to_actor.destination
-        attribute_type = belongs_to_actor.attribute_type
-        api = belongs_to_actor.api
-        allow_nil? = belongs_to_actor.allow_nil?
-
-        assert %Ash.Resource.Relationships.BelongsTo{
-                 name: ^name,
-                 destination: ^destination,
-                 attribute_type: ^attribute_type,
-                 source: AshPaperTrail.Test.Posts.Post.Version,
-                 api: ^api,
-                 allow_nil?: ^allow_nil?
-               } = Enum.find(relationships_on_version, &(&1.name == name))
-      end)
     end
   end
 end

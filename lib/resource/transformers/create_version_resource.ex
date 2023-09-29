@@ -89,6 +89,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           table = unquote(table)
           repo = unquote(repo)
           reference_source? = unquote(reference_source?)
+          belongs_to_actors = unquote(Macro.escape(belongs_to_actors))
 
           Code.eval_quoted(
             quote do
@@ -177,6 +178,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
               define_attribute?(actor_relationship.define_attribute?)
               allow_nil?(actor_relationship.allow_nil?)
               attribute_type(actor_relationship.attribute_type)
+              attribute_writable?(true)
             end
           end
         end
