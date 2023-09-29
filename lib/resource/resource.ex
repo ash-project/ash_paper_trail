@@ -3,11 +3,33 @@ defmodule AshPaperTrail.Resource do
   Documentation for `AshPaperTrail.Resource`.
   """
 
+  @belongs_to_actor %Spark.Dsl.Entity{
+    name: :belongs_to_actor,
+    describe: """
+    Creates a belongs_to relationship to version resource. When creating a new version, if the actor is set and matches the 
+    resource type, the version will be related to the actor. If your actors are polymorphic or varying types, declare a 
+    belongs_to_actor for each type.
+
+    The relationship created will always be `allow_nil? true` and foreign key constraints (if any) will unassociate 
+    if the actor record is deleted. If you need more complex relationship, set `define_attribute? false` and add the
+    relationship via a mixin.
+    """,
+    examples: [
+      "belongs_to_actor :user, MyApp.Users.User, api: MyApp.Users"
+    ],
+    no_depend_modules: [:destination],
+    target: AshPaperTrail.Resource.BelongsToActor,
+    args: [:name, :destination],
+    schema: AshPaperTrail.Resource.BelongsToActor.schema(),
+    transform: {AshPaperTrail.Resource.BelongsToActor, :transform, []}
+  }
+
   @paper_trail %Spark.Dsl.Section{
     name: :paper_trail,
     describe: """
     A section for configuring how versioning is derived for the resource.
     """,
+    entities: [@belongs_to_actor],
     schema: [
       attributes_as_attributes: [
         type: {:list, :atom},
@@ -16,41 +38,7 @@ defmodule AshPaperTrail.Resource do
         A set of attributes that should be set as attributes on the version resource, instead of stored in the freeform `changes` map attribute.
         """
       ],
-      belongs_to_actor: [
-        args: [:relationship_name, :resource],
-        doc: """
-        Creates a belongs_to relationship to version resource. When creating a new version, if the actor is set and matches the 
-        resource type, the version will be related to the actor. If your actors are polymorphic or varying types, declare a 
-        belongs_to_actor for each type.
-
-        The relationship created will always be `allow_nil? true` and foreign key constraints (if any) will unassociate 
-        if the actor record is deleted. If you need more complex relationship, set `define_attribute? false` and add the
-        relationship via a mixin.
-        """,
-        schema: [
-          relationship_name: [
-            type: :atom,
-            doc: "The name of the relationship to use for the actor (e.g. :user)",
-            required: true
-          ],
-          resource: [
-            type: :module,
-            doc: "The resource of the actor (e.g. MyApp.Users.User)",
-            required: true
-          ],
-          api: [
-            type: :module,
-            doc: "The apit of the actor (e.g. MyApp.Users)",
-            required: true
-          ],
-          define_attribute?: [
-            type: :boolean,
-            default: true,
-            doc:
-              "If set to `false` an attribute is not created on the resource for this relationship, and one must be manually added in `attributes`, invalidating many other options."
-          ]
-        ]
-      ],
+      belongs_to_actor: @belongs_to_actor,
       change_tracking_mode: [
         type: {:one_of, [:snapshot, :changes_only]},
         default: :snapshot,
