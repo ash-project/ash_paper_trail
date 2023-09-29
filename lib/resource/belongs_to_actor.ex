@@ -40,9 +40,4 @@ defmodule AshPaperTrail.Resource.BelongsToActor do
 
   @doc false
   def schema, do: @schema
-
-  @doc false
-  def transform(belongs_to_actor) do
-    {:ok, belongs_to_actor}
-  end
 end

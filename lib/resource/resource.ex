@@ -21,7 +21,6 @@ defmodule AshPaperTrail.Resource do
     target: AshPaperTrail.Resource.BelongsToActor,
     args: [:name, :destination],
     schema: AshPaperTrail.Resource.BelongsToActor.schema(),
-    transform: {AshPaperTrail.Resource.BelongsToActor, :transform, []}
   }
 
   @paper_trail %Spark.Dsl.Section{
@@ -38,7 +37,6 @@ defmodule AshPaperTrail.Resource do
         A set of attributes that should be set as attributes on the version resource, instead of stored in the freeform `changes` map attribute.
         """
       ],
-      belongs_to_actor: @belongs_to_actor,
       change_tracking_mode: [
         type: {:one_of, [:snapshot, :changes_only]},
         default: :snapshot,
