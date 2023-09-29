@@ -190,26 +190,26 @@ defmodule AshPaperTrailTest do
 
   describe "belongs_to_actor option" do
     test "creates a relationship on the version" do
-        assert length(AshPaperTrail.Resource.Info.belongs_to_actor(Posts.Post)) > 1
+      assert length(AshPaperTrail.Resource.Info.belongs_to_actor(Posts.Post)) > 1
 
-        relationships_on_version = Ash.Resource.Info.relationships(Posts.Post.Version)
-        Enum.each(AshPaperTrail.Resource.Info.belongs_to_actor(Posts.Post), fn belongs_to_actor -> 
-          name = belongs_to_actor.name
-          destination = belongs_to_actor.destination
-          attribute_type = belongs_to_actor.attribute_type
-          api = belongs_to_actor.api
-          allow_nil? = belongs_to_actor.allow_nil?
+      relationships_on_version = Ash.Resource.Info.relationships(Posts.Post.Version)
 
-          assert %Ash.Resource.Relationships.BelongsTo{
-            name: ^name,
-            destination: ^destination,
-            attribute_type: ^attribute_type,
-            source: AshPaperTrail.Test.Posts.Post.Version,
-            api: ^api,
-            allow_nil?: ^allow_nil?
-          } = Enum.find(relationships_on_version, & &1.name == name)
-        end) 
-        
+      Enum.each(AshPaperTrail.Resource.Info.belongs_to_actor(Posts.Post), fn belongs_to_actor ->
+        name = belongs_to_actor.name
+        destination = belongs_to_actor.destination
+        attribute_type = belongs_to_actor.attribute_type
+        api = belongs_to_actor.api
+        allow_nil? = belongs_to_actor.allow_nil?
+
+        assert %Ash.Resource.Relationships.BelongsTo{
+                 name: ^name,
+                 destination: ^destination,
+                 attribute_type: ^attribute_type,
+                 source: AshPaperTrail.Test.Posts.Post.Version,
+                 api: ^api,
+                 allow_nil?: ^allow_nil?
+               } = Enum.find(relationships_on_version, &(&1.name == name))
+      end)
     end
   end
 end

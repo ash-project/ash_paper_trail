@@ -10,9 +10,9 @@ defmodule AshPaperTrail.Resource.Info do
   def belongs_to_actor(resource) do
     Spark.Dsl.Extension.get_entities(resource, [:paper_trail])
     |> Enum.filter(fn
-             %AshPaperTrail.Resource.BelongsToActor{} -> true
-             _ -> false
-           end)
+      %AshPaperTrail.Resource.BelongsToActor{} -> true
+      _ -> false
+    end)
   end
 
   @spec change_tracking_mode(Spark.Dsl.t() | Ash.Resource.t()) :: atom

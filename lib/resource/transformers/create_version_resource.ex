@@ -156,17 +156,6 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           update_timestamp :version_updated_at
         end
 
-        relationships do
-          for actor_relationship <- unquote(Macro.escape(belongs_to_actors)) do
-            belongs_to actor_relationship.name, actor_relationship.destination do
-              api(actor_relationship.api)
-              define_attribute?(actor_relationship.define_attribute?)
-              allow_nil?(actor_relationship.allow_nil?)
-              attribute_type(actor_relationship.attribute_type)
-            end
-          end
-        end
-
         actions do
           defaults([:create, :read, :update])
         end
@@ -176,6 +165,15 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
             destination_attribute(unquote(destination_attribute))
             allow_nil?(false)
             attribute_writable?(true)
+          end
+
+          for actor_relationship <- unquote(Macro.escape(belongs_to_actors)) do
+            belongs_to actor_relationship.name, actor_relationship.destination do
+              api(actor_relationship.api)
+              define_attribute?(actor_relationship.define_attribute?)
+              allow_nil?(actor_relationship.allow_nil?)
+              attribute_type(actor_relationship.attribute_type)
+            end
           end
         end
 
