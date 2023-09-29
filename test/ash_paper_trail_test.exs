@@ -195,7 +195,10 @@ defmodule AshPaperTrailTest do
       news_feed_id = news_feed.id
 
       post = Posts.Post.create!(@valid_attrs, tenant: "acme", actor: news_feed)
-      Posts.Post.publish!(post, tenant: "acme", actor: user)
+      post = Posts.Post.publish!(post, tenant: "acme", actor: user)
+
+      post = Posts.Post.update!(post, %{subject: "new subject"}, tenant: "acme", actor: "a string")
+
       post_id = post.id
 
       assert(
@@ -214,6 +217,14 @@ defmodule AshPaperTrailTest do
             version_action_type: :update,
             version_source_id: ^post_id,
             user_id: ^user_id,
+            news_feed_id: nil
+          },
+                    %{
+            subject: "new subject",
+            body: "body",
+            version_action_type: :update,
+            version_source_id: ^post_id,
+            user_id: nil,
             news_feed_id: nil
           }
         ] =
