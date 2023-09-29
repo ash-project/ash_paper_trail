@@ -96,9 +96,13 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
                 table(unquote(table) <> "_versions")
                 repo(unquote(repo))
 
-                unless unquote(reference_source?) do
-                  references do
+                references do
+                  unless unquote(reference_source?) do
                     reference(:version_source, ignore?: true)
+                  end
+
+                  for actor_relationship <- unquote(Macro.escape(belongs_to_actors)) do
+                    reference(actor_relationship.name, on_delete: :nothing, on_update: :update)
                   end
                 end
               end
