@@ -53,7 +53,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     changes =
       resource_attributes
       |> Enum.reject(&(&1.name in to_skip))
-      |> Enum.reduce(%{}, &build_changes(change_tracking_mode, changeset, &1, &2))
+      |> build_changes(change_tracking_mode, changeset)
 
     input =
       Map.merge(input, %{
@@ -100,94 +100,15 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     }
   end
 
-  defp build_changes(:snapshot, changeset, attribute, changes) do
-    value = Ash.Changeset.get_attribute(changeset, attribute.name)
-    {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, [])
-    Map.put(changes, attribute.name, dumped_value)
+  defp build_changes(attributes, :changes_only, changeset) do
+    AshPaperTrail.Dumpers.ChangesOnly.build_changes(attributes, changeset)
   end
 
-  defp build_changes(:changes_only, changeset, attribute, changes) do
-    if Ash.Changeset.changing_attribute?(changeset, attribute.name) do
-      value = Ash.Changeset.get_attribute(changeset, attribute.name)
-      {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, [])
-      Map.put(changes, attribute.name, dumped_value)
-    else
-      changes
-    end
+  defp build_changes(attributes, :snapshot, changeset) do
+    AshPaperTrail.Dumpers.Snapshot.build_changes(attributes, changeset)
   end
 
-  defp build_changes(:full_diff, %{action: %{type: :create}} = changeset, attribute, changes) do
-    case Ash.Changeset.fetch_change(changeset, attribute.name) do
-      {:ok, value} ->
-        Map.put(changes, attribute.name, %{to: dump_value(value, attribute)})
-
-      :error ->
-        Map.put(changes, attribute.name, %{to: nil})
-    end
-  end
-
-  defp build_changes(:full_diff, changeset, attribute, changes) do
-    dumped_data = Ash.Changeset.get_data(changeset, attribute.name) |> dump_value(attribute)
-
-    if Ash.Type.embedded_type?(attribute.type) do
-      case Ash.Changeset.fetch_change(changeset, attribute.name) do
-        {:ok, value} ->
-          Map.put(
-            changes,
-            attribute.name,
-            build_map_changes(dumped_data, dump_value(value, attribute))
-          )
-
-        :error ->
-          Map.put(changes, attribute.name, %{unchanged: dumped_data})
-      end
-    else
-      case Ash.Changeset.fetch_change(changeset, attribute.name) do
-        {:ok, value} ->
-          Map.put(changes, attribute.name, %{from: dumped_data, to: dump_value(value, attribute)})
-
-        :error ->
-          Map.put(changes, attribute.name, %{unchanged: dumped_data})
-      end
-    end
-  end
-
-  defp build_map_changes(nil, value) do
-    %{create: dump_map_changes(%{}, value)}
-  end
-
-  defp build_map_changes(data, nil) do
-    %{destroy: dump_map_changes(data, %{})}
-  end
-
-  defp build_map_changes(data, value) do
-    %{update: dump_map_changes(data, value)}
-  end
-
-  defp dump_map_changes(%{} = from_map, %{} = to_map) do
-    keys = Map.keys(from_map) ++ Map.keys(to_map)
-
-    for key <- keys,
-        into: %{},
-        do:
-          {key,
-           dump_map_change_value(
-             Map.has_key?(from_map, key),
-             Map.get(from_map, key),
-             Map.has_key?(to_map, key),
-             Map.get(to_map, key)
-           )}
-  end
-
-  defp dump_map_change_value(false, _from, true, to), do: %{to: to}
-  defp dump_map_change_value(true, from, false, _to), do: %{from: from}
-  defp dump_map_change_value(true, from, true, from), do: %{unchanged: from}
-  defp dump_map_change_value(true, from, true, to), do: %{from: from, to: to}
-
-  defp dump_value(nil, _attribute), do: nil
-
-  defp dump_value(value, attribute) do
-    {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, [])
-    dumped_value
+  defp build_changes(attributes, :full_diff, changeset) do
+    AshPaperTrail.Dumpers.FullDiff.build_changes(attributes, changeset)
   end
 end
