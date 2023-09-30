@@ -4,24 +4,23 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   end
 
   defp build_attribute_change(%{type: {:array, _type}} = attribute, changeset, changes) do
-    if changeset.action_type == :create do
-      Map.put(
-        changes,
-        attribute.name,
-        %{to: []}
-      )
-    else
-      Map.put(
-        changes,
-        attribute.name,
-        %{unchanged: []}
-      )
-    end
+      if changeset.action_type == :create do
+        Map.put(
+          changes,
+          attribute.name,
+          %{to: []}
+        )
+      else
+        Map.put(
+          changes,
+          attribute.name,
+          %{unchanged: []}
+        )
+      end
   end
 
   defp build_attribute_change(attribute, changeset, changes) do
     if Ash.Type.embedded_type?(attribute.type) do
-
       data = Ash.Changeset.get_data(changeset, attribute.name) |> dump_value(attribute)
 
       case Ash.Changeset.fetch_change(changeset, attribute.name) do

@@ -66,5 +66,18 @@ defmodule AshPaperTrail.Test.Posts.Page do
       allow_nil? false
       default false
     end
+
+    attribute :seo_map, :map do
+      allow_nil? true
+    end
+
+    attribute :views, :integer do
+      allow_nil? false
+      default 0
+    end
+
+    attribute :lucky_numbers, {:array, :integer} do
+      allow_nil? true
+    end
   end
 end
