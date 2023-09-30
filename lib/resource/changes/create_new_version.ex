@@ -116,6 +116,16 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     end
   end
 
+  defp build_changes(:full_diff, %{action: %{type: :create}} = changeset, attribute, changes) do
+    case Ash.Changeset.fetch_change(changeset, attribute.name) do
+      {:ok, value} ->
+        Map.put(changes, attribute.name, %{to: dump_value(value, attribute)})
+
+      :error ->
+        Map.put(changes, attribute.name, %{to: nil})
+    end
+  end
+
   defp build_changes(:full_diff, changeset, attribute, changes) do
     dumped_data = Ash.Changeset.get_data(changeset, attribute.name) |> dump_value(attribute)
 
