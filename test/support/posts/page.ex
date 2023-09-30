@@ -36,12 +36,6 @@ defmodule AshPaperTrail.Test.Posts.Page do
     end
   end
 
-  multitenancy do
-    strategy :attribute
-    attribute :tenant
-    parse_attribute {AshPaperTrail.Test.Tenant, :parse_tenant, []}
-  end
-
   attributes do
     uuid_primary_key :id
 
