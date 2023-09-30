@@ -4,76 +4,97 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   end
 
   defp build_attribute_change(%{type: {:array, _type}} = attribute, changeset, changes) do
-      if changeset.action_type == :create do
-        Map.put(
-          changes,
-          attribute.name,
-          %{to: []}
-        )
-      else
-        Map.put(
-          changes,
-          attribute.name,
-          %{unchanged: []}
-        )
-      end
+    if Ash.Type.embedded_type?(attribute.type) do
+      build_attribute_change(:embedded_array, attribute, changeset, changes)
+    else
+      build_attribute_change(:simple, attribute, changeset, changes)
+    end
   end
 
   defp build_attribute_change(attribute, changeset, changes) do
     if Ash.Type.embedded_type?(attribute.type) do
-      data = Ash.Changeset.get_data(changeset, attribute.name) |> dump_value(attribute)
-
-      case Ash.Changeset.fetch_change(changeset, attribute.name) do
-        {:ok, nil} ->
-          Map.put(changes, attribute.name, build_map_changes(data, nil))
-
-        {:ok, value} ->
-          Map.put(
-            changes,
-            attribute.name,
-            build_map_changes(data, dump_value(value, attribute))
-          )
-
-        :error ->
-          if changeset.action_type == :create do
-            Map.put(changes, attribute.name, %{to: data})
-          else
-            Map.put(changes, attribute.name, %{unchanged: data})
-          end
-      end
+      build_attribute_change(:embedded, attribute, changeset, changes)
     else
-      {data_present, data} =
+      build_attribute_change(:simple, attribute, changeset, changes)
+    end
+  end
+
+  defp build_attribute_change(
+         :embedded_array,
+         %{type: {:array, _type}} = attribute,
+         changeset,
+         changes
+       ) do
+    if changeset.action_type == :create do
+      Map.put(
+        changes,
+        attribute.name,
+        %{to: []}
+      )
+    else
+      Map.put(
+        changes,
+        attribute.name,
+        %{unchanged: []}
+      )
+    end
+  end
+
+  defp build_attribute_change(:embedded, attribute, changeset, changes) do
+    data = Ash.Changeset.get_data(changeset, attribute.name) |> dump_value(attribute)
+
+    case Ash.Changeset.fetch_change(changeset, attribute.name) do
+      {:ok, nil} ->
+        Map.put(changes, attribute.name, build_map_changes(data, nil))
+
+      {:ok, value} ->
+        Map.put(
+          changes,
+          attribute.name,
+          build_map_changes(data, dump_value(value, attribute))
+        )
+
+      :error ->
         if changeset.action_type == :create do
-          {false, nil}
+          Map.put(changes, attribute.name, %{to: data})
         else
-          {true, Ash.Changeset.get_data(changeset, attribute.name)}
+          Map.put(changes, attribute.name, %{unchanged: data})
         end
+    end
+  end
 
-      case Ash.Changeset.fetch_change(changeset, attribute.name) do
-        {:ok, value} ->
-          Map.put(
-            changes,
-            attribute.name,
-            dump_change_value(
-              data_present,
-              data,
-              true,
-              value
-            )
-          )
-
-        :error ->
-          Map.put(
-            changes,
-            attribute.name,
-            dump_change_value(
-              data_present,
-              data,
-              data_present,
-              data
-            )
-          )
+  defp build_attribute_change(:simple, attribute, changeset, changes) do
+    {data_present, data} =
+      if changeset.action_type == :create do
+        {false, nil}
+      else
+        {true, Ash.Changeset.get_data(changeset, attribute.name)}
       end
+
+    case Ash.Changeset.fetch_change(changeset, attribute.name) do
+      {:ok, value} ->
+        Map.put(
+          changes,
+          attribute.name,
+          dump_change_value(
+            data_present,
+            data,
+            true,
+            value
+          )
+        )
+
+      :error ->
+        Map.put(
+          changes,
+          attribute.name,
+          dump_change_value(
+            data_present,
+            data,
+            data_present,
+            data
+          )
+        )
     end
   end
 
