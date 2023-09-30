@@ -53,11 +53,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     changes =
       resource_attributes
       |> Enum.reject(&(&1.name in to_skip))
-      |> Enum.filter(
-        &(change_tracking_mode == :snapshot ||
-            Ash.Changeset.changing_attribute?(changeset, &1.name))
-      )
-      |> Enum.reduce(%{}, &build_changes(changeset, &1, &2))
+      |> Enum.reduce(%{}, &build_changes(change_tracking_mode, changeset, &1, &2))
 
     input =
       Map.merge(input, %{
@@ -104,9 +100,71 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     }
   end
 
-  defp build_changes(changeset, attribute, changes) do
+  defp build_changes(:snapshot, changeset, attribute, changes) do
     value = Ash.Changeset.get_attribute(changeset, attribute.name)
     {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, [])
     Map.put(changes, attribute.name, dumped_value)
+  end
+
+  defp build_changes(:changes_only, changeset, attribute, changes) do
+    if Ash.Changeset.changing_attribute?(changeset, attribute.name) do
+      value = Ash.Changeset.get_attribute(changeset, attribute.name)
+      {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, [])
+      Map.put(changes, attribute.name, dumped_value)
+    else
+      changes
+    end
+  end
+
+  defp build_changes(:full_diff, changeset, attribute, changes) do
+    dumped_data = Ash.Changeset.get_data(changeset, attribute.name) |> dump_value(attribute)
+
+    if Ash.Type.embedded_type?(attribute.type) do
+      case Ash.Changeset.fetch_change(changeset, attribute.name) do
+        {:ok, value} ->
+          Map.put(
+            changes,
+            attribute.name,
+            build_embedded_changes(dumped_data, dump_value(value, attribute))
+          )
+
+        :error ->
+          Map.put(changes, attribute.name, %{unchanged: dumped_data})
+      end
+    else
+      case Ash.Changeset.fetch_change(changeset, attribute.name) do
+        {:ok, value} ->
+          Map.put(changes, attribute.name, %{from: dumped_data, to: dump_value(value, attribute)})
+
+        :error ->
+          Map.put(changes, attribute.name, %{unchanged: dumped_data})
+      end
+    end
+  end
+
+  defp build_embedded_changes(data, data) do
+    %{unchanged: data}
+  end
+
+  defp build_embedded_changes(nil, value) do
+    %{from: nil, to: value}
+  end
+
+  defp build_embedded_changes(data, nil) do
+    %{from: data, to: nil}
+  end
+
+  defp build_embedded_changes(data, value) do
+    Map.keys(value)
+    |> Enum.reduce(%{}, fn key, changes ->
+      Map.put(changes, key, build_embedded_changes(data[key], value[key]))
+    end)
+  end
+
+  defp dump_value(nil, _attribute), do: nil
+
+  defp dump_value(value, attribute) do
+    {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, [])
+    dumped_value
   end
 end

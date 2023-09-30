@@ -1,6 +1,6 @@
-defmodule AshPaperTrail.Test.Posts.Post do
+defmodule AshPaperTrail.Test.Posts.Page do
   @moduledoc """
-    A page is like a post but uses the change_tracking_mode :changes_only
+    A page is like a post but uses the change_tracking_mode :full_diff
   """
 
   use Ash.Resource,
@@ -14,8 +14,7 @@ defmodule AshPaperTrail.Test.Posts.Post do
 
   paper_trail do
     attributes_as_attributes [:subject, :body, :tenant]
-    change_tracking_mode :changes_only
-    store_action_name? true
+    change_tracking_mode :full_diff
   end
 
   code_interface do

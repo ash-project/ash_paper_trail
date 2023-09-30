@@ -55,12 +55,25 @@ defmodule AshPaperTrail.Resource do
         """
       ],
       change_tracking_mode: [
-        type: {:one_of, [:snapshot, :changes_only]},
+        type: {:one_of, [:snapshot, :changes_only, :full_diff]},
         default: :snapshot,
         doc: """
-        The mode to use for change tracking. Valid options are `:snapshot` and `:changes_only`.
-        `:snapshot` will store the entire resource in the `changes` attribute, while `:changes_only`
-        will only store the attributes that have changed.
+        Changes are stored in a map attribute called `changes`.  The `change_tracking_mode` 
+        determines what's stored. Valid options are `:snapshot` and `:changes_only` and `:full_diff`.
+
+        :snapshot will json dump the contents of every attribute whether they changed or not.
+
+        `{ subject: "new subject", body: "unchanged body", author: { name: "bob"}}`
+
+        :changes_only will json dump the contents of only the attributes that have changed. 
+        Note if any part of an embedded attribute and array of embedded attributes, changes then
+        the entire top level attribute is dumped.
+
+        `{ subject: "new subject" }`
+
+        :full_diff will json dump the contents of each attribute.
+        `{ subject: { from: "subject", to: "new subject" }, body: { unchanged: "unchanged_body" }}, author: { changes: { unchanged: "bob" }}`
+
         """
       ],
       store_action_name?: [
