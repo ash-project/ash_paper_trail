@@ -135,7 +135,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
           Map.put(
             changes,
             attribute.name,
-            build_embedded_changes(dumped_data, dump_value(value, attribute))
+            build_map_changes(dumped_data, dump_value(value, attribute))
           )
 
         :error ->
@@ -152,17 +152,36 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     end
   end
 
-  #defp build_embedded_changes(data, data) do
-  #  %{unchanged: data}
-  #end
-
-  defp build_embedded_changes(data, value) do
-     %{from: data, to: value}
-#    Map.keys(value)
-#    |> Enum.reduce(%{}, fn key, changes ->
-#      Map.put(changes, key, build_embedded_changes(data[key], value[key]))
-#    end)
+  defp build_map_changes(nil, value) do
+    %{create: dump_map_changes(%{}, value)}
   end
+
+  defp build_map_changes(data, nil) do
+    %{destroy: dump_map_changes(data, %{})}
+  end
+
+  defp build_map_changes(data, value) do
+    %{update: dump_map_changes(data, value)}
+  end
+
+  defp dump_map_changes(%{} = from_map, %{} = to_map) do
+    keys = Map.keys(from_map) ++ Map.keys(to_map)
+
+    for key <- keys,
+        into: %{},
+        do:
+          {key,
+           dump_map_change_value(
+             Map.has_key?(from_map, key),
+             Map.get(from_map, key),
+             Map.has_key?(to_map, key),
+             Map.get(to_map, key)
+           )}
+  end
+
+  defp dump_map_change_value(false, _from, true, to), do: %{to: to}
+  defp dump_map_change_value(true, from, false, _to), do: %{from: from}
+  defp dump_map_change_value(true, from, true, to), do: %{from: from, to: to}
 
   defp dump_value(nil, _attribute), do: nil
 
