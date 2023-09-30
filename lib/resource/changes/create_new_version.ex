@@ -181,6 +181,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp dump_map_change_value(false, _from, true, to), do: %{to: to}
   defp dump_map_change_value(true, from, false, _to), do: %{from: from}
+  defp dump_map_change_value(true, from, true, from), do: %{unchanged: from}
   defp dump_map_change_value(true, from, true, to), do: %{from: from, to: to}
 
   defp dump_value(nil, _attribute), do: nil
