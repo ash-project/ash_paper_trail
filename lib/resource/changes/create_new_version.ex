@@ -152,23 +152,16 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     end
   end
 
-  defp build_embedded_changes(data, data) do
-    %{unchanged: data}
-  end
-
-  defp build_embedded_changes(nil, value) do
-    %{from: nil, to: value}
-  end
-
-  defp build_embedded_changes(data, nil) do
-    %{from: data, to: nil}
-  end
+  #defp build_embedded_changes(data, data) do
+  #  %{unchanged: data}
+  #end
 
   defp build_embedded_changes(data, value) do
-    Map.keys(value)
-    |> Enum.reduce(%{}, fn key, changes ->
-      Map.put(changes, key, build_embedded_changes(data[key], value[key]))
-    end)
+     %{from: data, to: value}
+#    Map.keys(value)
+#    |> Enum.reduce(%{}, fn key, changes ->
+#      Map.put(changes, key, build_embedded_changes(data[key], value[key]))
+#    end)
   end
 
   defp dump_value(nil, _attribute), do: nil

@@ -142,10 +142,10 @@ defmodule AshPaperTrailTest do
 
       page = Posts.Page.create!(%{subject: "subject", body: "body"}, tenant: "acme")
 
-      #page =
-      #  Posts.Page.update!(page, %{subject: "new subject", author: %{first_name: "bob"}},
-      #    tenant: "acme"
-      #  )
+      page =
+        Posts.Page.update!(page, %{subject: "new subject", author: %{first_name: "bob"}},
+          tenant: "acme"
+      )
 
       #page =
       #  Posts.Page.update!(
@@ -154,7 +154,7 @@ defmodule AshPaperTrailTest do
       #    tenant: "acme"
       #  )
 
-      [created_version] =
+      [created_version, added_author_version] =
         Posts.Api.read!(Posts.Page.Version, tenant: "acme")
         |> Enum.sort_by(& &1.version_inserted_at)
 
@@ -168,20 +168,20 @@ defmodule AshPaperTrailTest do
                tenant: %{to: "acme"}
              } = created_version.changes
 
-     #   assert %{
-     #           subject: %{from: "subject", to: "new subject"},
-     #           body: %{unchanged: "body"},
-     #           author: %{
-     #             changes: %{first_name: %{from: nil, to: "bob"}, last_name: %{unchanged: nil}}
-     #           },
-     #           published: %{unchanged: false},
-     #           secret: %{unchanged: nil},
-     #           tags: %{unchanged: []},
-     #           tenant: %{unchanged: "acme"}
-     #         } = added_author_version.changes
+        assert %{
+                subject: %{from: "subject", to: "new subject"},
+                body: %{unchanged: "body"},
+                author: %{
+                  changes: %{first_name: %{from: nil, to: "bob"}, last_name: %{unchanged: nil}}
+                },
+                published: %{unchanged: false},
+                secret: %{unchanged: nil},
+                tags: %{unchanged: []},
+                tenant: %{unchanged: "acme"}
+              } = added_author_version.changes
 
-     #   assert [:author, :body, :published, :secret, :subject, :tags, :tenant] =
-     #           Map.keys(added_author_version.changes) |> Enum.sort()
+        assert [:author, :body, :published, :secret, :subject, :tags, :tenant] =
+                Map.keys(added_author_version.changes) |> Enum.sort()
 
       #  assert %{
       #          subject: %{unchanged: "new subject"},
