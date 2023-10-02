@@ -41,6 +41,11 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
     change_tracking_mode = AshPaperTrail.Resource.Info.change_tracking_mode(changeset.resource)
 
+    belongs_to_actors =
+      AshPaperTrail.Resource.Info.belongs_to_actor(changeset.resource)
+
+    actor = changeset.context[:private][:actor]
+
     resource_attributes =
       changeset.resource
       |> Ash.Resource.Info.attributes()
@@ -56,7 +61,19 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       |> build_changes(change_tracking_mode, changeset)
 
     input =
-      Map.merge(input, %{
+      Enum.reduce(belongs_to_actors, input, fn belongs_to_actor, input ->
+        with true <- is_struct(actor) && actor.__struct__ == belongs_to_actor.destination,
+             relationship when not is_nil(relationship) <-
+               Ash.Resource.Info.relationship(version_resource, belongs_to_actor.name) do
+          primary_key = Map.get(actor, hd(Ash.Resource.Info.primary_key(actor.__struct__)))
+          source_attribute = Map.get(relationship, :source_attribute)
+          Map.put(input, source_attribute, primary_key)
+        else
+          _ ->
+            input
+        end
+      end)
+      |> Map.merge(%{
         version_source_id: Map.get(result, hd(Ash.Resource.Info.primary_key(changeset.resource))),
         version_action_type: changeset.action.type,
         version_action_name: changeset.action.name,
@@ -68,7 +85,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       |> Ash.Changeset.for_create(:create, input,
         tenant: changeset.tenant,
         authorize?: false,
-        actor: changeset.context[:private][:actor]
+        actor: actor
       )
       |> Ash.Changeset.force_change_attributes(Map.take(private, version_resource_attributes))
       |> changeset.api.create!(return_notifications?: true)
