@@ -53,7 +53,7 @@ defmodule AshPaperTrail.Resource do
         type: {:list, :atom},
         default: [],
         doc: """
-        A list of attributes that should be ignored. `created_at`, `updated_at` and the primary key are always ignored.
+        A list of attributes that should be ignored. Typically you'll want to ignore your timestamps. The primary key is always ignored.
         """
       ],
       mixin: [
