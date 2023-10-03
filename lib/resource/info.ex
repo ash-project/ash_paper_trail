@@ -22,8 +22,7 @@ defmodule AshPaperTrail.Resource.Info do
 
   @spec ignore_attributes(Spark.Dsl.t() | Ash.Resource.t()) :: [atom]
   def ignore_attributes(resource) do
-    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :ignore_attributes, []) ++
-      [:created_at, :updated_at] ++ Ash.Resource.Info.primary_key(resource)
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :ignore_attributes, [])
   end
 
   @spec mixin(Spark.Dsl.t() | Ash.Resource.t()) :: mfa | nil

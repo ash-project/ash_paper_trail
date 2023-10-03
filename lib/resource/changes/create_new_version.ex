@@ -34,7 +34,9 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
     version_changeset = Ash.Changeset.new(version_resource)
 
-    to_skip = AshPaperTrail.Resource.Info.ignore_attributes(changeset.resource)
+    to_skip =
+      Ash.Resource.Info.primary_key(changeset.resource) ++
+        AshPaperTrail.Resource.Info.ignore_attributes(changeset.resource)
 
     attributes_as_attributes =
       AshPaperTrail.Resource.Info.attributes_as_attributes(changeset.resource)

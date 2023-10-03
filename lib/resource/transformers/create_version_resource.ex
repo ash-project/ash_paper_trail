@@ -7,8 +7,8 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
   def transform(dsl_state) do
     version_module = AshPaperTrail.Resource.Info.version_resource(dsl_state)
     module = Transformer.get_persisted(dsl_state, :module)
-    to_skip = AshPaperTrail.Resource.Info.ignore_attributes(dsl_state)
 
+    ignore_attributes = AshPaperTrail.Resource.Info.ignore_attributes(dsl_state)
     attributes_as_attributes = AshPaperTrail.Resource.Info.attributes_as_attributes(dsl_state)
     belongs_to_actors = AshPaperTrail.Resource.Info.belongs_to_actor(dsl_state)
     reference_source? = AshPaperTrail.Resource.Info.reference_source?(dsl_state)
@@ -18,8 +18,12 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     attributes =
       dsl_state
       |> Ash.Resource.Info.attributes()
-      |> Enum.reject(&(&1.name in to_skip))
       |> Enum.filter(&(&1.name in attributes_as_attributes))
+
+    sensitive_changes? = dsl_state
+      |> Ash.Resource.Info.attributes()
+      |> Enum.filter(&(&1.name in ignore_attributes))
+      |> Enum.any?(& &1.sensitive?)
 
     data_layer = version_extensions[:data_layer] || Ash.DataLayer.data_layer(dsl_state)
 
@@ -158,7 +162,10 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
             end
           end
 
-          attribute :changes, :map
+          attribute :changes, :map do
+            sensitive? unquote(sensitive_changes?)
+          end
+
           create_timestamp :version_inserted_at
           update_timestamp :version_updated_at
         end
