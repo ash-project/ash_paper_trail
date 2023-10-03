@@ -7,7 +7,6 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
   def transform(dsl_state) do
     version_module = AshPaperTrail.Resource.Info.version_resource(dsl_state)
     module = Transformer.get_persisted(dsl_state, :module)
-    to_skip = AshPaperTrail.Resource.Info.ignore_attributes(dsl_state)
 
     ignore_attributes = AshPaperTrail.Resource.Info.ignore_attributes(dsl_state)
     attributes_as_attributes = AshPaperTrail.Resource.Info.attributes_as_attributes(dsl_state)
@@ -19,7 +18,6 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     attributes =
       dsl_state
       |> Ash.Resource.Info.attributes()
-      |> Enum.reject(&(&1.name in to_skip))
       |> Enum.filter(&(&1.name in attributes_as_attributes))
 
     sensitive_changes? = dsl_state
