@@ -4,6 +4,8 @@ defmodule AshPaperTrail.Test.Posts.Tag do
     validate_api_inclusion?: false
 
   attributes do
+    uuid_primary_key :id
+
     attribute :tag, :string
   end
 end

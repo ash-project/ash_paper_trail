@@ -58,6 +58,14 @@ defmodule AshPaperTrail.Test.Posts.Page do
     end
 
     attribute :tags, {:array, AshPaperTrail.Test.Posts.Tag} do
+      allow_nil? true
+    end
+
+    attribute :moderator_reaction, AshPaperTrail.Test.Posts.Reaction do
+      allow_nil? true
+    end
+
+    attribute :reactions, {:array, AshPaperTrail.Test.Posts.Reaction} do
       allow_nil? false
       default []
     end

@@ -1,4 +1,3 @@
-
 defmodule AshPaperTrail.Dumpers.FullDiff do
   def build_changes(attributes, changeset) do
     Enum.reduce(attributes, %{}, &build_attribute_change(&1, changeset, &2))
@@ -8,6 +7,7 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
     if Ash.Type.embedded_type?(attribute.type) do
       build_attribute_change(:embedded_array, attribute, changeset, changes)
     else
+      IO.inspect(attribute, label: "array_attribute")
       build_attribute_change(:simple, attribute, changeset, changes)
     end
   end
@@ -26,59 +26,71 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
     primary_keys = Ash.Resource.Info.primary_key(resource)
 
     # Get the datas (changing from)
-    {uniq_keys, datas, data_indexes} = Ash.Changeset.get_data(changeset, attribute.name) 
-    |> dump_value(attribute)
-    |> List.wrap() 
-    |> Enum.with_index(& {&2, &1})
-    |> Enum.reduce({MapSet.new(), %{}, %{}}, fn {index, data}, {uniq_keys, datas, data_indexes} ->
-      keys = map_get_keys(data, primary_keys)
-      {MapSet.put(uniq_keys, keys), Map.put(datas, keys, data), Map.put(data_indexes, keys, index)}
-    end)
+    {uniq_keys, datas, data_indexes} =
+      Ash.Changeset.get_data(changeset, attribute.name)
+      |> dump_value(attribute)
+      |> List.wrap()
+      |> Enum.with_index(&{&2, &1})
+      |> Enum.reduce({MapSet.new(), %{}, %{}}, fn {index, data},
+                                                  {uniq_keys, datas, data_indexes} ->
+        keys = map_get_keys(data, primary_keys)
+
+        {MapSet.put(uniq_keys, keys), Map.put(datas, keys, data),
+         Map.put(data_indexes, keys, index)}
+      end)
 
     # Get the values (changing to)
-    {uniq_keys, values, value_indexes} = case Ash.Changeset.fetch_change(changeset, attribute.name) do
-     {:ok, values} -> values
-     :error -> []
-    end 
-    |> dump_value(attribute)
-    |> Enum.with_index(& {&2, &1})
-    |> Enum.reduce({uniq_keys, %{}, %{}}, fn {index, value}, {uniq_keys, values, value_indexes} ->
-      keys = map_get_keys(value, primary_keys)
-      {MapSet.put(uniq_keys, keys), Map.put(values, keys, value), Map.put(value_indexes, keys, index)}
-    end)    
+    {uniq_keys, values, value_indexes} =
+      case Ash.Changeset.fetch_change(changeset, attribute.name) do
+        {:ok, values} -> values
+        :error -> []
+      end
+      |> dump_value(attribute)
+      |> Enum.with_index(&{&2, &1})
+      |> Enum.reduce({uniq_keys, %{}, %{}}, fn {index, value},
+                                               {uniq_keys, values, value_indexes} ->
+        keys = map_get_keys(value, primary_keys)
+
+        {MapSet.put(uniq_keys, keys), Map.put(values, keys, value),
+         Map.put(value_indexes, keys, index)}
+      end)
 
     # Build a change for each id
-    {changed?, embedded_changes} = Enum.reduce(uniq_keys, {false, []}, fn key, {changed?, embedded_changes} -> 
-      data = Map.get(datas, key)
-      value = Map.get(values, key)
+    {changed?, embedded_changes} =
+      Enum.reduce(uniq_keys, {false, []}, fn key, {changed?, embedded_changes} ->
+        data = Map.get(datas, key)
+        value = Map.get(values, key)
 
-      index_change = dump_change_value(
+        index_change =
+          dump_change_value(
             Map.has_key?(data_indexes, key),
             Map.get(data_indexes, key),
             Map.has_key?(value_indexes, key),
             Map.get(value_indexes, key)
           )
 
-      case build_map_changes(data, value) do 
-        %{unchanged: _unchanged} = change ->
-          change = Map.put(change, :index, index_change)
-          {changed?, [change | embedded_changes ]}
+        case build_map_changes(data, value) do
+          %{unchanged: _unchanged} = change ->
+            change = Map.put(change, :index, index_change)
+            {changed?, [change | embedded_changes]}
 
-        %{} = change ->
-          change = Map.put(change, :index, index_change)
-          {true, [change | embedded_changes]}
-      end
-    end)
+          %{} = change ->
+            change = Map.put(change, :index, index_change)
+            {true, [change | embedded_changes]}
+        end
+      end)
 
     # Sort them by [current_index, 1] if present, [datas_index, 0] previous index (if removed)
-    embedded_changes = Enum.sort_by(embedded_changes, fn change -> 
-      case change do
-        %{destroyed: _embedded, index: %{from: i}} -> [i, 0]
-        %{index: %{to: i}} -> [i, 1]
-      end
-    end)
+    embedded_changes =
+      Enum.sort_by(embedded_changes, fn change ->
+        case change do
+          %{destroyed: _embedded, index: %{from: i}} -> [i, 0]
+          %{index: %{to: i}} -> [i, 1]
+          %{index: %{unchanged: i}} -> [i, 1]
+        end
+      end)
 
-    if ((changeset.action_type == :create) || changed?) do
+    if changeset.action_type == :create || changed? do
       Map.put(
         changes,
         attribute.name,
@@ -114,6 +126,40 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
           Map.put(changes, attribute.name, %{unchanged: data})
         end
     end
+  end
+
+  defp build_attribute_change(:union_array, attribute, changeset, changes) do
+    {data_present, datas} =
+      if changeset.action_type == :create do
+        {false, nil}
+      else
+        datas = Ash.Changeset.get_data(changeset, attribute.name) |>
+        List.wrap() |>
+        Enum.map(fn data -> dump_change_value(true, data, false, nil) end)
+
+        {true, datas}
+      end
+
+    {value_present, values} = case Ash.Changeset.fetch_change(changeset, attribute.name) do
+      {:ok, values} ->
+        values = List.wrap(values) |>
+        Enum.map(fn value -> dump_change_value(false, nil, true, value) end)
+
+        {true, values}
+      :error ->
+        {false, nil}
+    end
+
+    Map.put(
+      changes,
+      attribute.name,
+      dump_change_value(
+        data_present,
+        datas,
+        value_present,
+        values
+      )
+    )
   end
 
   defp build_attribute_change(:simple, attribute, changeset, changes) do
@@ -182,7 +228,10 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
            )}
   end
 
+  defp dump_change_value(false, _, true, %Ash.Union{} = union), do: %{to: union.value, type: union.type}
   defp dump_change_value(false, _from, _, to), do: %{to: to}
+
+  defp dump_change_value(true, %Ash.Union{} = union, false, _to), do: %{from: union.value, type: union.type}
   defp dump_change_value(true, from, false, _to), do: %{from: from}
   defp dump_change_value(true, from, true, from), do: %{unchanged: from}
   defp dump_change_value(true, from, true, to), do: %{from: from, to: to}
