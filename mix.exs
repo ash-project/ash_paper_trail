@@ -43,10 +43,19 @@ defmodule AshPaperTrail.MixProject do
   defp aliases do
     [
       sobelow: "sobelow --skip",
-      docs: ["docs", "ash.replace_doc_links"],
+      docs: [
+        "spark.cheat_sheets",
+        "docs",
+        "spark.replace_doc_links",
+        "spark.cheat_sheets_in_search"
+      ],
       credo: "credo --strict",
       "spark.formatter":
-        "spark.formatter --extensions AshPaperTrail.Resource,AshPaperTrail.Registry"
+        "spark.formatter --extensions AshPaperTrail.Resource,AshPaperTrail.Registry,AshPaperTrail.Api",
+      "spark.cheat_sheets_in_search":
+        "spark.cheat_sheets_in_search --extensions AshPaperTrail.Resource,AshPaperTrail.Registry,AshPaperTrail.Api",
+      "spark.cheat_sheets":
+        "spark.cheat_sheets --extensions AshPaperTrail.Resource,AshPaperTrail.Registry,AshPaperTrail.Api"
     ]
   end
 end

@@ -80,7 +80,7 @@ paper_trail do
 end
 ```
 
-This will make your version resource have `foo` and `bar` attributes (they will still show up in `changes`), i.e 
+This will make your version resource have `foo` and `bar` attributes (they will still show up in `changes`), i.e
 ```elixir
 %ThingVersion{foo: "foo", bar: "bar", changes: %{"foo" => "foo", "bar" => "bar"}}
 ```
