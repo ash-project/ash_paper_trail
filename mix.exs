@@ -31,12 +31,12 @@ defmodule AshPaperTrail.MixProject do
     [
       {:ash, "~> 2.4"},
       {:ex_doc, "~> 0.22", only: :dev, runtime: false},
-      {:ex_check, "~> 0.12.0", only: :dev},
+      {:ex_check, "~> 0.12", only: :dev},
       {:credo, ">= 0.0.0", only: :dev, runtime: false},
       {:dialyxir, ">= 0.0.0", only: :dev, runtime: false},
       {:sobelow, ">= 0.0.0", only: :dev, runtime: false},
-      {:git_ops, "~> 2.5.1", only: :dev},
-      {:excoveralls, "~> 0.13.0", only: [:dev, :test]}
+      {:git_ops, "~> 2.5", only: :dev},
+      {:excoveralls, "~> 0.13", only: [:dev, :test]}
     ]
   end
 
