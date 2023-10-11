@@ -14,13 +14,15 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     reference_source? = AshPaperTrail.Resource.Info.reference_source?(dsl_state)
     store_action_name? = AshPaperTrail.Resource.Info.store_action_name?(dsl_state)
     version_extensions = AshPaperTrail.Resource.Info.version_extensions(dsl_state)
+    store_inputs? = AshPaperTrail.Resource.Info.store_inputs?(dsl_state)
 
     attributes =
       dsl_state
       |> Ash.Resource.Info.attributes()
       |> Enum.filter(&(&1.name in attributes_as_attributes))
 
-    sensitive_changes? = dsl_state
+    sensitive_changes? =
+      dsl_state
       |> Ash.Resource.Info.attributes()
       |> Enum.filter(&(&1.name in ignore_attributes))
       |> Enum.any?(& &1.sensitive?)
@@ -160,6 +162,10 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
               constraints(attr.constraints)
               always_select?(attr.always_select?)
             end
+          end
+
+          if unquote(store_inputs?) do
+            attribute :inputs, :map
           end
 
           attribute :changes, :map do

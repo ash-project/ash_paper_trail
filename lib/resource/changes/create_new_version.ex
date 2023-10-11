@@ -43,8 +43,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
     change_tracking_mode = AshPaperTrail.Resource.Info.change_tracking_mode(changeset.resource)
 
-    belongs_to_actors =
-      AshPaperTrail.Resource.Info.belongs_to_actor(changeset.resource)
+    belongs_to_actors = AshPaperTrail.Resource.Info.belongs_to_actor(changeset.resource)
 
     actor = changeset.context[:private][:actor]
 
@@ -52,7 +51,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       changeset.resource
       |> Ash.Resource.Info.attributes()
 
-    {input, private} =
+    {public_params, private_params} =
       resource_attributes
       |> Enum.filter(&(&1.name in attributes_as_attributes))
       |> Enum.reduce({%{}, %{}}, &build_inputs(changeset, &1, &2))
@@ -66,8 +65,8 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       )
       |> Enum.reduce(%{}, &build_changes(changeset, &1, &2))
 
-    input =
-      Enum.reduce(belongs_to_actors, input, fn belongs_to_actor, input ->
+    public_params =
+      Enum.reduce(belongs_to_actors, public_params, fn belongs_to_actor, input ->
         with true <- is_struct(actor) && actor.__struct__ == belongs_to_actor.destination,
              relationship when not is_nil(relationship) <-
                Ash.Resource.Info.relationship(version_resource, belongs_to_actor.name) do
@@ -85,15 +84,18 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
         version_action_name: changeset.action.name,
         changes: changes
       })
+      |> maybe_add_original_inputs(changeset)
 
     {_, notifications} =
       version_changeset
-      |> Ash.Changeset.for_create(:create, input,
+      |> Ash.Changeset.for_create(:create, public_params,
         tenant: changeset.tenant,
         authorize?: false,
         actor: actor
       )
-      |> Ash.Changeset.force_change_attributes(Map.take(private, version_resource_attributes))
+      |> Ash.Changeset.force_change_attributes(
+        Map.take(private_params, version_resource_attributes)
+      )
       |> changeset.api.create!(return_notifications?: true)
 
     notifications
@@ -127,5 +129,13 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     value = Ash.Changeset.get_attribute(changeset, attribute.name)
     {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, [])
     Map.put(changes, attribute.name, dumped_value)
+  end
+
+  defp maybe_add_original_inputs(params, changeset) do
+    if AshPaperTrail.Resource.Info.store_inputs?(changeset.resource) do
+      Map.put(params, :inputs, Map.merge(changeset.arguments, changeset.attributes))
+    else
+      params
+    end
   end
 end

@@ -12,6 +12,7 @@ defmodule AshPaperTrail.Test.Posts.Post do
     attributes_as_attributes [:subject, :body, :tenant]
     change_tracking_mode :changes_only
     store_action_name? true
+    store_inputs? true
     belongs_to_actor :user, AshPaperTrail.Test.Accounts.User, api: AshPaperTrail.Test.Accounts.Api
 
     belongs_to_actor :news_feed, AshPaperTrail.Test.Accounts.NewsFeed,

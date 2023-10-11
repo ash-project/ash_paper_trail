@@ -25,8 +25,7 @@ defmodule AshPaperTrailTest do
       assert %{subject: "new subject", body: "new body"} =
                Posts.Post.update!(post, %{subject: "new subject", body: "new body"})
 
-      assert [%{subject: "new subject", body: "new body"}] =
-               Posts.Post.read!(tenant: "acme")
+      assert [%{subject: "new subject", body: "new body"}] = Posts.Post.read!(tenant: "acme")
     end
 
     test "destroys work as normal" do
@@ -66,8 +65,7 @@ defmodule AshPaperTrailTest do
                  version_action_name: :create,
                  version_source_id: ^post_id
                }
-             ] =
-               Articles.Api.read!(Posts.Post.Version, tenant: "acme")
+             ] = Articles.Api.read!(Posts.Post.Version, tenant: "acme")
     end
 
     test "a new version is created on update" do
@@ -133,8 +131,7 @@ defmodule AshPaperTrailTest do
         Articles.Api.read!(Articles.Article.Version)
         |> Enum.filter(&(&1.version_action_type == :update))
 
-      assert [:body, :subject] =
-               Map.keys(updated_version.changes) |> Enum.sort()
+      assert [:body, :subject] = Map.keys(updated_version.changes) |> Enum.sort()
     end
 
     test "a new version is created on destroy" do
@@ -258,6 +255,36 @@ defmodule AshPaperTrailTest do
       assert :ok = Articles.Article.destroy!(post)
 
       assert [] = Articles.Article.read!()
+    end
+  end
+
+  describe "store_inputs? options" do
+    test "when true, on create will create a version with the original inputs" do
+      assert AshPaperTrail.Resource.Info.store_inputs?(Posts.Post) == true
+
+      Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      post_version = Posts.Api.read!(Posts.Post.Version, tenant: "acme")
+
+      assert [
+               %{
+                 inputs: %{
+                   author: %AshPaperTrail.Test.Posts.Author{},
+                   body: "body",
+                   id: _id,
+                   published: false,
+                   subject: "subject",
+                   tags: [
+                     %AshPaperTrail.Test.Posts.Tag{
+                       tag: "ash"
+                     },
+                     %AshPaperTrail.Test.Posts.Tag{
+                       tag: "phoenix"
+                     }
+                   ]
+                 }
+               }
+             ] = post_version
     end
   end
 end

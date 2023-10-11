@@ -7,7 +7,8 @@ spark_locals_without_parens = [
   on_actions: 1,
   reference_source?: 1,
   store_action_name?: 1,
-  version_extensions: 1
+  version_extensions: 1,
+  store_inputs?: 1
 ]
 
 [

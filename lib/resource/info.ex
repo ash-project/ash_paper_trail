@@ -62,4 +62,9 @@ defmodule AshPaperTrail.Resource.Info do
       Module.concat([Spark.Dsl.Extension.get_persisted(resource, :module), Version])
     end
   end
+
+  @spec store_inputs?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
+  def store_inputs?(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :store_inputs?, false)
+  end
 end
