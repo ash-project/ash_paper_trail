@@ -1,7 +1,8 @@
 defmodule AshPaperTrailTest do
+  @moduledoc false
   use ExUnit.Case
 
-  alias AshPaperTrail.Test.{Posts, Articles, Accounts}
+  alias AshPaperTrail.Test.{Accounts, Articles, Posts}
 
   @valid_attrs %{
     subject: "subject",

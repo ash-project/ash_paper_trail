@@ -1,4 +1,5 @@
 defmodule AshPaperTrail.Test.Posts.Post do
+  @moduledoc false
   use Ash.Resource,
     data_layer: Ash.DataLayer.Ets,
     extensions: [AshPaperTrail.Resource],

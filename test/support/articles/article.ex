@@ -1,4 +1,5 @@
 defmodule AshPaperTrail.Test.Articles.Article do
+  @moduledoc false
   use Ash.Resource,
     data_layer: Ash.DataLayer.Ets,
     extensions: [AshPaperTrail.Resource],
