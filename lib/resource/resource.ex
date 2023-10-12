@@ -99,7 +99,7 @@ defmodule AshPaperTrail.Resource do
         type: :boolean,
         default: false,
         doc: """
-        Whether or not to store the original inputs to the action as well as the changes within the version resource.
+        Whether or not to store the original inputs to the action as well as the changes within the version resource.  Note: There's no filtering of the user input, so if your resource has password attributes or arguments, beware the will be stored in plain text.
         """
       ]
     ]
