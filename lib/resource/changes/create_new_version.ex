@@ -133,9 +133,35 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp maybe_add_original_inputs(params, changeset) do
     if AshPaperTrail.Resource.Info.store_inputs?(changeset.resource) do
-      Map.put(params, :inputs, Map.merge(changeset.arguments, changeset.attributes))
+      inputs =
+        changeset.attributes
+        |> Map.merge(changeset.arguments)
+        |> normalise_inputs()
+
+      Map.put(params, :inputs, inputs)
     else
       params
     end
+  end
+
+  defp normalise_inputs(input = %mod{}) when is_struct(input) do
+    case Ash.Type.dump_to_embedded(mod, input, []) do
+      {:ok, embedded_map} -> embedded_map
+      other -> raise "Unexpected result from dump_to_embedded: #{inspect(other)}"
+    end
+  end
+
+  defp normalise_inputs(inputs) when is_map(inputs) do
+    Map.new(inputs, fn {k, v} ->
+      {k, normalise_inputs(v)}
+    end)
+  end
+
+  defp normalise_inputs(inputs = [input | rest]) when is_list(inputs) do
+    [normalise_inputs(input) | normalise_inputs(rest)]
+  end
+
+  defp normalise_inputs(input) do
+    input
   end
 end
