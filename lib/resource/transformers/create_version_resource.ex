@@ -165,7 +165,9 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           end
 
           if unquote(store_inputs?) do
-            attribute :inputs, :map
+            attribute :inputs, :map do
+              sensitive? true
+            end
           end
 
           attribute :changes, :map do
