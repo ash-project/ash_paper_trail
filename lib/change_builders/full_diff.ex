@@ -97,10 +97,19 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
     end
   end
 
-  defp build_embedded_changes(nil, value), do: %{created: build_embedded_attribute_changes(%{}, value)}
-  defp build_embedded_changes(data, nil), do: %{destroyed: build_embedded_attribute_changes(data, %{})}
-  defp build_embedded_changes(data, data), do: %{unchanged: build_embedded_attribute_changes(data, data)}
-  defp build_embedded_changes(data, value), do: %{updated: build_embedded_attribute_changes(data, value)}
+  defp build_embedded_changes(nil, nil), do: %{unchanged: nil}
+
+  defp build_embedded_changes(nil, %{} = value),
+    do: %{created: build_embedded_attribute_changes(%{}, value)}
+
+  defp build_embedded_changes(%{} = data, nil),
+    do: %{destroyed: build_embedded_attribute_changes(data, %{})}
+
+  defp build_embedded_changes(%{} = data, data),
+    do: %{unchanged: build_embedded_attribute_changes(data, data)}
+
+  defp build_embedded_changes(%{} = data, %{} = value),
+    do: %{updated: build_embedded_attribute_changes(data, value)}
 
   defp build_embedded_attribute_changes(%{} = from_map, %{} = to_map) do
     keys = Map.keys(from_map) ++ Map.keys(to_map)
@@ -120,14 +129,33 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   # A composite attribute change will be represented as a map:
   #
   #   %{ to: [ %{}, %{}, %{}] }
-  #   %{ unchange: [ %{}, %{}, %{}] }
+  #   %{ unchanged: [ %{}, %{}, %{}] }
   #
   # Each element of the array will be represent as a simple change or an embedded change.
   # It will incude a union key if applicable.  Embedded resources with primary_keys will also
   # include an `index` key set to `%{from: x, to: y}` or `%{to: x}` or `%{ucnhanged: x}`.
-  def build_composite_array_change(_attribute, _changeset) do
-    %{ to: [] }
+  def build_composite_array_change(attribute, changeset) do
+    data = Ash.Changeset.get_data(changeset, attribute.name)
+    dumped_data = dump_value(data, attribute)
+
+    values =
+      case Ash.Changeset.fetch_change(changeset, attribute.name) do
+        {:ok, values} -> values
+        :error -> []
+      end
+
+    dumped_values = dump_value(values, attribute)
+
+    if changeset.action_type == :create do
+      %{to: dumped_values}
+    else
+      build_composite_array_changes(dumped_data, dumped_values)
+    end
   end
+
+  def build_composite_array_changes(dumped_values, dumped_values), do: %{unchanged: dumped_values}
+  def build_composite_array_changes(nil, []), do: %{unchanged: []}
+  def build_composite_array_changes(_dumped_data, dumped_values), do: %{to: dumped_values}
 
   # defp build_attribute_change(%{type: {:array, type}} = attribute, changeset, changes) do
   #   cond do
@@ -401,7 +429,7 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   # end
 
   defp dump_value(value, attribute) do
-    {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, [])
+    {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, attribute.constraints)
     dumped_value
   end
 
@@ -412,6 +440,7 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   defp build_simple_change_map(false, _from, _, to), do: %{to: to}
   defp build_simple_change_map(true, from, true, from), do: %{unchanged: from}
   defp build_simple_change_map(true, from, true, to), do: %{from: from, to: to}
+  defp build_simple_change_map(true, from, false, _to), do: %{from: from}
 
   defp is_union?(type) do
     type == Ash.Type.Union or
