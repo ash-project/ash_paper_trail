@@ -138,6 +138,19 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
     data = Ash.Changeset.get_data(changeset, attribute.name)
     dumped_data = dump_value(data, attribute)
 
+    {data_indexes, data_lookup} =
+      Enum.zip(List.wrap(data), List.wrap(dumped_data))
+      |> Enum.with_index(fn {data, dumped_data}, index -> {index, data, dumped_data} end)
+      |> Enum.reduce({%{}, %{}}, fn {index, data, dumped_data}, {data_indexes, data_lookup} ->
+        primary_keys = primary_keys(data)
+        keys = map_get_keys(data, primary_keys)
+
+        {
+          Map.put(data_indexes, keys, index),
+          Map.put(data_lookup, keys, dumped_data)
+        }
+      end)
+
     values =
       case Ash.Changeset.fetch_change(changeset, attribute.name) do
         {:ok, values} -> values
@@ -147,8 +160,23 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
     dumped_values =
       Enum.zip(values, dump_value(values, attribute))
       |> Enum.with_index(fn {value, dumped_value}, index -> {index, value, dumped_value} end)
-      |> Enum.map(fn {index, _value, dumped_value} ->
-        %{created: build_embedded_attribute_changes(%{}, dumped_value), index: %{to: index} }
+      |> Enum.map(fn {to_index, value, dumped_value} ->
+        case primary_keys(value) do
+          [] ->
+            %{created: build_embedded_attribute_changes(%{}, dumped_value), no_primary_key: true }
+
+          primary_keys ->
+            keys = map_get_keys(value, primary_keys)
+
+            dumped_data = Map.get(data_lookup, keys)
+
+            change = build_embedded_changes(dumped_data, dumped_value)
+            # change = %{created: build_embedded_attribute_changes(dumped_data, dumped_value) }
+
+            index_change = Map.get(data_indexes, keys) |> build_index_change(to_index)
+
+            Map.put(change, :index, index_change)
+        end
       end)
 
     if changeset.action_type == :create do
@@ -161,6 +189,10 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   def build_composite_array_changes(dumped_values, dumped_values), do: %{unchanged: dumped_values}
   def build_composite_array_changes(nil, []), do: %{unchanged: []}
   def build_composite_array_changes(_dumped_data, dumped_values), do: %{to: dumped_values}
+
+  def build_index_change(nil, to), do: %{to: to}
+  def build_index_change(from, from), do: %{unchanged: from}
+  def build_index_change(from, to), do: %{from: from, to: to}
 
   # defp build_attribute_change(%{type: {:array, type}} = attribute, changeset, changes) do
   #   cond do
@@ -438,9 +470,9 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
     dumped_value
   end
 
-  # defp map_get_keys(resource, keys) do
-  #   Enum.map(keys, &Map.get(resource, &1))
-  # end
+  defp map_get_keys(resource, keys) do
+    Enum.map(keys, &Map.get(resource, &1))
+  end
 
   defp build_simple_change_map(false, _from, _, to), do: %{to: to}
   defp build_simple_change_map(true, from, true, from), do: %{unchanged: from}
@@ -453,4 +485,8 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   end
 
   defp is_embedded?(type), do: Ash.Type.embedded_type?(type)
+
+  defp primary_keys(%{__struct__: resource}), do: Ash.Resource.Info.primary_key(resource)
+  defp primary_keys(resource) when is_struct(resource), do: Ash.Resource.Info.primary_key(resource)
+  defp primary_keys(_resource), do: []
 end
