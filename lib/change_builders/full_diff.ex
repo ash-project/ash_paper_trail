@@ -138,16 +138,17 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
     data = Ash.Changeset.get_data(changeset, attribute.name)
     dumped_data = dump_value(data, attribute)
 
-    {data_indexes, data_lookup} =
+    {data_indexes, data_lookup, data_ids} =
       Enum.zip(List.wrap(data), List.wrap(dumped_data))
       |> Enum.with_index(fn {data, dumped_data}, index -> {index, data, dumped_data} end)
-      |> Enum.reduce({%{}, %{}}, fn {index, data, dumped_data}, {data_indexes, data_lookup} ->
+      |> Enum.reduce({%{}, %{}, MapSet.new()}, fn {index, data, dumped_data}, {data_indexes, data_lookup, data_ids} ->
         primary_keys = primary_keys(data)
         keys = map_get_keys(data, primary_keys)
 
         {
           Map.put(data_indexes, keys, index),
-          Map.put(data_lookup, keys, dumped_data)
+          Map.put(data_lookup, keys, dumped_data),
+          MapSet.put(data_ids, keys)
         }
       end)
 
@@ -157,10 +158,10 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
         :error -> []
       end
 
-    dumped_values =
+    {dumped_values, dumped_ids} =
       Enum.zip(values, dump_value(values, attribute))
       |> Enum.with_index(fn {value, dumped_value}, index -> {index, value, dumped_value} end)
-      |> Enum.map(fn {to_index, value, dumped_value} ->
+      |> Enum.reduce({[], MapSet.new()}, fn {to_index, value, dumped_value}, {dumped_values, dumped_ids} ->
         case primary_keys(value) do
           [] ->
             %{created: build_embedded_attribute_changes(%{}, dumped_value), no_primary_key: true }
@@ -175,12 +176,27 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
 
             index_change = Map.get(data_indexes, keys) |> build_index_change(to_index)
 
-            Map.put(change, :index, index_change)
+            {
+              [Map.put(change, :index, index_change) | dumped_values],
+              MapSet.put(dumped_ids, keys)
+            }
         end
       end)
 
+    dumped_values =
+      MapSet.difference(data_ids, dumped_ids)
+      |> Enum.reduce(dumped_values, fn keys, dumped_values ->
+        dumped_data = Map.get(data_lookup, keys)
+
+        change = build_embedded_changes(dumped_data, nil)
+
+        index_change = Map.get(data_indexes, keys) |> build_index_change(nil)
+
+        [Map.put(change, :index, index_change) | dumped_values]
+      end)
+
     if changeset.action_type == :create do
-      %{to: dumped_values}
+      %{to: sort_composite_array_changes(dumped_values)}
     else
       build_composite_array_changes(dumped_data, dumped_values)
     end
@@ -188,11 +204,23 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
 
   def build_composite_array_changes(dumped_values, dumped_values), do: %{unchanged: dumped_values}
   def build_composite_array_changes(nil, []), do: %{unchanged: []}
-  def build_composite_array_changes(_dumped_data, dumped_values), do: %{to: dumped_values}
+  def build_composite_array_changes(_dumped_data, dumped_values) do
+    %{to: sort_composite_array_changes(dumped_values)}
+  end
 
   def build_index_change(nil, to), do: %{to: to}
   def build_index_change(from, from), do: %{unchanged: from}
   def build_index_change(from, to), do: %{from: from, to: to}
+
+  def sort_composite_array_changes(dumped_values) do
+    Enum.sort_by(dumped_values, fn change ->
+      case change do
+        %{destroyed: _embedded, index: %{from: i}} -> [i, 0]
+        %{index: %{to: i}} -> [i, 1]
+        %{index: %{unchanged: i}} -> [i, 1]
+      end
+    end)
+  end
 
   # defp build_attribute_change(%{type: {:array, type}} = attribute, changeset, changes) do
   #   cond do

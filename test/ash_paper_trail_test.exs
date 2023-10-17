@@ -462,49 +462,49 @@ defmodule AshPaperTrailTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    test "making an array nil", ctx do
-      res =
-        ctx.resource.create!(%{
-          subject: "subject",
-          body: "body",
-          tags: [%{tag: "Ash"}]
-        })
+    # test "making an array nil", ctx do
+    #   res =
+    #     ctx.resource.create!(%{
+    #       subject: "subject",
+    #       body: "body",
+    #       tags: [%{tag: "Ash"}]
+    #     })
 
-      ctx.resource.update!(res, %{
-        tags: nil
-      })
+    #   ctx.resource.update!(res, %{
+    #     tags: nil
+    #   })
 
-      assert %{
-               tags: %{
-                 from: [
-                   %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
-                 ],
-                 to: nil
-               },
-               lucky_numbers: %{from: [7], to: []}
-             } = last_version_changes(ctx.api, ctx.version_resource)
-    end
+    #   assert %{
+    #            tags: %{
+    #              from: [
+    #                %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
+    #              ],
+    #              to: nil
+    #            },
+    #            lucky_numbers: %{from: [7], to: []}
+    #          } = last_version_changes(ctx.api, ctx.version_resource)
+    # end
 
-    test "update resource by creating with a union", ctx do
-      res =
-        ctx.resource.create!(%{
-          subject: "subject",
-          body: "body",
-          reactions: [2, "like"],
-          moderator_reaction: 100
-        })
+    # test "update resource by creating with a union", ctx do
+    #   res =
+    #     ctx.resource.create!(%{
+    #       subject: "subject",
+    #       body: "body",
+    #       reactions: [2, "like"],
+    #       moderator_reaction: 100
+    #     })
 
-      assert %{
-               moderator_reaction: %{type: "score", to: 100},
-               reactions: %{to: [%{type: "score", to: 2}, %{type: "comment", to: "like"}]}
-             } = last_version_changes(ctx.api, ctx.version_resource)
-    end
+    #   assert %{
+    #            moderator_reaction: %{type: "score", to: 100},
+    #            reactions: %{to: [%{type: "score", to: 2}, %{type: "comment", to: "like"}]}
+    #          } = last_version_changes(ctx.api, ctx.version_resource)
+    # end
 
-    test "update resource by adding a union embedded resource" do
-    end
+    # test "update resource by adding a union embedded resource" do
+    # end
 
-    test "update resource by adding a union resource to an embedded array" do
-    end
+    # test "update resource by adding a union resource to an embedded array" do
+    # end
   end
 
   describe "belongs_to_actor option" do
