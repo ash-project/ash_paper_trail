@@ -144,7 +144,12 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
         :error -> []
       end
 
-    dumped_values = dump_value(values, attribute)
+    dumped_values =
+      Enum.zip(values, dump_value(values, attribute))
+      |> Enum.with_index(fn {value, dumped_value}, index -> {index, value, dumped_value} end)
+      |> Enum.map(fn {index, _value, dumped_value} ->
+        %{created: build_embedded_attribute_changes(%{}, dumped_value), index: %{to: index} }
+      end)
 
     if changeset.action_type == :create do
       %{to: dumped_values}
