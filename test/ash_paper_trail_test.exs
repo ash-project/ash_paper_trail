@@ -458,25 +458,26 @@ defmodule AshPaperTrailTest do
     end
 
     test "making an array nil", ctx do
-      res = ctx.resource.create!(%{
-        subject: "subject",
-        body: "body",
-        tags: [%{tag: "Ash"}],
-      })
+      res =
+        ctx.resource.create!(%{
+          subject: "subject",
+          body: "body",
+          tags: [%{tag: "Ash"}]
+        })
 
       ctx.resource.update!(res, %{
         tags: nil
       })
 
       assert %{
-        tags: %{
-          from: [
-            %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}},
-          ],
-          to: nil
-        },
-        lucky_numbers: %{from: [7], to: []}
-      } = last_version_changes(ctx.api, ctx.version_resource)
+               tags: %{
+                 from: [
+                   %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
+                 ],
+                 to: nil
+               },
+               lucky_numbers: %{from: [7], to: []}
+             } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
     test "update resource by creating with a union", ctx do
@@ -489,9 +490,9 @@ defmodule AshPaperTrailTest do
         })
 
       assert %{
-        moderator_reaction: %{type: "score", to: 100},
-        reactions: %{ to: [%{ type: "score", to: 2}, %{ type: "comment", to: "like"}]}
-      } = last_version_changes(ctx.api, ctx.version_resource)
+               moderator_reaction: %{type: "score", to: 100},
+               reactions: %{to: [%{type: "score", to: 2}, %{type: "comment", to: "like"}]}
+             } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
     test "update resource by adding a union embedded resource" do
