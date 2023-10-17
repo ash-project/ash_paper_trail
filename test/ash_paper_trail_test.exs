@@ -508,14 +508,26 @@ defmodule AshPaperTrailTest do
     #     })
 
     #   assert %{
-    #            reactions: %{to: [%{type: "score", to: 2}, %{type: "comment", to: "like"}]}
+    #            reactions: %{to: [%{"type" => "score", "value" => 2}, %{"type" => "comment", value => "like"}]}
     #          } = last_version_changes(ctx.api, ctx.version_resource)
     # end
 
-    # test "update resource by adding a union embedded resource" do
+    # test "update resource by creating with a union embedded resource" do
     # end
 
-    # test "update resource by adding a union resource to an embedded array" do
+    # test "update resource by updating a union embedded resource" do
+    # end
+
+    # test "update resource by removing a union embedded resource" do
+    # end
+
+    # test "update resource by creating with a union resource to an embedded array" do
+    # end
+
+    # test "update resource by updating with a union resource to an embedded array" do
+    # end
+
+    # test "update resource by destroying with a union resource to an embedded array" do
     # end
   end
 

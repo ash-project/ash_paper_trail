@@ -1,8 +1,4 @@
 defmodule AshPaperTrail.Dumpers.FullDiff do
-  # def build_changes(attributes, changeset) do
-  #   Enum.reduce(attributes, %{}, &build_attribute_change(&1, changeset, &2))
-  # end
-
   def build_changes(attributes, changeset) do
     Enum.reduce(attributes, %{}, fn attribute, changes ->
       Map.put(
