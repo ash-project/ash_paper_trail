@@ -159,7 +159,7 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
       end
 
     {dumped_values, dumped_ids} =
-      Enum.zip(values, dump_value(values, attribute))
+      Enum.zip(List.wrap(values), List.wrap(dump_value(values, attribute)))
       |> Enum.with_index(fn {value, dumped_value}, index -> {index, value, dumped_value} end)
       |> Enum.reduce({[], MapSet.new()}, fn {to_index, value, dumped_value}, {dumped_values, dumped_ids} ->
         case primary_keys(value) do

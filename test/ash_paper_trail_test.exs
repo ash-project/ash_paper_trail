@@ -438,7 +438,7 @@ defmodule AshPaperTrailTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    test "update resource by removing from an an array", ctx do
+    test "update resource by removing from an array", ctx do
       res =
         ctx.resource.create!(%{
           subject: "subject",
@@ -462,28 +462,29 @@ defmodule AshPaperTrailTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    # test "making an array nil", ctx do
-    #   res =
-    #     ctx.resource.create!(%{
-    #       subject: "subject",
-    #       body: "body",
-    #       tags: [%{tag: "Ash"}]
-    #     })
+    test "making a composite array nil", ctx do
+      res =
+        ctx.resource.create!(%{
+          subject: "subject",
+          body: "body",
+          tags: [%{tag: "Ash"}],
+          lucky_numbers: [7]
+        })
 
-    #   ctx.resource.update!(res, %{
-    #     tags: nil
-    #   })
+      ctx.resource.update!(res, %{
+        tags: nil,
+        lucky_numbers: nil
+      })
 
-    #   assert %{
-    #            tags: %{
-    #              from: [
-    #                %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
-    #              ],
-    #              to: nil
-    #            },
-    #            lucky_numbers: %{from: [7], to: []}
-    #          } = last_version_changes(ctx.api, ctx.version_resource)
-    # end
+      assert %{
+               tags: %{
+                 to: [
+                   %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
+                 ]
+               },
+               lucky_numbers: %{from: [7], to: nil}
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
 
     # test "update resource by creating with a union", ctx do
     #   res =
