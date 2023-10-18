@@ -487,7 +487,6 @@ defmodule AshPaperTrailTest do
     end
 
     test "update resource by creating with a union", ctx do
-      res =
         ctx.resource.create!(%{
           subject: "subject",
           body: "body",
@@ -495,9 +494,25 @@ defmodule AshPaperTrailTest do
         })
 
       assert %{
-               moderator_reaction: %{to: %{"type" => :score, "value" => 100}},
+               moderator_reaction: %{to: %{type: "score", value: 100}},
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
+
+  #   test "update resource by updating a union", ctx do
+  #     res = ctx.resource.create!(%{
+  #       subject: "subject",
+  #       body: "body",
+  #       moderator_reaction: 100
+  #     })
+
+  #     ctx.resource.update!(res, %{
+  #       moderator_reaction: "like"
+  #     })
+
+  #   assert %{
+  #            moderator_reaction: %{from: %{"type" => "score", "value" => 100}, to: %{"type" => :comment, "value" => "like"}},
+  #          } = last_version_changes(ctx.api, ctx.version_resource)
+  # end
 
     # test "update resource by creating with a union in array", ctx do
     #   res =
@@ -508,7 +523,7 @@ defmodule AshPaperTrailTest do
     #     })
 
     #   assert %{
-    #            reactions: %{to: [%{"type" => "score", "value" => 2}, %{"type" => "comment", value => "like"}]}
+    #            reactions: %{to: [%{"type" => "score", "value" => 2}, %{"type" => "comment", "value" => "like"}]}
     #          } = last_version_changes(ctx.api, ctx.version_resource)
     # end
 

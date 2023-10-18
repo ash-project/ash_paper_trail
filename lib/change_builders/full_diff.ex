@@ -21,14 +21,20 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   end
 
   def build_attribute_change(attribute, changeset) do
-    # embedded types are created, updated, destroyed, and have their individual attributes tracked
-    if is_embedded?(attribute.type) do
-      build_embedded_change(attribute, changeset)
 
-      # non-embedded types are treated as a single value
-    else
-      build_simple_change(attribute, changeset)
-    end
+    cond do
+      # embedded types are created, updated, destroyed, and have their individual attributes tracked
+      is_embedded?(attribute.type) ->
+        build_embedded_change(attribute, changeset)
+
+      # embedded types are special in that they have a value and a type
+      is_union?(attribute.type) ->
+        build_union_change(attribute, changeset)
+
+      true ->
+        # non-embedded types are treated as a single value
+        build_simple_change(attribute, changeset)
+      end
   end
 
   # A simple attribute change will be represented as a map:
@@ -53,6 +59,40 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
           dumped_data,
           true,
           dump_value(value, attribute)
+        )
+
+      :error ->
+        build_simple_change_map(
+          data_present,
+          dumped_data,
+          data_present,
+          dumped_data
+        )
+    end
+  end
+
+  # A union attribute change will be represented as a map:
+  #
+  #   %{ to: %{value: value, type: type } }
+  #   %{ from: %{value: value, type: type }, to: %{value: value, type: type } }
+  #   %{ unchanged: %{value: value, type: type } }
+  #
+  # if the attribute is a union, then there will also be a type key
+  def build_union_change(attribute, changeset) do
+    {data_present, dumped_data} =
+      if changeset.action_type == :create do
+        {false, nil}
+      else
+        {true, Ash.Changeset.get_data(changeset, attribute.name) |> dump_union_value(attribute)}
+      end
+
+    case Ash.Changeset.fetch_change(changeset, attribute.name) do
+      {:ok, value} ->
+        build_simple_change_map(
+          data_present,
+          dumped_data,
+          true,
+          dump_union_value(value, attribute)
         )
 
       :error ->
@@ -223,6 +263,12 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   defp dump_value(value, attribute) do
     {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, attribute.constraints)
     dumped_value
+  end
+
+  defp dump_union_value(nil, _attribute), do: nil
+  defp dump_union_value(value, attribute) do
+    value = dump_value(value, attribute)
+    %{value: value["value"], type: to_string(value["type"])}
   end
 
   defp map_get_keys(resource, keys) do
