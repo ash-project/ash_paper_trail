@@ -9,14 +9,16 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
     end)
   end
 
-  def build_attribute_change(%{type: {:array, type}} = attribute, changeset) do
-    # a composite array is a union or embedded type which we treat as individual values
-    if is_union?(type) || is_embedded?(type) do
-      build_composite_array_change(attribute, changeset)
+  def build_attribute_change(%{type: {:array, attr_type}} = attribute, changeset) do
+    cond do
+      is_union?(attr_type) ->
+        build_union_array_change(attribute, changeset)
 
-      # a non-composite array is treated as a single value
-    else
-      build_simple_change(attribute, changeset)
+      is_embedded?(attr_type) ->
+        build_embedded_array_change(attribute, changeset)
+
+      true ->
+        build_simple_change(attribute, changeset)
     end
   end
 
@@ -162,15 +164,15 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
            )}
   end
 
-  # A composite attribute change will be represented as a map:
+  # A array of embedded resources be represented as a map:
   #
   #   %{ to: [ %{}, %{}, %{}] }
   #   %{ unchanged: [ %{}, %{}, %{}] }
   #
-  # Each element of the array will be represented as a simple change or an embedded change.
+  # Each element of the array will be represented as a simple change, union change or an embedded change.
   # It will incude a union key if applicable.  Embedded resources with primary_keys will also
   # include an `index` key set to `%{from: x, to: y}` or `%{to: x}` or `%{ucnhanged: x}`.
-  def build_composite_array_change(attribute, changeset) do
+  def build_embedded_array_change(attribute, changeset) do
     data = Ash.Changeset.get_data(changeset, attribute.name)
     dumped_data = dump_value(data, attribute)
 
@@ -200,7 +202,7 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
       |> Enum.reduce({[], MapSet.new()}, fn {to_index, value, dumped_value}, {dumped_values, dumped_ids} ->
         case primary_keys(value) do
           [] ->
-            %{created: build_embedded_attribute_changes(%{}, dumped_value), no_primary_key: true }
+            %{created: build_embedded_attribute_changes(%{}, dumped_value) }
 
           primary_keys ->
             keys = map_get_keys(value, primary_keys)
@@ -232,23 +234,23 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
       end)
 
     if changeset.action_type == :create do
-      %{to: sort_composite_array_changes(dumped_values)}
+      %{to: sort_embedded_array_changes(dumped_values)}
     else
-      build_composite_array_changes(dumped_data, dumped_values)
+      build_embedded_array_changes(dumped_data, dumped_values)
     end
   end
 
-  def build_composite_array_changes(dumped_values, dumped_values), do: %{unchanged: dumped_values}
-  def build_composite_array_changes(nil, []), do: %{unchanged: []}
-  def build_composite_array_changes(_dumped_data, dumped_values) do
-    %{to: sort_composite_array_changes(dumped_values)}
+  def build_embedded_array_changes(dumped_values, dumped_values), do: %{unchanged: dumped_values}
+  def build_embedded_array_changes(nil, []), do: %{unchanged: []}
+  def build_embedded_array_changes(_dumped_data, dumped_values) do
+    %{to: sort_embedded_array_changes(dumped_values)}
   end
 
   def build_index_change(nil, to), do: %{to: to}
   def build_index_change(from, from), do: %{unchanged: from}
   def build_index_change(from, to), do: %{from: from, to: to}
 
-  def sort_composite_array_changes(dumped_values) do
+  def sort_embedded_array_changes(dumped_values) do
     Enum.sort_by(dumped_values, fn change ->
       case change do
         %{destroyed: _embedded, index: %{from: i}} -> [i, 0]
@@ -258,6 +260,44 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
     end)
   end
 
+
+  # A array of union resources be represented as a map:
+  #
+  #   %{ to: [ %{}, %{}, %{}] }
+  #   %{ unchanged: [ %{}, %{}, %{}] }
+  #
+  # Each element of the array will be represented as a union change.
+  def build_union_array_change(attribute, changeset) do
+    data = Ash.Changeset.get_data(changeset, attribute.name)
+    dumped_data = dump_union_value(data, attribute)
+
+    values =
+      case Ash.Changeset.fetch_change(changeset, attribute.name) do
+        {:ok, values} -> values
+        :error -> []
+      end
+    dumped_values = dump_union_value(values, attribute)
+
+    # We need to pad the shorter list with nils so that we can zip them together
+    max_len = [dumped_data, dumped_values] |> Enum.map(&List.wrap(&1)) |> Enum.map(&length(&1)) |> Enum.max()
+
+    changes = [dumped_data, dumped_values]
+    |> Enum.map(&List.wrap(&1))
+    |> Enum.map(&(&1 ++ List.duplicate(nil, max_len - length(&1))))
+    |> Enum.zip()
+    |> Enum.map(fn {dumped_data, dumped_value} ->
+      build_simple_change_map(
+        dumped_data != nil,
+        dumped_data,
+        dumped_value != nil,
+        dumped_value
+      )
+    end)
+
+    %{to: changes}
+  end
+
+
   defp dump_value(nil, _attribute), do: nil
 
   defp dump_value(value, attribute) do
@@ -266,6 +306,11 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   end
 
   defp dump_union_value(nil, _attribute), do: nil
+  defp dump_union_value(values, attribute) when is_list(values) do
+    dump_value(values, attribute) |> Enum.map(fn value ->
+      %{value: value["value"], type: to_string(value["type"])}
+    end)
+  end
   defp dump_union_value(value, attribute) do
     value = dump_value(value, attribute)
     %{value: value["value"], type: to_string(value["type"])}
