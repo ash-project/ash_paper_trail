@@ -70,6 +70,14 @@ defmodule AshPaperTrail.Test.Posts.Page do
       default []
     end
 
+    attribute :source, AshPaperTrail.Test.Posts.Source do
+      allow_nil? true
+    end
+
+    attribute :references, {:array, AshPaperTrail.Test.Posts.Source} do
+      allow_nil? true
+    end
+
     attribute :published, :boolean do
       allow_nil? false
       default false
