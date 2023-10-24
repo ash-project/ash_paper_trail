@@ -579,7 +579,7 @@ defmodule AshPaperTrailTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    test "update resource by creating with a union embedded resource", ctx do
+    test "create resource by creating with a union embedded resource", ctx do
       ctx.resource.create!(%{
         subject: "subject",
         body: "body",
@@ -588,7 +588,7 @@ defmodule AshPaperTrailTest do
 
       assert %{
                source: %{
-                 type: "book",
+                 type: %{to: "book"},
                  created: %{
                    type: %{to: "book"},
                    name: %{to: "The Book"},
@@ -599,7 +599,43 @@ defmodule AshPaperTrailTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
+
+    test "update resource by creating with a union embedded resource", ctx do
+      res = ctx.resource.create!(%{
+        subject: "subject",
+        body: "body",
+        source: nil
+      })
+
+      ctx.resource.update!(res, %{
+        source: %{type: "book", name: "The Book", page: 1}
+      })
+
+
+      assert %{
+               source: %{
+                from: nil,
+                 type: %{to: "book"},
+                 created: %{
+                   type: %{to: "book"},
+                   name: %{to: "The Book"},
+                   page: %{to: 1},
+                   id: %{to: _id}
+                 }
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+
+
     # test "update resource by updating a union embedded resource" do
+    #   ctx.resource.create!(%{
+    #     subject: "subject",
+    #     body: "body",
+    #     source: %{type: "book", name: "The Book", page: 1}
+    #   })
+    # end
+
+    # test "update resource by updating a union embedded resource and changing type" do
     # end
 
     # test "update resource by removing a union embedded resource" do
