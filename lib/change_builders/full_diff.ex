@@ -23,7 +23,6 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   end
 
   def build_attribute_change(attribute, changeset) do
-
     cond do
       # embedded types are created, updated, destroyed, and have their individual attributes tracked
       is_embedded?(attribute.type) ->
@@ -36,7 +35,7 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
       true ->
         # non-embedded types are treated as a single value
         build_simple_change(attribute, changeset)
-      end
+    end
   end
 
   # A simple attribute change will be represented as a map:
@@ -86,27 +85,29 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   #   %{ updated: %{ attr: %{to: ""}, ...}, type: "..." }
   #   %{ destroyed: %{ attr: %{to: ""}, ...}, type: "..." }
   def build_union_change(attribute, changeset) do
-
     {data_present, dumped_data} =
       if changeset.action_type == :create do
         {false, nil}
       else
         data = Ash.Changeset.get_data(changeset, attribute.name)
         {:non_embedded, dumped_data} = dump_union_value(data, attribute)
-        {true,dumped_data}
+        {true, dumped_data}
       end
 
     case Ash.Changeset.fetch_change(changeset, attribute.name) do
       {:ok, value} ->
-        {:non_embedded, dumped_value} = dump_union_value(value, attribute)
+        case dump_union_value(value, attribute) do
+        {:non_embedded, dumped_value} ->
+          build_simple_change_map(
+            data_present,
+            dumped_data,
+            true,
+            dumped_value
+          )
+        {:embedded, dumped_value_type, dumped_value} ->
+          build_embedded_union_changes(dumped_data, dumped_value_type, dumped_value)
 
-        build_simple_change_map(
-          data_present,
-          dumped_data,
-          true,
-          dumped_value
-        )
-
+        end
       :error ->
         build_simple_change_map(
           data_present,
@@ -159,6 +160,21 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   defp build_embedded_changes(%{} = data, %{} = value),
     do: %{updated: build_embedded_attribute_changes(data, value)}
 
+
+  defp build_embedded_union_changes(nil, _value_type, nil), do: %{unchanged: nil}
+
+  defp build_embedded_union_changes(nil, value_type, %{} = value),
+    do: %{created: build_embedded_attribute_changes(%{}, value), type: to_string(value_type)}
+
+  defp build_embedded_union_changes(%{} = data, _value_type, nil),
+    do: %{destroyed: build_embedded_attribute_changes(data, %{})}
+
+  defp build_embedded_union_changes(%{} = data, _value_type, data),
+    do: %{unchanged: build_embedded_attribute_changes(data, data)}
+
+  defp build_embedded_union_changes(%{} = data, _value_type, %{} = value),
+    do: %{updated: build_embedded_attribute_changes(data, value)}
+
   defp build_embedded_attribute_changes(%{} = from_map, %{} = to_map) do
     keys = Map.keys(from_map) ++ Map.keys(to_map)
 
@@ -189,7 +205,8 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
     {data_indexes, data_lookup, data_ids} =
       Enum.zip(List.wrap(data), List.wrap(dumped_data))
       |> Enum.with_index(fn {data, dumped_data}, index -> {index, data, dumped_data} end)
-      |> Enum.reduce({%{}, %{}, MapSet.new()}, fn {index, data, dumped_data}, {data_indexes, data_lookup, data_ids} ->
+      |> Enum.reduce({%{}, %{}, MapSet.new()}, fn {index, data, dumped_data},
+                                                  {data_indexes, data_lookup, data_ids} ->
         primary_keys = primary_keys(data)
         keys = map_get_keys(data, primary_keys)
 
@@ -209,10 +226,11 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
     {dumped_values, dumped_ids} =
       Enum.zip(List.wrap(values), List.wrap(dump_value(values, attribute)))
       |> Enum.with_index(fn {value, dumped_value}, index -> {index, value, dumped_value} end)
-      |> Enum.reduce({[], MapSet.new()}, fn {to_index, value, dumped_value}, {dumped_values, dumped_ids} ->
+      |> Enum.reduce({[], MapSet.new()}, fn {to_index, value, dumped_value},
+                                            {dumped_values, dumped_ids} ->
         case primary_keys(value) do
           [] ->
-            %{created: build_embedded_attribute_changes(%{}, dumped_value) }
+            %{created: build_embedded_attribute_changes(%{}, dumped_value)}
 
           primary_keys ->
             keys = map_get_keys(value, primary_keys)
@@ -252,6 +270,7 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
 
   def build_embedded_array_changes(dumped_values, dumped_values), do: %{unchanged: dumped_values}
   def build_embedded_array_changes(nil, []), do: %{unchanged: []}
+
   def build_embedded_array_changes(_dumped_data, dumped_values) do
     %{to: sort_embedded_array_changes(dumped_values)}
   end
@@ -270,7 +289,6 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
     end)
   end
 
-
   # A array of union resources be represented as a map:
   #
   #   %{ to: [ %{}, %{}, %{}] }
@@ -286,27 +304,32 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
         {:ok, values} -> values
         :error -> []
       end
+
     {:non_embedded, dumped_values} = dump_union_value(values, attribute)
 
     # We need to pad the shorter list with nils so that we can zip them together
-    max_len = [dumped_data, dumped_values] |> Enum.map(&List.wrap(&1)) |> Enum.map(&length(&1)) |> Enum.max()
+    max_len =
+      [dumped_data, dumped_values]
+      |> Enum.map(&List.wrap(&1))
+      |> Enum.map(&length(&1))
+      |> Enum.max()
 
-    changes = [dumped_data, dumped_values]
-    |> Enum.map(&List.wrap(&1))
-    |> Enum.map(&(&1 ++ List.duplicate(nil, max_len - length(&1))))
-    |> Enum.zip()
-    |> Enum.map(fn {dumped_data, dumped_value} ->
-      build_simple_change_map(
-        dumped_data != nil,
-        dumped_data,
-        dumped_value != nil,
-        dumped_value
-      )
-    end)
+    changes =
+      [dumped_data, dumped_values]
+      |> Enum.map(&List.wrap(&1))
+      |> Enum.map(&(&1 ++ List.duplicate(nil, max_len - length(&1))))
+      |> Enum.zip()
+      |> Enum.map(fn {dumped_data, dumped_value} ->
+        build_simple_change_map(
+          dumped_data != nil,
+          dumped_data,
+          dumped_value != nil,
+          dumped_value
+        )
+      end)
 
     %{to: changes}
   end
-
 
   defp dump_value(nil, _attribute), do: nil
 
@@ -316,15 +339,25 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   end
 
   defp dump_union_value(nil, _attribute), do: {:non_embedded, nil}
+
   defp dump_union_value(values, attribute) when is_list(values) do
-    {:non_embedded, dump_value(values, attribute) |> Enum.map(fn value ->
-      %{value: value["value"], type: to_string(value["type"])}
-    end)
-  }
+    {:non_embedded,
+     dump_value(values, attribute)
+     |> Enum.map(fn value ->
+       %{value: value["value"], type: to_string(value["type"])}
+     end)}
   end
+
   defp dump_union_value(value, attribute) do
-    value = dump_value(value, attribute)
-    {:non_embedded, %{value: value["value"], type: to_string(value["type"])}}
+    union_value = dump_value(value, attribute)
+
+    if is_embedded_union?(attribute.type, union_value["type"]) do
+      {:embedded, union_value["type"], union_value["value"]}
+    else
+
+      {:non_embedded, %{value: union_value["value"], type: to_string(union_value["type"])}}
+
+    end
   end
 
   defp map_get_keys(resource, keys) do
@@ -336,9 +369,20 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   defp build_simple_change_map(true, from, true, to), do: %{from: from, to: to}
   defp build_simple_change_map(true, from, false, _to), do: %{from: from}
 
-  # defp is_embedded_union?(type) do
-  #   is_union?(type) && :erlang.function_exported(type, :subtype_constraints, 0)
-  # end
+  defp is_embedded_union?(type, subtype) do
+    with true <- is_union?(type),
+         true <- :erlang.function_exported(type, :subtype_constraints, 0),
+         subtype_constraints <- type.subtype_constraints(),
+         subtypes when not is_nil(subtypes) <- Keyword.get(subtype_constraints, :types),
+         subtype_config when not is_nil(subtype) <- Keyword.get(subtypes, subtype),
+         subtype_config_type when not is_nil(subtype_config_type) <-
+           Keyword.get(subtype_config, :type) do
+      is_embedded?(subtype_config_type)
+    else
+      _ -> false
+    end
+  end
+
   defp is_union?(type) do
     type == Ash.Type.Union or
       (Ash.Type.NewType.new_type?(type) && Ash.Type.NewType.subtype_of(type) == Ash.Type.Union)
@@ -347,6 +391,9 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   defp is_embedded?(type), do: Ash.Type.embedded_type?(type)
 
   defp primary_keys(%{__struct__: resource}), do: Ash.Resource.Info.primary_key(resource)
-  defp primary_keys(resource) when is_struct(resource), do: Ash.Resource.Info.primary_key(resource)
+
+  defp primary_keys(resource) when is_struct(resource),
+    do: Ash.Resource.Info.primary_key(resource)
+
   defp primary_keys(_resource), do: []
 end

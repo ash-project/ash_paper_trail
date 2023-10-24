@@ -515,11 +515,11 @@ defmodule AshPaperTrailTest do
     # end
 
     test "update resource by creating with an array of unions", ctx do
-        ctx.resource.create!(%{
-          subject: "subject",
-          body: "body",
-          reactions: [2, "like"]
-        })
+      ctx.resource.create!(%{
+        subject: "subject",
+        body: "body",
+        reactions: [2, "like"]
+      })
 
       assert %{
                reactions: %{
@@ -529,7 +529,8 @@ defmodule AshPaperTrailTest do
     end
 
     test "update resource by updating an array of unions", ctx do
-       res = ctx.resource.create!(%{
+      res =
+        ctx.resource.create!(%{
           subject: "subject",
           body: "body",
           reactions: [2, "like"]
@@ -542,34 +543,38 @@ defmodule AshPaperTrailTest do
       assert %{
                reactions: %{
                  to: [
-                  %{from: %{type: "score", value: 2}, to: %{type: "comment", value: "excellent"}},
-                  %{unchanged: %{type: "comment", value: "like"}},
-                  %{to: %{type: "score", value: 3}}
-                ]
+                   %{
+                     from: %{type: "score", value: 2},
+                     to: %{type: "comment", value: "excellent"}
+                   },
+                   %{unchanged: %{type: "comment", value: "like"}},
+                   %{to: %{type: "score", value: 3}}
+                 ]
                }
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
     test "update resource by removing from an array of unions", ctx do
-      res = ctx.resource.create!(%{
-         subject: "subject",
-         body: "body",
-         reactions: [2, "like"]
-       })
+      res =
+        ctx.resource.create!(%{
+          subject: "subject",
+          body: "body",
+          reactions: [2, "like"]
+        })
 
-     ctx.resource.update!(res, %{
-       reactions: [2]
-     })
+      ctx.resource.update!(res, %{
+        reactions: [2]
+      })
 
-     assert %{
-              reactions: %{
-                to: [
-                 %{unchanged: %{type: "score", value: 2}},
-                 %{from: %{type: "comment", value: "like"}},
-               ]
-              }
-            } = last_version_changes(ctx.api, ctx.version_resource)
-   end
+      assert %{
+               reactions: %{
+                 to: [
+                   %{unchanged: %{type: "score", value: 2}},
+                   %{from: %{type: "comment", value: "like"}}
+                 ]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
 
     test "update resource by creating with a union embedded resource", ctx do
       ctx.resource.create!(%{
@@ -579,11 +584,16 @@ defmodule AshPaperTrailTest do
       })
 
       assert %{
-        source: %{
-          created: %{ type: %{to: "book"}, name: %{to: "The Book"}, page: %{to: 1}, id: %{to: _id} }
-        }
-      } = last_version_changes(ctx.api, ctx.version_resource)
-
+               source: %{
+                 type: "book",
+                 created: %{
+                   type: %{to: "book"},
+                   name: %{to: "The Book"},
+                   page: %{to: 1},
+                   id: %{to: _id}
+                 }
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
     # test "update resource by updating a union embedded resource" do
