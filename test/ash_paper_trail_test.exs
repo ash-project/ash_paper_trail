@@ -626,17 +626,63 @@ defmodule AshPaperTrailTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
+    test "update resource by updating a union embedded resource and leaving unchanged", ctx do
+      res = ctx.resource.create!(%{
+        subject: "subject",
+        body: "body",
+        source: %{type: "book", name: "The Book", page: 1}
+      })
 
-    # test "update resource by updating a union embedded resource" do
-    #   ctx.resource.create!(%{
+      book_id = res.source.value.id
+
+      ctx.resource.update!(res, %{ subject: "new subject" })
+
+      assert %{
+        source: %{
+          type: %{unchanged: "book"},
+          unchanged: %{
+            type: %{unchanged: "book"},
+            name: %{unchanged: "The Book"},
+            page: %{unchanged: 1},
+            id: %{unchanged: ^book_id}
+          }
+        }
+      } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+
+    # test "update resource by updating a union embedded resource", ctx do
+    #   res = ctx.resource.create!(%{
     #     subject: "subject",
     #     body: "body",
     #     source: %{type: "book", name: "The Book", page: 1}
     #   })
+
+    #   book_id = res.source.id
+
+    #   ctx.resource.update!(res, %{
+    #     source: %{type: "book", name: "The Other Book", page: 12}
+    #   })
+
+    #   assert %{
+    #     source: %{
+    #      from: nil,
+    #       type: %{to: "book"},
+    #       updated: %{
+    #         type: %{to: "book"},
+    #         name: %{to: "The Other Book"},
+    #         page: %{to: 12},
+    #         id: %{to: ^book_id}
+    #       }
+    #     }
+    #   } = last_version_changes(ctx.api, ctx.version_resource)
     # end
 
-    # test "update resource by updating a union embedded resource and changing type" do
+    # test "update resource by updating a union embedded resource and changing embedded type" do
     # end
+
+    # test "update resource by updating a union embedded resource and changing to non-embedded type" do
+    # end
+
 
     # test "update resource by removing a union embedded resource" do
     # end

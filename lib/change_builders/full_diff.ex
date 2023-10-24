@@ -85,19 +85,24 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   #   %{ updated: %{ attr: %{to: ""}, ...}, type: "..." }
   #   %{ destroyed: %{ attr: %{to: ""}, ...}, type: "..." }
   def build_union_change(attribute, changeset) do
-    {data_present, dumped_data} =
+    {data_present, dumped_data_type, dumped_data} =
       if changeset.action_type == :create do
-        {false, nil}
+        {false, nil, nil}
       else
         data = Ash.Changeset.get_data(changeset, attribute.name)
-        {:non_embedded, dumped_data} = dump_union_value(data, attribute)
-        {true, dumped_data}
+        case dump_union_value(data, attribute) do
+          {:non_embedded, _, dumped_data} ->
+            {true, nil, dumped_data}
+          {:embedded, dumped_data_type, dumped_data_value} ->
+            {true, dumped_data_type, dumped_data_value}
+          end
       end
 
     case Ash.Changeset.fetch_change(changeset, attribute.name) do
       {:ok, value} ->
         case dump_union_value(value, attribute) do
-        {:non_embedded, dumped_value} ->
+        {:non_embedded, _, dumped_value} ->
+          IO.inspect(attribute.name,label: "non_embedded")
           build_simple_change_map(
             data_present,
             dumped_data,
@@ -105,16 +110,21 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
             dumped_value
           )
         {:embedded, dumped_value_type, dumped_value} ->
-          build_embedded_union_changes(data_present, dumped_data, dumped_value_type, dumped_value)
+          IO.inspect([attribute.name, data_present, dumped_data_type, dumped_data, dumped_value_type, dumped_value], label: "embedded")
+          build_embedded_union_changes(data_present, dumped_data_type, dumped_data, dumped_value_type, dumped_value)
 
         end
       :error ->
-        build_simple_change_map(
-          data_present,
-          dumped_data,
-          data_present,
-          dumped_data
-        )
+        if dumped_data_type == nil do
+          build_simple_change_map(
+            data_present,
+            dumped_data,
+            data_present,
+            dumped_data
+          )
+        else
+          build_embedded_union_changes(data_present, dumped_data_type, dumped_data, dumped_data_type, dumped_data)
+        end
     end
   end
 
@@ -161,21 +171,21 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
     do: %{updated: build_embedded_attribute_changes(data, value)}
 
 
-  defp build_embedded_union_changes(_data_present, nil, _value_type, nil), do: %{unchanged: nil}
+  defp build_embedded_union_changes(_data_present, _data_type, nil, _value_type, nil), do: %{unchanged: nil}
 
-  defp build_embedded_union_changes(true = _data_present, nil, value_type, %{} = value),
+  defp build_embedded_union_changes(true = _data_present, _data_type, nil, value_type, %{} = value),
     do: %{created: build_embedded_attribute_changes(%{}, value), from: nil, type: %{to: to_string(value_type)}}
 
-  defp build_embedded_union_changes(false = _data_present, nil, value_type, %{} = value),
+  defp build_embedded_union_changes(false = _data_present, _data_type, nil, value_type, %{} = value),
     do: %{created: build_embedded_attribute_changes(%{}, value), type: %{ to: to_string(value_type)}}
 
-  defp build_embedded_union_changes(_data_present, %{} = data, _value_type, nil),
+  defp build_embedded_union_changes(_data_present, _data_type, %{} = data, _value_type, nil),
     do: %{destroyed: build_embedded_attribute_changes(data, %{})}
 
-  defp build_embedded_union_changes(_data_present, %{} = data, _value_type, data),
-    do: %{unchanged: build_embedded_attribute_changes(data, data)}
+  defp build_embedded_union_changes(_data_present, data_type, %{} = data, data_type, data),
+    do: %{unchanged: build_embedded_attribute_changes(data, data), type: %{unchanged: to_string(data_type)}}
 
-  defp build_embedded_union_changes(_data_present, %{} = data, _value_type, %{} = value),
+  defp build_embedded_union_changes(_data_present, _data_type, %{} = data, _value_type, %{} = value),
     do: %{updated: build_embedded_attribute_changes(data, value)}
 
   defp build_embedded_attribute_changes(%{} = from_map, %{} = to_map) do
@@ -300,7 +310,7 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   # Each element of the array will be represented as a union change.
   def build_union_array_change(attribute, changeset) do
     data = Ash.Changeset.get_data(changeset, attribute.name)
-    {:non_embedded, dumped_data} = dump_union_value(data, attribute)
+    {:non_embedded, _, dumped_data} = dump_union_value(data, attribute)
 
     values =
       case Ash.Changeset.fetch_change(changeset, attribute.name) do
@@ -308,7 +318,7 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
         :error -> []
       end
 
-    {:non_embedded, dumped_values} = dump_union_value(values, attribute)
+    {:non_embedded, _, dumped_values} = dump_union_value(values, attribute)
 
     # We need to pad the shorter list with nils so that we can zip them together
     max_len =
@@ -341,10 +351,10 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
     dumped_value
   end
 
-  defp dump_union_value(nil, _attribute), do: {:non_embedded, nil}
+  defp dump_union_value(nil, _attribute), do: {:non_embedded, nil, nil}
 
   defp dump_union_value(values, attribute) when is_list(values) do
-    {:non_embedded,
+    {:non_embedded, nil,
      dump_value(values, attribute)
      |> Enum.map(fn value ->
        %{value: value["value"], type: to_string(value["type"])}
@@ -358,7 +368,7 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
       {:embedded, union_value["type"], union_value["value"]}
     else
 
-      {:non_embedded, %{value: union_value["value"], type: to_string(union_value["type"])}}
+      {:non_embedded, union_value["type"], %{value: union_value["value"], type: to_string(union_value["type"])}}
 
     end
   end
