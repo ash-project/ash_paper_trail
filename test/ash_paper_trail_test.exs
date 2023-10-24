@@ -192,7 +192,8 @@ defmodule AshPaperTrailTest do
         subject: "subject",
         body: "body",
         author: %{first_name: "Bob"},
-        seo_map: %{keywords: []}
+        seo_map: %{keywords: []},
+        source: nil
       })
 
       assert %{
@@ -208,6 +209,7 @@ defmodule AshPaperTrailTest do
                seo_map: %{to: %{keywords: []}},
                published: %{to: false},
                secret: %{to: nil},
+               source: %{to: nil},
                tags: %{to: []}
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
@@ -224,6 +226,7 @@ defmodule AshPaperTrailTest do
                secret: %{unchanged: nil},
                tags: %{unchanged: []},
                seo_map: %{unchanged: nil},
+               source: %{unchanged: nil},
                views: %{from: 0, to: 1}
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
