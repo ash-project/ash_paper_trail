@@ -102,7 +102,6 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
       {:ok, value} ->
         case dump_union_value(value, attribute) do
         {:non_embedded, _, dumped_value} ->
-          IO.inspect(attribute.name,label: "non_embedded")
           build_simple_change_map(
             data_present,
             dumped_data,
@@ -110,7 +109,6 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
             dumped_value
           )
         {:embedded, dumped_value_type, dumped_value} ->
-          IO.inspect([attribute.name, data_present, dumped_data_type, dumped_data, dumped_value_type, dumped_value], label: "embedded")
           build_embedded_union_changes(data_present, dumped_data_type, dumped_data, dumped_value_type, dumped_value)
 
         end
@@ -185,8 +183,8 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   defp build_embedded_union_changes(_data_present, data_type, %{} = data, data_type, data),
     do: %{unchanged: build_embedded_attribute_changes(data, data), type: %{unchanged: to_string(data_type)}}
 
-  defp build_embedded_union_changes(_data_present, _data_type, %{} = data, _value_type, %{} = value),
-    do: %{updated: build_embedded_attribute_changes(data, value)}
+  defp build_embedded_union_changes(_data_present, data_type, %{} = data, data_type, %{} = value),
+    do: %{updated: build_embedded_attribute_changes(data, value), type: %{unchanged: to_string(data_type)}}
 
   defp build_embedded_attribute_changes(%{} = from_map, %{} = to_map) do
     keys = Map.keys(from_map) ++ Map.keys(to_map)

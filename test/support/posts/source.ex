@@ -1,9 +1,5 @@
 defmodule AshPaperTrail.Test.Posts.Source do
-  @moduledoc """
-  A FeatureVariant is possible value/setting for a Feature. There are multiple types of
-  features (boolean, string, integer and object). Each type of Feature has a corresponding
-  FeatureVariant.
-  """
+  @moduledoc false
 
   use Ash.Type.NewType,
     subtype_of: :union,
