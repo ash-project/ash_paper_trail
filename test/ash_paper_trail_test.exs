@@ -729,11 +729,48 @@ defmodule AshPaperTrailTest do
       } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    # test "update resource by updating a union embedded resource and changing from non-embedded type" do
-    # end
+    test "update resource by updating a union embedded resource and changing from non-embedded type", ctx do
+      res = ctx.resource.create!(%{
+        subject: "subject",
+        body: "body",
+        source: "https://www.just-a-link.com"
+      })
 
-    # test "update resource by removing a union embedded resource" do
-    # end
+      ctx.resource.update!(res, %{
+        source: %{type: "book", name: "The Book", page: 1}
+      })
+
+      assert %{
+        source: %{
+          type: %{to: "book"},
+          created: %{
+            type: %{to: "book"},
+            name: %{to: "The Book"},
+            page: %{to: 1},
+          },
+          from: %{type: "link", value: "https://www.just-a-link.com"}
+        }
+      } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+
+    test "update resource by updating a union embedded resource and changing from non-embedded type to non-embedded type", ctx do
+      res = ctx.resource.create!(%{
+        subject: "subject",
+        body: "body",
+        source: "https://www.just-a-link.com"
+      })
+
+      ctx.resource.update!(res, %{
+        source: "https://www.just-another-link.com"
+      })
+
+      assert %{
+        source: %{
+          from: %{type: "link", value: "https://www.just-a-link.com"},
+          to: %{type: "link", value: "https://www.just-another-link.com"}
+        }
+      } = last_version_changes(ctx.api, ctx.version_resource)
+    end
 
     # test "update resource by creating with a union resource to an embedded array" do
     # end
@@ -742,6 +779,9 @@ defmodule AshPaperTrailTest do
     # end
 
     # test "update resource by destroying with a union resource to an embedded array" do
+    # end
+
+    # test "update resource by reordering with a union resource to an embedded array" do
     # end
   end
 

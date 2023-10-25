@@ -163,8 +163,11 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   defp build_embedded_union_changes(data_present, false, _data_type, data, value_present, false, _value_type, value), do: build_simple_change_map(data_present, data, value_present, value)
   defp build_embedded_union_changes(_data_present, _data_embedded, _data_type, nil, _value_present, _value_embedded, _value_type, nil), do: %{unchanged: nil}
 
-  defp build_embedded_union_changes(true = _data_present, _data_embedded, _data_type, nil, _value_present, _value_embedded, value_type, %{} = value),
+  defp build_embedded_union_changes(true = _data_present, _data_embedded, _data_type, nil, true = _value_present, true = _value_embedded, value_type, %{} = value),
     do: %{created: build_embedded_attribute_changes(%{}, value), from: nil, type: %{to: to_string(value_type)}}
+
+  defp build_embedded_union_changes(true = _data_present, false = _data_embedded, _data_type, data, true = _value_present, true = _value_embedded, value_type, %{} = value),
+    do: %{created: build_embedded_attribute_changes(%{}, value), type: %{to: to_string(value_type)}, from: %{type: to_string(data[:type]), value: data[:value]}}
 
   defp build_embedded_union_changes(false = _data_present, _data_embedded, _data_type, nil, _value_present, _value_embedded, value_type, %{} = value),
     do: %{created: build_embedded_attribute_changes(%{}, value), type: %{ to: to_string(value_type)}}
