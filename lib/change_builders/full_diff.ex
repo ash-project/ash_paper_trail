@@ -186,6 +186,9 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   defp build_embedded_union_changes(_data_present, data_type, %{} = data, data_type, %{} = value),
     do: %{updated: build_embedded_attribute_changes(data, value), type: %{unchanged: to_string(data_type)}}
 
+  defp build_embedded_union_changes(true, data_type, %{} = data, value_type, %{} = value),
+    do: %{created: build_embedded_attribute_changes(%{}, value), destroyed: build_embedded_attribute_changes(data, %{}), type: %{from: to_string(data_type), to: to_string(value_type)}}
+
   defp build_embedded_attribute_changes(%{} = from_map, %{} = to_map) do
     keys = Map.keys(from_map) ++ Map.keys(to_map)
 

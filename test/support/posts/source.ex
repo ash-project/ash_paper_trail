@@ -14,6 +14,9 @@ defmodule AshPaperTrail.Test.Posts.Source do
           tag: :type,
           tag_value: :book,
           type: AshPaperTrail.Test.Posts.SourceBook
+        ],
+        link: [
+          type: :string
         ]
       ]
     ]
