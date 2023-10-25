@@ -718,7 +718,7 @@ defmodule AshPaperTrailTest do
 
       assert %{
         source: %{
-          type: %{from: "book", to: "link"},
+          type: %{from: "book"},
           destroyed: %{
             type: %{from: "book"},
             name: %{from: "The Book"},
