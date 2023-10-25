@@ -501,19 +501,23 @@ defmodule AshPaperTrailTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-      test "update resource by updating a union", ctx do
-        res = ctx.resource.create!(%{
+    test "update resource by updating a union", ctx do
+      res =
+        ctx.resource.create!(%{
           subject: "subject",
           body: "body",
           moderator_reaction: 100
         })
 
-        ctx.resource.update!(res, %{
-          moderator_reaction: "like"
-        })
+      ctx.resource.update!(res, %{
+        moderator_reaction: "like"
+      })
 
       assert %{
-               moderator_reaction: %{from: %{type: "score", value: 100}, to: %{type: "comment", value: "like"}},
+               moderator_reaction: %{
+                 from: %{type: "score", value: 100},
+                 to: %{type: "comment", value: "like"}
+               }
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
@@ -546,6 +550,14 @@ defmodule AshPaperTrailTest do
       assert %{
                reactions: %{
                  to: [
+                  # 2 was removed from index 0
+
+                  # excellent was added at index 0
+
+                  # like was unchanged at index 1
+
+                  # 3 was added at index 2
+
                    %{
                      from: %{type: "score", value: 2},
                      to: %{type: "comment", value: "excellent"}
@@ -572,8 +584,8 @@ defmodule AshPaperTrailTest do
       assert %{
                reactions: %{
                  to: [
-                   %{unchanged: %{type: "score", value: 2}},
-                   %{from: %{type: "comment", value: "like"}}
+                   %{unchanged: %{type: %{unchanged: "score"}, value: %{unchanged: 2}}},
+                   %{from: %{type: %{from: "comment"}, value: %{from: "like"}}}
                  ]
                }
              } = last_version_changes(ctx.api, ctx.version_resource)
@@ -599,22 +611,21 @@ defmodule AshPaperTrailTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-
     test "update resource by creating with a union embedded resource", ctx do
-      res = ctx.resource.create!(%{
-        subject: "subject",
-        body: "body",
-        source: nil
-      })
+      res =
+        ctx.resource.create!(%{
+          subject: "subject",
+          body: "body",
+          source: nil
+        })
 
       ctx.resource.update!(res, %{
         source: %{type: "book", name: "The Book", page: 1}
       })
 
-
       assert %{
                source: %{
-                from: nil,
+                 from: nil,
                  type: %{to: "book"},
                  created: %{
                    type: %{to: "book"},
@@ -627,35 +638,37 @@ defmodule AshPaperTrailTest do
     end
 
     test "update resource by updating a union embedded resource and leaving unchanged", ctx do
-      res = ctx.resource.create!(%{
-        subject: "subject",
-        body: "body",
-        source: %{type: "book", name: "The Book", page: 1}
-      })
+      res =
+        ctx.resource.create!(%{
+          subject: "subject",
+          body: "body",
+          source: %{type: "book", name: "The Book", page: 1}
+        })
 
       book_id = res.source.value.id
 
-      ctx.resource.update!(res, %{ subject: "new subject" })
+      ctx.resource.update!(res, %{subject: "new subject"})
 
       assert %{
-        source: %{
-          type: %{unchanged: "book"},
-          unchanged: %{
-            type: %{unchanged: "book"},
-            name: %{unchanged: "The Book"},
-            page: %{unchanged: 1},
-            id: %{unchanged: ^book_id}
-          }
-        }
-      } = last_version_changes(ctx.api, ctx.version_resource)
+               source: %{
+                 type: %{unchanged: "book"},
+                 unchanged: %{
+                   type: %{unchanged: "book"},
+                   name: %{unchanged: "The Book"},
+                   page: %{unchanged: 1},
+                   id: %{unchanged: ^book_id}
+                 }
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
     test "update resource by updating a union embedded resource", ctx do
-      res = ctx.resource.create!(%{
-        subject: "subject",
-        body: "body",
-        source: %{type: "book", name: "The Book", page: 1}
-      })
+      res =
+        ctx.resource.create!(%{
+          subject: "subject",
+          body: "body",
+          source: %{type: "book", name: "The Book", page: 1}
+        })
 
       book_id = res.source.value.id
 
@@ -664,115 +677,138 @@ defmodule AshPaperTrailTest do
       })
 
       assert %{
-        source: %{
-          type: %{unchanged: "book"},
-          updated: %{
-            type: %{unchanged: "book"},
-            name: %{to: "The Other Book", from: "The Book"},
-            page: %{to: 12, from: 1},
-            # FIXME: why does id change?
-            # id: %{unchanged: ^book_id}
-          }
-        }
-      } = last_version_changes(ctx.api, ctx.version_resource)
+               source: %{
+                 type: %{unchanged: "book"},
+                 updated: %{
+                   type: %{unchanged: "book"},
+                   name: %{to: "The Other Book", from: "The Book"},
+                   page: %{to: 12, from: 1}
+                   # FIXME: why does id change?
+                   # id: %{unchanged: ^book_id}
+                 }
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    test "update resource by updating a union embedded resource and changing embedded type", ctx do
-      res = ctx.resource.create!(%{
-        subject: "subject",
-        body: "body",
-        source: %{type: "book", name: "The Book", page: 1}
-      })
+    test "update resource by updating a union embedded resource and changing embedded type",
+         ctx do
+      res =
+        ctx.resource.create!(%{
+          subject: "subject",
+          body: "body",
+          source: %{type: "book", name: "The Book", page: 1}
+        })
 
       ctx.resource.update!(res, %{
         source: %{type: "blog", name: "The Blog", url: "https://www.myblog.com"}
       })
 
       assert %{
-        source: %{
-          type: %{from: "book", to: "blog"},
-          destroyed: %{
-            type: %{from: "book"},
-            name: %{from: "The Book"},
-            page: %{from: 1},
-          },
-          created: %{
-            type: %{to: "blog"},
-            name: %{to: "The Blog"},
-            url: %{to: "https://www.myblog.com"}
-          }
-        }
-      } = last_version_changes(ctx.api, ctx.version_resource)
+               source: %{
+                 type: %{from: "book", to: "blog"},
+                 destroyed: %{
+                   type: %{from: "book"},
+                   name: %{from: "The Book"},
+                   page: %{from: 1}
+                 },
+                 created: %{
+                   type: %{to: "blog"},
+                   name: %{to: "The Blog"},
+                   url: %{to: "https://www.myblog.com"}
+                 }
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    test "update resource by updating a union embedded resource and changing to non-embedded type", ctx do
-      res = ctx.resource.create!(%{
-        subject: "subject",
-        body: "body",
+    test "update resource by updating a union embedded resource and changing to non-embedded type",
+         ctx do
+      res =
+        ctx.resource.create!(%{
+          subject: "subject",
+          body: "body",
+          source: %{type: "book", name: "The Book", page: 1}
+        })
+
+      ctx.resource.update!(res, %{
+        source: "https://www.just-a-link.com"
+      })
+
+      assert %{
+               source: %{
+                 type: %{from: "book"},
+                 destroyed: %{
+                   type: %{from: "book"},
+                   name: %{from: "The Book"},
+                   page: %{from: 1}
+                 },
+                 to: %{type: "link", value: "https://www.just-a-link.com"}
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+
+    test "update resource by updating a union embedded resource and changing from non-embedded type",
+         ctx do
+      res =
+        ctx.resource.create!(%{
+          subject: "subject",
+          body: "body",
+          source: "https://www.just-a-link.com"
+        })
+
+      ctx.resource.update!(res, %{
         source: %{type: "book", name: "The Book", page: 1}
       })
 
-      ctx.resource.update!(res, %{
-        source: "https://www.just-a-link.com"
-      })
-
       assert %{
-        source: %{
-          type: %{from: "book"},
-          destroyed: %{
-            type: %{from: "book"},
-            name: %{from: "The Book"},
-            page: %{from: 1},
-          },
-          to: %{type: "link", value: "https://www.just-a-link.com"}
-        }
-      } = last_version_changes(ctx.api, ctx.version_resource)
+               source: %{
+                 type: %{to: "book"},
+                 created: %{
+                   type: %{to: "book"},
+                   name: %{to: "The Book"},
+                   page: %{to: 1}
+                 },
+                 from: %{type: "link", value: "https://www.just-a-link.com"}
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    test "update resource by updating a union embedded resource and changing from non-embedded type", ctx do
-      res = ctx.resource.create!(%{
-        subject: "subject",
-        body: "body",
-        source: "https://www.just-a-link.com"
-      })
+    # test "update resource by updating a union embedded resource and changing from non-embedded type to non-embedded type", ctx do
+    #   res = ctx.resource.create!(%{
+    #     subject: "subject",
+    #     body: "body",
+    #     source: "https://www.just-a-link.com"
+    #   })
 
-      ctx.resource.update!(res, %{
-        source: %{type: "book", name: "The Book", page: 1}
-      })
+    #   ctx.resource.update!(res, %{
+    #     source: "https://www.just-another-link.com"
+    #   })
 
-      assert %{
-        source: %{
-          type: %{to: "book"},
-          created: %{
-            type: %{to: "book"},
-            name: %{to: "The Book"},
-            page: %{to: 1},
-          },
-          from: %{type: "link", value: "https://www.just-a-link.com"}
-        }
-      } = last_version_changes(ctx.api, ctx.version_resource)
-    end
+    #   assert %{
+    #     source: %{
+    #       from: %{type: "link", value: "https://www.just-a-link.com"},
+    #       to: %{type: "link", value: "https://www.just-another-link.com"}
+    #     }
+    #   } = last_version_changes(ctx.api, ctx.version_resource)
+    # end
 
-    test "update resource by updating a union embedded resource and changing from non-embedded type to non-embedded type", ctx do
-      res = ctx.resource.create!(%{
-        subject: "subject",
-        body: "body",
-        source: "https://www.just-a-link.com"
-      })
+    # test "create resource with an array of union embedded resources", ctx do
+    #   ctx.resource.create!(%{
+    #     subject: "subject",
+    #     body: "body",
+    #     references: [
+    #       %{type: "book", name: "The Book", page: 1},
+    #       %{type: "blog", name: "The Blog", url: "https://www.myblog.com"},
+    #       "https://www.just-a-link.com"
+    #     ]
+    #   })
 
-      ctx.resource.update!(res, %{
-        source: "https://www.just-another-link.com"
-      })
-
-      assert %{
-        source: %{
-          from: %{type: "link", value: "https://www.just-a-link.com"},
-          to: %{type: "link", value: "https://www.just-another-link.com"}
-        }
-      } = last_version_changes(ctx.api, ctx.version_resource)
-    end
-
-    # test "update resource by creating with a union resource to an embedded array" do
+    #   assert %{
+    #     references: %{to: [
+    #       %{created: %{ type: %{to: "book"}, name: %{to: "The Book"}, page: %{to: 1}}, index: %{to: 0}, type: %{to: "book"}},
+    #       %{created: %{ type: %{to: "blog"}, name: %{to: "The Blog"}, url: "https://www.myblog.com"}, index: %{to: 1}, type: %{to: "blog"}},
+    #       %{type: "link", value: "https://www.just-another-link.com", index: %{to: 3}}
+    #     ]}
+    #   } = last_version_changes(ctx.api, ctx.version_resource)
     # end
 
     # test "update resource by updating with a union resource to an embedded array" do
