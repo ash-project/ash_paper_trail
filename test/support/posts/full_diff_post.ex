@@ -1,4 +1,4 @@
-defmodule AshPaperTrail.Test.Posts.Page do
+defmodule AshPaperTrail.Test.Posts.FullDiffPost do
   @moduledoc """
     A page is like a post but uses the change_tracking_mode :full_diff
   """
@@ -41,13 +41,9 @@ defmodule AshPaperTrail.Test.Posts.Page do
 
     attribute :tenant, :string
 
-    attribute :subject, :string do
-      allow_nil? false
-    end
+    attribute :subject, :string, default: ""
 
-    attribute :body, :string do
-      allow_nil? false
-    end
+    attribute :body, :string, default: ""
 
     attribute :secret, :string do
       private? true

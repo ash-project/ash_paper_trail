@@ -445,16 +445,15 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
       |> Enum.with_index(fn {data, dumped_tuple}, index -> {index, data, dumped_tuple} end)
       |> Enum.reduce({%{}, %{}, MapSet.new()}, fn {index, data, dumped_tuple},
                                                   {indexes, lookup, ids} ->
-
         keys =
           case dumped_tuple do
             {:embedded, embedded_type, _dumped_value} ->
               primary_keys = union_primary_keys(data, embedded_type)
               map_get_keys(data, primary_keys)
 
-            {:non_embedded, _, _} -> []
+            {:non_embedded, _, _} ->
+              []
           end
-
 
         {
           Map.put(indexes, keys, index),
