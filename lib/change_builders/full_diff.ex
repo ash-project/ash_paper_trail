@@ -160,7 +160,7 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   defp build_embedded_changes(nil, nil), do: %{unchanged: nil}
 
   defp build_embedded_changes(nil, %{} = value),
-    do: %{created: build_embedded_attribute_changes(%{}, value)}
+    do: %{created: build_embedded_attribute_changes(%{}, value), from: nil}
 
   defp build_embedded_changes(%{} = data, nil),
     do: %{destroyed: build_embedded_attribute_changes(data, %{})}
@@ -361,11 +361,11 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
     values =
       case Ash.Changeset.fetch_change(changeset, attribute.name) do
         {:ok, values} -> values
-        :error -> []
+        :error -> nil
       end
 
     {dumped_values, dumped_ids} =
-      Enum.zip(List.wrap(values), List.wrap(dump_value(values, attribute)))
+      Enum.zip(List.wrap(values), List.wrap(dump_value(List.wrap(values), attribute)))
       |> Enum.with_index(fn {value, dumped_value}, index -> {index, value, dumped_value} end)
       |> Enum.reduce({[], MapSet.new()}, fn {to_index, value, dumped_value},
                                             {dumped_values, dumped_ids} ->
@@ -402,15 +402,25 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
         [Map.put(change, :index, index_change) | dumped_values]
       end)
 
-    if changeset.action_type == :create do
-      %{to: sort_embedded_array_changes(dumped_values)}
-    else
-      build_embedded_array_changes(dumped_data, dumped_values)
+    cond do
+      changeset.action_type == :create ->
+        %{to: sort_embedded_array_changes(dumped_values)}
+
+      is_nil(values) && is_nil(data) ->
+        %{unchanged: nil}
+
+      is_nil(data) ->
+        %{from: nil, to: sort_embedded_array_changes(dumped_values)}
+
+      is_nil(values) ->
+        %{to: nil, from: sort_embedded_array_changes(dumped_values)}
+
+      true ->
+        build_embedded_array_changes(dumped_data, dumped_values)
     end
   end
 
   def build_embedded_array_changes(dumped_values, dumped_values), do: %{unchanged: dumped_values}
-  def build_embedded_array_changes(nil, []), do: %{unchanged: []}
 
   def build_embedded_array_changes(_dumped_data, dumped_values) do
     %{to: sort_embedded_array_changes(dumped_values)}
