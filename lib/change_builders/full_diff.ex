@@ -427,6 +427,7 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
   end
 
   def build_index_change(nil, to), do: %{to: to}
+  def build_index_change(from, nil), do: %{from: from}
   def build_index_change(from, from), do: %{unchanged: from}
   def build_index_change(from, to), do: %{from: from, to: to}
 
@@ -613,13 +614,21 @@ defmodule AshPaperTrail.Dumpers.FullDiff do
 
   defp dump_value(value, attribute) do
     {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, attribute.constraints)
+    # IO.inspect({value, attribute.type, attribute.constraints}, label: "dump_value")
     dumped_value
   end
 
   defp dump_union_value(nil, _attribute), do: {:non_embedded, nil, nil}
 
   defp dump_union_value(values, attribute) when is_list(values) do
-    dump_value(values, attribute)
+    {:array, type} = attribute.type
+    constraints = attribute.constraints[:items]
+
+    values |>
+    Enum.map(fn value ->
+      {:ok, dumped_value } = Ash.Type.dump_to_embedded(type, value, constraints)
+      dumped_value
+    end)
     |> Enum.map(fn union_value ->
       if is_embedded_union?(attribute.type, union_value["type"]) do
         {:embedded, union_value["type"], union_value["value"]}
