@@ -240,25 +240,25 @@ defmodule AshPaperTrail.FullDiffTest do
     #          } = last_version_changes(ctx.api, ctx.version_resource)
     # end
 
-  #   test "update an array of embedded resources to nil", ctx do
-  #     res =
-  #       ctx.resource.create!(%{
-  #         tags: [%{tag: "Ash"}]
-  #       })
+    #   test "update an array of embedded resources to nil", ctx do
+    #     res =
+    #       ctx.resource.create!(%{
+    #         tags: [%{tag: "Ash"}]
+    #       })
 
-  #     ctx.resource.update!(res, %{
-  #       tags: nil
-  #     })
+    #     ctx.resource.update!(res, %{
+    #       tags: nil
+    #     })
 
-  #     assert %{
-  #              tags: %{
-  #                to: nil,
-  #                from: [
-  #                  %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
-  #                ]
-  #              }
-  #            } = last_version_changes(ctx.api, ctx.version_resource)
-  #   end
+    #     assert %{
+    #              tags: %{
+    #                to: nil,
+    #                from: [
+    #                  %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
+    #                ]
+    #              }
+    #            } = last_version_changes(ctx.api, ctx.version_resource)
+    #   end
   end
 
   describe "change tracking of a union attribute" do
@@ -290,6 +290,39 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
+    test "update resource leaving union unchanged", ctx do
+      ctx.resource.create!(%{
+        moderator_reaction: 100
+      })
+      |> ctx.resource.update!(%{
+        subject: "new subject",
+        moderator_reaction: 100
+      })
+
+      assert %{
+               moderator_reaction: %{
+                 unchanged: %{type: "score", value: 100}
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+
+    test "update resource without union unchanged", ctx do
+      res =
+        ctx.resource.create!(%{
+          moderator_reaction: 100
+        })
+
+      ctx.resource.update!(res, %{
+        subject: "new subject"
+      })
+
+      assert %{
+               moderator_reaction: %{
+                 unchanged: %{type: "score", value: 100}
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+
     # test "create resource by creating with a union embedded resource", ctx do
     #   ctx.resource.create!(%{
     #     source: %{type: "book", name: "The Book", page: 1}
@@ -297,7 +330,6 @@ defmodule AshPaperTrail.FullDiffTest do
 
     #   assert %{
     #            source: %{
-    #             # TODO: type & value should be under created
     #              type: "book",
     #              created: %{
     #                type: %{to: "book"},
@@ -480,7 +512,6 @@ defmodule AshPaperTrail.FullDiffTest do
     #     }
     #   } = last_version_changes(ctx.api, ctx.version_resource)
     # end
-
   end
 
   describe "change tracking an array of union attributes" do

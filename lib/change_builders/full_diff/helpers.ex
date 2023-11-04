@@ -285,8 +285,8 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   """
   def attribute_changes(%{} = data_map, nil) do
     for key <- keys_in([data_map]),
-    into: %{},
-    do: {key, %{from: Map.get(data_map, key)}}
+        into: %{},
+        do: {key, %{from: Map.get(data_map, key)}}
   end
 
   def attribute_changes(%{} = data_map, %{} = value_map) do
@@ -307,8 +307,8 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   defp keys_in(map_list) do
     Enum.reduce(map_list, MapSet.new(), fn map, keys ->
       Map.keys(map)
-      |>MapSet.new()
-      |>MapSet.union(keys)
+      |> MapSet.new()
+      |> MapSet.union(keys)
     end)
   end
 

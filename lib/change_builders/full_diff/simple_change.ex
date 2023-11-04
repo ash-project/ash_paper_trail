@@ -9,8 +9,8 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.SimpleChange do
   import AshPaperTrail.ChangeBuilders.FullDiff.Helpers
 
   def build(attribute, changeset) do
-    dump_data_value(changeset, attribute)     |> IO.inspect(label: "#{attribute.name} dump_data_value")
-
+    dump_data_value(changeset, attribute)
+    |> IO.inspect(label: "#{attribute.name} dump_data_value")
     |> attribute_change_map()
   end
 end
