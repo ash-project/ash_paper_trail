@@ -1,4 +1,4 @@
-defmodule AshPaperTrail.Dumpers.ChangesOnly do
+defmodule AshPaperTrail.ChangeBuilders.ChangesOnly do
   def build_changes(attributes, changeset) do
     Enum.reduce(attributes, %{}, &build_attribute_change(&1, changeset, &2))
   end

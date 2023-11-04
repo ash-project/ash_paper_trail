@@ -120,14 +120,14 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
   end
 
   defp build_changes(attributes, :changes_only, changeset) do
-    AshPaperTrail.Dumpers.ChangesOnly.build_changes(attributes, changeset)
+    AshPaperTrail.ChangeBuilders.ChangesOnly.build_changes(attributes, changeset)
   end
 
   defp build_changes(attributes, :snapshot, changeset) do
-    AshPaperTrail.Dumpers.Snapshot.build_changes(attributes, changeset)
+    AshPaperTrail.ChangeBuilders.Snapshot.build_changes(attributes, changeset)
   end
 
   defp build_changes(attributes, :full_diff, changeset) do
-    AshPaperTrail.Dumpers.FullDiff.build_changes(attributes, changeset)
+    AshPaperTrail.ChangeBuilders.FullDiff.build_changes(attributes, changeset)
   end
 end

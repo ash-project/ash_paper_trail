@@ -1,4 +1,4 @@
-defmodule AshPaperTrail.Dumpers.Snapshot do
+defmodule AshPaperTrail.ChangeBuilders.Snapshot do
   def build_changes(attributes, changeset) do
     Enum.reduce(attributes, %{}, &build_attribute_change(&1, changeset, &2))
   end
