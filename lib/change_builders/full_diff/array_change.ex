@@ -1,4 +1,4 @@
-defmodule ChangeBuilders.FullDiff.ArrayChange do
+defmodule AshPaperTrail.ChangeBuilders.FullDiff.ArrayChange do
   import AshPaperTrail.ChangeBuilders.FullDiff.Helpers
 
   def build(%{type: {:array, attr_type}} = attribute, changeset) do

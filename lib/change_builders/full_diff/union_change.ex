@@ -57,6 +57,4 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
       dumped_value
     )
   end
-
-
 end

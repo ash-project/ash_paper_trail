@@ -36,9 +36,9 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   attribute_change_map({data_present, data, value_present, value})
   """
   def attribute_change_map({false, _data, _, value}), do: %{to: value}
+  def attribute_change_map({true, data, false, _}), do: %{unchanged: data}
   def attribute_change_map({true, data, true, data}), do: %{unchanged: data}
   def attribute_change_map({true, data, true, value}), do: %{from: data, to: value}
-  def attribute_change_map({true, data, false, _value}), do: %{from: data}
 
   def is_union?(type) do
     type == Ash.Type.Union or
@@ -253,27 +253,42 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
     end
   end
 
-    @doc """
+  @doc """
   Builds a simple change map based on the given values.
 
   change_map({data_present, data, value_present, value})
   """
-  def embedded_change_map({false, _data, _, value}),
-  do: %{created: attribute_changes(%{}, value)}
 
-def embedded_change_map({true, data, true, data}),
-  do: %{unchanged: attribute_changes(data, data)}
+  def embedded_change_map({false, _data, false, _value}), do: %{to: nil}
+  def embedded_change_map({true, nil, _, nil}), do: %{unchanged: nil}
 
-def embedded_change_map({true, data, true, value}),
-  do: %{updated: attribute_changes(data, value)}
+  def embedded_change_map({false, _data, _, %{} = value}),
+    do: %{created: attribute_changes(%{}, value)}
 
-def embedded_change_map({true, data, false, _value}),
-  do: %{destroyed: attribute_changes(data, %{})}
+  def embedded_change_map({true, nil, _, %{} = value}),
+    do: %{created: attribute_changes(%{}, value), from: nil}
 
+  def embedded_change_map({true, data, false, _value}),
+    do: %{unchanged: attribute_changes(data, data)}
 
-    @doc """
+  def embedded_change_map({true, data, true, data}),
+    do: %{unchanged: attribute_changes(data, data)}
+
+  def embedded_change_map({true, data, true, nil}),
+    do: %{destroyed: attribute_changes(data, nil), to: nil}
+
+  def embedded_change_map({true, data, true, value}),
+    do: %{updated: attribute_changes(data, value)}
+
+  @doc """
   Building a map of attribute changes for the embedded resource
   """
+  def attribute_changes(%{} = data_map, nil) do
+    for key <- keys_in([data_map]),
+    into: %{},
+    do: {key, %{from: Map.get(data_map, key)}}
+  end
+
   def attribute_changes(%{} = data_map, %{} = value_map) do
     for key <- keys_in([data_map, value_map]),
         into: %{},
@@ -290,7 +305,11 @@ def embedded_change_map({true, data, false, _value}),
   end
 
   defp keys_in(map_list) do
-    Enum.reduce(map_list, MapSet.new(), fn map, keys -> MapSet.union(keys, Map.keys(map)) end)
+    Enum.reduce(map_list, MapSet.new(), fn map, keys ->
+      Map.keys(map)
+      |>MapSet.new()
+      |>MapSet.union(keys)
+    end)
   end
 
   defp map_key(%{} = map, key) do
