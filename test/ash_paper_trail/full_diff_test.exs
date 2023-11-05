@@ -435,15 +435,14 @@ defmodule AshPaperTrail.FullDiffTest do
 
       assert %{
                source: %{
-                created: %{
-                  type: "book",
-                  value: %{
-                    type: %{to: "book"},
-                    name: %{to: "The Other Book"},
-                    page: %{to: 12}
-                  }
-                },
-
+                 created: %{
+                   type: "book",
+                   value: %{
+                     type: %{to: "book"},
+                     name: %{to: "The Other Book"},
+                     page: %{to: 12}
+                   }
+                 },
                  destroyed: %{
                    type: "book",
                    value: %{
@@ -456,34 +455,38 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
+    test "update resource by updating a union embedded resource and changing embedded type",
+         ctx do
+      res =
+        ctx.resource.create!(%{
+          source: %{type: "book", name: "The Book", page: 1}
+        })
 
-    # test "update resource by updating a union embedded resource and changing embedded type",
-    #      ctx do
-    #   res =
-    #     ctx.resource.create!(%{
-    #       source: %{type: "book", name: "The Book", page: 1}
-    #     })
+      ctx.resource.update!(res, %{
+        source: %{type: "blog", name: "The Blog", url: "https://www.myblog.com"}
+      })
 
-    #   ctx.resource.update!(res, %{
-    #     source: %{type: "blog", name: "The Blog", url: "https://www.myblog.com"}
-    #   })
-
-    #   assert %{
-    #            source: %{
-    #              type: %{from: "book", to: "blog"},
-    #              destroyed: %{
-    #                type: %{from: "book"},
-    #                name: %{from: "The Book"},
-    #                page: %{from: 1}
-    #              },
-    #              created: %{
-    #                type: %{to: "blog"},
-    #                name: %{to: "The Blog"},
-    #                url: %{to: "https://www.myblog.com"}
-    #              }
-    #            }
-    #          } = last_version_changes(ctx.api, ctx.version_resource)
-    # end
+      assert %{
+               source: %{
+                 destroyed: %{
+                   type: "book",
+                   value: %{
+                     type: %{from: "book"},
+                     name: %{from: "The Book"},
+                     page: %{from: 1}
+                   }
+                 },
+                 created: %{
+                   type: "blog",
+                   value: %{
+                     type: %{to: "blog"},
+                     name: %{to: "The Blog"},
+                     url: %{to: "https://www.myblog.com"}
+                   }
+                 }
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
 
     # test "update resource by updating a union embedded resource and changing to non-embedded type",
     #      ctx do
