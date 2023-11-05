@@ -96,19 +96,39 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.EmbeddedArrayChange do
     do: %{to: diff_lists(data_tuples, value_tuples)}
 
   defp diff_lists(data_tuples, value_tuples) do
-    diff_list_changes(data_tuples, value_tuples)
+    zip_up_tuples(data_tuples, value_tuples)
+    |> Enum.map(&item_change_map/1)
     |> sort_list()
   end
 
-  defp diff_list_changes(data_tuples, value_tuples) do
+  # [{data_tuple, nil}, {nil, value_tuple}, {data_tuple, value_tuple}]
+  defp zip_up_tuples(data_tuples, value_tuples) do
     []
   end
 
+  # These should be in embedded_change.
+  defp item_change_map({nil, {_uid, value}}) do
+    %{created: build_embedded_attribute_changes(%{}, value_tuple)}
+  end
+  defp item_change_map({data_tuple, nil}) do
+    %{destroyed: build_embedded_attribute_changes(%{}, data_tuple)}
+  end
+  defp item_change_map({data_tuple, value_tuple}) do
+    %{created: build_embedded_attribute_changes(%{}, value_tuple)}
+  end
+  defp item_change_map({data_tuple, value_tuple}) do
+    %{created: build_embedded_attribute_changes(%{}, value_tuple)}
+  end
+
+
+  # Sort the list by index changes. Sort by where they _are_ currently in
+  # in the list, and if removed where they were. Put the removed item
+  # before the current item.
   defp sort_list(list) do
     Enum.sort_by(list, fn change ->
       case change do
         %{index: %{from: _, to: i}} -> [i, 1]
-        %{index: %{from: i}} -> [i, 0]
+        %{index: %{from: i}} -> [i, 0] # removed
         %{index: %{to: i}} -> [i, 1]
         %{index: %{unchanged: i}} -> [i, 1]
       end
