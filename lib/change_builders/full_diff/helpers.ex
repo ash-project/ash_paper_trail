@@ -3,26 +3,6 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   Misc helpers for building a full diff of a changeset.
   """
 
-  def dump_data_value(changeset, attribute) do
-    {data_present, dumped_data} =
-      if changeset.action_type == :create do
-        {false, nil}
-      else
-        {true, Ash.Changeset.get_data(changeset, attribute.name) |> dump_value(attribute)}
-      end
-
-    {value_present, dumped_value} =
-      case Ash.Changeset.fetch_change(changeset, attribute.name) do
-        {:ok, value} ->
-          {true, dump_value(value, attribute)}
-
-        :error ->
-          {false, nil}
-      end
-
-    {data_present, dumped_data, value_present, dumped_value}
-  end
-
   def dump_value(nil, _attribute), do: nil
 
   def dump_value(value, attribute) do
