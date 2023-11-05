@@ -15,13 +15,13 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
     If the union value is an embedded resource the `value` key will be replaced with
     created, unchanged, updated, destroyed.
 
-    %{ from: nil, to: %{type: type, created: %{ ...attributes... } } }
-    %{ unchanged: %{type: type, unchanged: %{ ...attributes... } } }
-    %{ updated: %{type: type, updated: %{ ...attributes... } } }
-    %{ from: %{type: type, value: value}, to: %{type: type, created: %{ ...attributes... } }
-    %{ from: %{type: type, destroyed: %{ ...attributes... } }, to: nil }
-    %{ from: %{type: type, destroyed: %{ ...attributes... } }, to: %{type: type, created: %{ ...attributes... } } }
-    %{ from: %{type: type, destroyed: %{ ...attributes... } }, to: %{type: type, value: value } }
+    %{ from: nil, created: %{type: type, value: %{ ...attributes... } } }
+    %{ unchanged: %{type: type, value: %{ ...attributes... } } }
+    %{ updated: %{type: type, value: %{ ...attributes... } } }
+    %{ from: %{type: type, value: value}, created: %{type: type, value: %{ ...attributes... } }
+    %{ destroyed: %{type: type, value: %{ ...attributes... } }, to: nil }
+    %{ destroyed: %{type: type, value: %{ ...attributes... } }, created: %{type: type, value: %{ ...attributes... } } }
+    %{ destroyed: %{type: type, destroyed: %{ ...attributes... } }, to: %{type: type, value: value } }
   """
   import AshPaperTrail.ChangeBuilders.FullDiff.Helpers
 
@@ -69,11 +69,23 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
 
   # def union_change_map({{_data_present, _data_type, _data}, { _value_present, _value_type, _value}}),
 
+  def union_change_map({{:not_present}, {:not_present}}),
+    do: %{to: nil}
+
   def union_change_map({{:not_present}, {:non_embedded, type, value}}),
-  do: %{to: %{type: to_string(type), value: value}}
+    do: %{to: %{type: to_string(type), value: value}}
+
+  def union_change_map({{:not_present}, {:embedded, type, value}}),
+    do: %{created: %{type: to_string(type), value: attribute_changes(%{}, value)}}
 
   def union_change_map({{:non_embedded, nil, nil}, {:not_present}}),
-  do: %{unchanged: nil}
+    do: %{unchanged: nil}
+
+  def union_change_map({{:non_embedded, nil, nil}, {:embedded, type, value}}),
+    do: %{
+      from: nil,
+      created: %{type: to_string(type), value: attribute_changes(%{}, value)}
+    }
 
   def union_change_map({{:non_embedded, type, data}, {:not_present}}),
     do: %{unchanged: %{type: to_string(type), value: data}}
@@ -82,6 +94,20 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
     do: %{
       from: %{type: to_string(data_type), value: data},
       to: %{type: to_string(value_type), value: value}
+    }
+
+  def union_change_map({{:embedded, type, data}, {:not_present}}),
+    do: %{
+      unchanged: %{type: to_string(type), value: attribute_changes(data, data)}
+    }
+
+  def union_change_map({{:embedded, data_type, data}, {:embedded, value_type, value}}),
+    do: %{
+      destroyed: %{
+        type: to_string(data_type),
+        value: attribute_changes(data, nil)
+      },
+      created: %{type: to_string(value_type), value: attribute_changes(%{}, value)}
     }
 
   def union_change_map({data, value}),
