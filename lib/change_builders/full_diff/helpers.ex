@@ -274,6 +274,53 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
 
   def primary_keys(%{__struct__: resource}, dump_value) do
     Ash.Resource.Info.primary_key(resource)
-    |> Enum.reduce([resource], & &2 ++ [Map.get(dump_value, &1)])
+    |> Enum.reduce([resource], &(&2 ++ [Map.get(dump_value, &1)]))
+  end
+
+
+  def build_index_change(nil, to), do: %{to: to}
+  def build_index_change(from, nil), do: %{from: from}
+  def build_index_change(from, from), do: %{unchanged: from}
+  def build_index_change(from, to), do: %{from: from, to: to}
+
+  def union_primary_keys(%Ash.Union{} = union, subtype) do
+    with true <- :erlang.function_exported(union, :subtype_constraints, 0),
+         subtype_constraints <- union.subtype_constraints(),
+         subtypes when not is_nil(subtypes) <- Keyword.get(subtype_constraints, :types),
+         subtype_config when not is_nil(subtype) <- Keyword.get(subtypes, subtype),
+         subtype_config_type when not is_nil(subtype_config_type) <-
+           Keyword.get(subtype_config, :type) do
+      primary_keys(subtype_config_type)
+    else
+      _ -> []
+    end
+  end
+
+  def map_get_keys(resource, keys) do
+    Enum.map(keys, &Map.get(resource, &1))
+  end
+
+  def primary_keys(%{__struct__: resource}), do: Ash.Resource.Info.primary_key(resource)
+
+  def primary_keys(resource) when is_struct(resource),
+    do: Ash.Resource.Info.primary_key(resource)
+
+  def primary_keys(_resource), do: []
+
+
+  def sort_embedded_array_changes(dumped_values) do
+    Enum.sort_by(dumped_values, fn change ->
+      case change do
+        %{destroyed: _embedded, index: %{from: i}} -> [i, 0]
+        %{index: %{to: i}} -> [i, 1]
+        %{index: %{unchanged: i}} -> [i, 1]
+      end
+    end)
+  end
+
+  def build_embedded_array_changes(dumped_values, dumped_values), do: %{unchanged: dumped_values}
+
+  def build_embedded_array_changes(_dumped_data, dumped_values) do
+    %{to: sort_embedded_array_changes(dumped_values)}
   end
 end

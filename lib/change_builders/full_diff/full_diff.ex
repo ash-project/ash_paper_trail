@@ -10,7 +10,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff do
     SimpleChange,
     EmbeddedChange,
     UnionChange,
-    ArrayChange
+    EmbeddedArrayChange, UnionArrayChange
   }
 
   @doc """
@@ -46,15 +46,17 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff do
       end
 
     cond do
-      array && (is_union?(type) || is_embedded?(type)) ->
-        ArrayChange.build(attribute, changeset)
+      array && is_union?(type) ->
+        UnionArrayChange.build(attribute, changeset)
+
+      array && is_embedded?(type) ->
+        EmbeddedArrayChange.build(attribute, changeset)
+
+      is_union?(attribute.type) ->
+        UnionChange.build(attribute, changeset)
 
       is_embedded?(attribute.type) ->
         EmbeddedChange.build(attribute, changeset)
-
-      # embedded types are special in that they have a value and a type
-      is_union?(attribute.type) ->
-        UnionChange.build(attribute, changeset)
 
       true ->
         SimpleChange.build(attribute, changeset)
