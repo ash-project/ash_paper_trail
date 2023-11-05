@@ -269,14 +269,19 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
     {Map.has_key?(map, key), Map.get(map, key)}
   end
 
-  def primary_keys(%Ash.Union{value: value}, dumped_value), do: primary_keys(value, dumped_value)
-  def primary_keys(nil, _dumped_value), do: []
+  # returns a list of primary keys for the given resource, or nil if there are none
+  def unique_id(%Ash.Union{value: value}, dumped_value), do: unique_id(value, dumped_value)
+  def unique_id(nil, _dumped_value), do: nil
 
-  def primary_keys(%{__struct__: resource}, dump_value) do
-    Ash.Resource.Info.primary_key(resource)
-    |> Enum.reduce([resource], &(&2 ++ [Map.get(dump_value, &1)]))
+  def unique_id(%{__struct__: resource}, dump_value) do
+    case Ash.Resource.Info.primary_key(resource) do
+      [] ->
+        nil
+
+      primary_keys ->
+        Enum.reduce(primary_keys, [resource], &(&2 ++ [Map.get(dump_value, &1)]))
+    end
   end
-
 
   def build_index_change(nil, to), do: %{to: to}
   def build_index_change(from, nil), do: %{from: from}
@@ -306,7 +311,6 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
     do: Ash.Resource.Info.primary_key(resource)
 
   def primary_keys(_resource), do: []
-
 
   def sort_embedded_array_changes(dumped_values) do
     Enum.sort_by(dumped_values, fn change ->

@@ -3,9 +3,10 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.EmbeddedArrayChange do
   A array of embedded resources be represented as a map:
 
     %{ to: nil }
-    %{ to: [ ...items... ] }
-    %{ from: nil, to: [ ...items... ] }
-    %{ unchanged: [ ...items... ] }
+    %{ unchanged: nil }
+    %{ from: nil, to: [ ...all.new.items... ] }
+    %{ to: [ ...oneo.or.more.items.changing... ] }
+    %{ unchanged: [ ...no.items.changing... ] }
 
   With each element of the array represented as a embedded change:
 
@@ -135,5 +136,4 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.EmbeddedArrayChange do
 
   defp embedded_change_map({true, data, true, value}),
     do: %{updated: attribute_changes(data, value)}
-
 end

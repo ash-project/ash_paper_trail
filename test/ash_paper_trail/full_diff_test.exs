@@ -9,43 +9,69 @@ defmodule AshPaperTrail.FullDiffTest do
     [resource: Posts.FullDiffPost, api: Posts.Api, version_resource: Posts.FullDiffPost.Version]
   end
 
-  test "create a new resource", ctx do
-    ctx.resource.create!(%{subject: "subject", body: "body", lucky_numbers: [7, 11]})
+  describe "simple changes" do
+    test "create a new resource", ctx do
+      ctx.resource.create!(%{subject: "subject", body: "body", lucky_numbers: [7, 11]})
 
-    assert %{
-             subject: %{to: "subject"},
-             body: %{to: "body"},
-             author: %{to: nil},
-             published: %{to: false},
-             secret: %{to: nil},
-             tags: %{to: []},
-             seo_map: %{to: nil},
-             views: %{to: 0},
-             lucky_numbers: %{to: [7, 11]}
-           } = last_version_changes(ctx.api, ctx.version_resource)
-  end
+      assert %{
+               subject: %{to: "subject"},
+               body: %{to: "body"},
+               author: %{to: nil},
+               published: %{to: false},
+               secret: %{to: nil},
+               tags: %{to: []},
+               seo_map: %{to: nil},
+               views: %{to: 0},
+               lucky_numbers: %{to: [7, 11]}
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
 
-  test "update a resource", ctx do
-    ctx.resource.create!(%{subject: "subject", body: "body"})
-    |> ctx.resource.update!(%{
-      subject: "new subject",
-      views: 1,
-      lucky_numbers: [7],
-      seo_map: %{keywords: ["ash"]}
-    })
+    test "update a resource", ctx do
+      ctx.resource.create!(%{subject: "subject", body: "body"})
+      |> ctx.resource.update!(%{
+        subject: "new subject",
+        views: 1,
+        lucky_numbers: [7],
+        seo_map: %{keywords: ["ash"]}
+      })
 
-    assert %{
-             subject: %{to: "new subject", from: "subject"},
-             body: %{unchanged: "body"},
-             author: %{unchanged: nil},
-             published: %{unchanged: false},
-             secret: %{unchanged: nil},
-             tags: %{unchanged: nil},
-             seo_map: %{to: %{keywords: ["ash"]}, from: nil},
-             source: %{unchanged: nil},
-             views: %{from: 0, to: 1},
-             lucky_numbers: %{from: nil, to: [7]}
-           } = last_version_changes(ctx.api, ctx.version_resource)
+      assert %{
+               subject: %{to: "new subject", from: "subject"},
+               body: %{unchanged: "body"},
+               author: %{unchanged: nil},
+               published: %{unchanged: false},
+               secret: %{unchanged: nil},
+               tags: %{unchanged: nil},
+               seo_map: %{to: %{keywords: ["ash"]}, from: nil},
+               source: %{unchanged: nil},
+               views: %{from: 0, to: 1},
+               lucky_numbers: %{from: nil, to: [7]}
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+
+    test "destroy a resource", ctx do
+      ctx.resource.create!(%{
+        subject: "subject",
+        body: "body",
+        views: 1,
+        lucky_numbers: [7],
+        seo_map: %{keywords: ["ash"]}
+      })
+      |> ctx.resource.destroy!()
+
+      assert %{
+               subject: %{unchanged: "subject"},
+               body: %{unchanged: "body"},
+               author: %{unchanged: nil},
+               published: %{unchanged: false},
+               secret: %{unchanged: nil},
+               tags: %{unchanged: nil},
+               seo_map: %{unchanged: %{keywords: ["ash"]}},
+               source: %{unchanged: nil},
+               views: %{unchanged: 1},
+               lucky_numbers: %{unchanged: [7]}
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
   end
 
   describe "tracking an embedded resource" do

@@ -10,7 +10,8 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff do
     SimpleChange,
     EmbeddedChange,
     UnionChange,
-    EmbeddedArrayChange, UnionArrayChange
+    EmbeddedArrayChange,
+    UnionArrayChange
   }
 
   @doc """
@@ -25,10 +26,6 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff do
 
   """
   def build_changes(attributes, changeset) do
-    IO.inspect(
-      "================================== Starting Full Diff =================================="
-    )
-
     Enum.reduce(attributes, %{}, fn attribute, changes ->
       Map.put(
         changes,

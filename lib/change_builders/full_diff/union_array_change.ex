@@ -3,9 +3,10 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionArrayChange do
   A array of union resources be represented as a map:
 
     %{ to: nil }
-    %{ to: [ ...items... ] }
-    %{ from: nil, to: [ ...items... ] }
-    %{ unchanged: [ ...items... ] }
+    %{ unchanged: nil }
+    %{ from: nil, to: [ ...all.new.items... ] }
+    %{ to: [ ...one.or.more.item.changing... ] }
+    %{ unchanged: [ ...no.items.changing.. ] }
 
   With each element of the array represented as a union change:
 

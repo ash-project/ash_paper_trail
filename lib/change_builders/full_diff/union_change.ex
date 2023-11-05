@@ -60,8 +60,8 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
     %{"type" => type, "value" => dumped_value} = dump_value(value, attribute)
 
     if embedded_union?(attribute.type, type) do
-      primary_key = primary_keys(value, dumped_value) |> IO.inspect(label: "primary_key")
-      {:embedded, type, primary_key, dumped_value}
+      uid = unique_id(value, dumped_value)
+      {:embedded, type, uid, dumped_value}
     else
       {:non_embedded, type, dumped_value}
     end
