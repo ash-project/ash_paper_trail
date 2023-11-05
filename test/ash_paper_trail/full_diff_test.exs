@@ -488,31 +488,31 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    # test "update resource by updating a union embedded resource and changing to non-embedded type",
-    #      ctx do
-    #   res =
-    #     ctx.resource.create!(%{
-    #       subject: "subject",
-    #       body: "body",
-    #       source: %{type: "book", name: "The Book", page: 1}
-    #     })
+    test "update resource by updating a union embedded resource and changing to non-embedded type",
+         ctx do
+      ctx.resource.create!(%{
+        subject: "subject",
+        body: "body",
+        source: %{type: "book", name: "The Book", page: 1}
+      })
+      |> ctx.resource.update!(%{
+        source: "https://www.just-a-link.com"
+      })
 
-    #   ctx.resource.update!(res, %{
-    #     source: "https://www.just-a-link.com"
-    #   })
-
-    #   assert %{
-    #            source: %{
-    #              type: %{from: "book"},
-    #              destroyed: %{
-    #                type: %{from: "book"},
-    #                name: %{from: "The Book"},
-    #                page: %{from: 1}
-    #              },
-    #              to: %{type: "link", value: "https://www.just-a-link.com"}
-    #            }
-    #          } = last_version_changes(ctx.api, ctx.version_resource)
-    # end
+      assert %{
+               source: %{
+                 destroyed: %{
+                   type: "book",
+                   value: %{
+                     type: %{from: "book"},
+                     name: %{from: "The Book"},
+                     page: %{from: 1}
+                   }
+                 },
+                 to: %{type: "link", value: "https://www.just-a-link.com"}
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
 
     # test "update resource by updating a union embedded resource and changing from non-embedded type",
     #      ctx do

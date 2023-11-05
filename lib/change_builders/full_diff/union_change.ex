@@ -110,6 +110,15 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
       created: %{type: to_string(value_type), value: attribute_changes(%{}, value)}
     }
 
+  def union_change_map({{:embedded, data_type, data}, {:non_embedded, value_type, value}}),
+    do: %{
+      destroyed: %{
+        type: to_string(data_type),
+        value: attribute_changes(data, nil)
+      },
+      to: %{type: to_string(value_type), value: value}
+    }
+
   def union_change_map({data, value}),
     do: %{data: data, value: value}
 
