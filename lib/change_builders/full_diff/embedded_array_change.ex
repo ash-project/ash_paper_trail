@@ -5,7 +5,8 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.EmbeddedArrayChange do
     %{ to: nil }
     %{ unchanged: nil }
     %{ from: nil, to: [ ...all.new.items... ] }
-    %{ to: [ ...oneo.or.more.items.changing... ] }
+    %{ from: [ ...all.new.items.removed.... ], to: nil }
+    %{ to: [ ...one.or.more.items.changing... ] }
     %{ unchanged: [ ...no.items.changing... ] }
 
   With each element of the array represented as a embedded change:
@@ -32,6 +33,90 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.EmbeddedArrayChange do
   import AshPaperTrail.ChangeBuilders.FullDiff.Helpers
 
   def build(attribute, changeset) do
+    dump_data_value(attribute, changeset)
+    |> array_change_map()
+  end
+
+  defp dump_data_value(attribute, changeset) do
+    data_tuples =
+      if changeset.action_type == :create do
+        :not_present
+      else
+        case Ash.Changeset.get_data(changeset, attribute.name) do
+          nil ->
+            nil
+
+          data ->
+            dump_array(data, attribute)
+        end
+      end
+
+    value_tuples =
+      case Ash.Changeset.fetch_change(changeset, attribute.name) do
+        {:ok, nil} ->
+          nil
+
+        {:ok, values} ->
+          dump_array(values, attribute)
+
+        :error ->
+          :not_present
+      end
+
+    {data_tuples, value_tuples}
+  end
+
+  defp dump_array(values, attribute) do
+    dumped_values = dump_value(values, attribute)
+
+    # [{index, uid, data, dumped_data}, ...]
+    Enum.zip(values, dumped_values)
+    |> Enum.with_index(fn {value, dumped_value}, index ->
+      {index, unique_id(value, dumped_value), value, dumped_value}
+    end)
+  end
+
+  defp array_change_map({:not_present, :not_present}), do: %{to: nil}
+  defp array_change_map({:not_present, nil}), do: %{to: nil}
+  defp array_change_map({:not_present, value_tuples}), do: %{to: diff_lists([], value_tuples)}
+
+  defp array_change_map({nil, :not_present}), do: %{unchanged: nil}
+  defp array_change_map({nil, nil}), do: %{unchanged: nil}
+  defp array_change_map({nil, value_tuples}), do: %{to: diff_lists([], value_tuples), from: nil}
+
+  defp array_change_map({data_tuples, :not_present}),
+    do: %{unchanged: diff_lists(data_tuples, data_tuples)}
+
+  defp array_change_map({data_tuples, nil}), do: %{from: diff_lists(data_tuples, []), to: nil}
+
+  defp array_change_map({data_tuples, data_tuples}),
+    do: %{unchanged: diff_lists(data_tuples, data_tuples)}
+
+  defp array_change_map({data_tuples, value_tuples}),
+    do: %{to: diff_lists(data_tuples, value_tuples)}
+
+  defp diff_lists(data_tuples, value_tuples) do
+    diff_list_changes(data_tuples, value_tuples)
+    |> sort_list()
+  end
+
+  defp diff_list_changes(data_tuples, value_tuples) do
+    []
+  end
+
+  defp sort_list(list) do
+    Enum.sort_by(list, fn change ->
+      case change do
+        %{index: %{from: _, to: i}} -> [i, 1]
+        %{index: %{from: i}} -> [i, 0]
+        %{index: %{to: i}} -> [i, 1]
+        %{index: %{unchanged: i}} -> [i, 1]
+      end
+    end)
+  end
+
+
+  def _build(attribute, changeset) do
     data = Ash.Changeset.get_data(changeset, attribute.name)
     dumped_data = dump_value(data, attribute)
 
