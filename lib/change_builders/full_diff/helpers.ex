@@ -274,6 +274,6 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
 
   def primary_keys(%{__struct__: resource}, dump_value) do
     Ash.Resource.Info.primary_key(resource)
-    |> Enum.map(&Map.get(dump_value, &1))
+    |> Enum.reduce([resource], & &2 ++ [Map.get(dump_value, &1)])
   end
 end
