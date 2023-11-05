@@ -32,5 +32,4 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.SimpleChange do
 
     {data_present, dumped_data, value_present, dumped_value}
   end
-
 end

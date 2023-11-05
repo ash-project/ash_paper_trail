@@ -311,4 +311,29 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ArrayChange do
     do: Ash.Resource.Info.primary_key(resource)
 
   defp primary_keys(_resource), do: []
+
+  # Builds a simple change map based on the given values.
+  #
+  # change_map({data_present, data, value_present, value})
+
+  defp embedded_change_map({false, _data, false, _value}), do: %{to: nil}
+  defp embedded_change_map({true, nil, _, nil}), do: %{unchanged: nil}
+
+  defp embedded_change_map({false, _data, _, %{} = value}),
+    do: %{created: attribute_changes(%{}, value)}
+
+  defp embedded_change_map({true, nil, _, %{} = value}),
+    do: %{created: attribute_changes(%{}, value), from: nil}
+
+  defp embedded_change_map({true, data, false, _value}),
+    do: %{unchanged: attribute_changes(data, data)}
+
+  defp embedded_change_map({true, data, true, data}),
+    do: %{unchanged: attribute_changes(data, data)}
+
+  defp embedded_change_map({true, data, true, nil}),
+    do: %{destroyed: attribute_changes(data, nil), to: nil}
+
+  defp embedded_change_map({true, data, true, value}),
+    do: %{updated: attribute_changes(data, value)}
 end

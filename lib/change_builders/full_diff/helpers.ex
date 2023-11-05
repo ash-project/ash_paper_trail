@@ -234,33 +234,6 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   end
 
   @doc """
-  Builds a simple change map based on the given values.
-
-  change_map({data_present, data, value_present, value})
-  """
-
-  def embedded_change_map({false, _data, false, _value}), do: %{to: nil}
-  def embedded_change_map({true, nil, _, nil}), do: %{unchanged: nil}
-
-  def embedded_change_map({false, _data, _, %{} = value}),
-    do: %{created: attribute_changes(%{}, value)}
-
-  def embedded_change_map({true, nil, _, %{} = value}),
-    do: %{created: attribute_changes(%{}, value), from: nil}
-
-  def embedded_change_map({true, data, false, _value}),
-    do: %{unchanged: attribute_changes(data, data)}
-
-  def embedded_change_map({true, data, true, data}),
-    do: %{unchanged: attribute_changes(data, data)}
-
-  def embedded_change_map({true, data, true, nil}),
-    do: %{destroyed: attribute_changes(data, nil), to: nil}
-
-  def embedded_change_map({true, data, true, value}),
-    do: %{updated: attribute_changes(data, value)}
-
-  @doc """
   Building a map of attribute changes for the embedded resource
   """
   def attribute_changes(%{} = data_map, nil) do
@@ -297,6 +270,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   end
 
   def primary_keys(%Ash.Union{value: value}, dumped_value), do: primary_keys(value, dumped_value)
+  def primary_keys(nil, _dumped_value), do: []
 
   def primary_keys(%{__struct__: resource}, dump_value) do
     Ash.Resource.Info.primary_key(resource)
