@@ -315,4 +315,11 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   defp map_key(%{} = map, key) do
     {Map.has_key?(map, key), Map.get(map, key)}
   end
+
+  def primary_keys(%Ash.Union{value: value}, dumped_value), do: primary_keys(value, dumped_value)
+
+  def primary_keys(%{__struct__: resource}, dump_value) do
+    Ash.Resource.Info.primary_key(resource)
+    |> Enum.map(&Map.get(dump_value, &1))
+  end
 end

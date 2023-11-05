@@ -156,109 +156,6 @@ defmodule AshPaperTrail.FullDiffTest do
     end
   end
 
-  describe "tracking changes an array of embedded resources" do
-    test "create a new resource with an array of embedded resources", ctx do
-      ctx.resource.create!(%{
-        tags: [%{tag: "Ash"}, %{tag: "Phoenix"}]
-      })
-
-      assert %{
-               tags: %{
-                 to: [
-                   %{created: %{tag: %{to: "Ash"}, id: %{to: _id1}}, index: %{to: 0}},
-                   %{created: %{tag: %{to: "Phoenix"}, id: %{to: _id2}}, index: %{to: 1}}
-                 ]
-               }
-             } = last_version_changes(ctx.api, ctx.version_resource)
-    end
-
-    test "update an array of embedded resources", ctx do
-      res =
-        ctx.resource.create!(%{
-          tags: [%{tag: "Ash"}, %{tag: "Phoenix"}]
-        })
-
-      %{tags: [%{id: ash_id}, %{id: phx_id}]} = res
-
-      ctx.resource.update!(res, %{
-        tags: [%{tag: "Ash", id: ash_id}, %{tag: "Nerves"}, %{tag: "Phx", id: phx_id}]
-      })
-
-      assert %{
-               tags: %{
-                 to: [
-                   %{
-                     unchanged: %{tag: %{unchanged: "Ash"}, id: %{unchanged: ^ash_id}},
-                     index: %{unchanged: 0}
-                   },
-                   %{created: %{tag: %{to: "Nerves"}, id: %{to: _nerves_id}}, index: %{to: 1}},
-                   %{
-                     updated: %{tag: %{to: "Phx"}, id: %{unchanged: ^phx_id}},
-                     index: %{to: 2, from: 1}
-                   }
-                 ]
-               }
-             } = last_version_changes(ctx.api, ctx.version_resource)
-    end
-
-    test "update resource by adding to an empty array of embedded resourcces", ctx do
-      res =
-        ctx.resource.create!(%{
-          tags: []
-        })
-
-      ctx.resource.update!(res, %{
-        tags: [%{tag: "Ash"}]
-      })
-
-      assert %{
-               tags: %{
-                 to: [
-                   %{created: %{tag: %{to: "Ash"}, id: %{to: _ash_id}}, index: %{to: 0}}
-                 ]
-               }
-             } = last_version_changes(ctx.api, ctx.version_resource)
-    end
-
-    # test "update resource by removing from an array of embedded resources", ctx do
-    #   ctx.resource.create!(%{
-    #     tags: [%{tag: "Ash"}],
-    #     lucky_numbers: [7]
-    #   })
-    #   |> ctx.resource.update!(%{
-    #     tags: []
-    #   })
-
-    #   assert %{
-    #            tags: %{
-    #              to: [
-    #                %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
-    #              ]
-    #            }
-    #          } = last_version_changes(ctx.api, ctx.version_resource)
-    # end
-
-    #   test "update an array of embedded resources to nil", ctx do
-    #     res =
-    #       ctx.resource.create!(%{
-    #         tags: [%{tag: "Ash"}]
-    #       })
-
-    #     ctx.resource.update!(res, %{
-    #       tags: nil
-    #     })
-
-    #     assert %{
-    #              tags: %{
-    #                to: nil,
-    #                from: [
-    #                  %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
-    #                ]
-    #              }
-    #            } = last_version_changes(ctx.api, ctx.version_resource)
-    #   end
-  end
-
   describe "change tracking of a union attribute" do
     test "update resource by creating with a union", ctx do
       ctx.resource.create!(%{
@@ -514,50 +411,155 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    # test "update resource by updating a union embedded resource and changing from non-embedded type",
-    #      ctx do
-    #   res =
-    #     ctx.resource.create!(%{
-    #       subject: "subject",
-    #       body: "body",
-    #       source: "https://www.just-a-link.com"
-    #     })
+    test "update resource by updating a union embedded resource and changing from non-embedded type",
+         ctx do
+      res =
+        ctx.resource.create!(%{
+          subject: "subject",
+          body: "body",
+          source: "https://www.just-a-link.com"
+        })
 
-    #   ctx.resource.update!(res, %{
-    #     source: %{type: "book", name: "The Book", page: 1}
+      ctx.resource.update!(res, %{
+        source: %{type: "book", name: "The Book", page: 1}
+      })
+
+      assert %{
+               source: %{
+                 created: %{
+                   type: "book",
+                   value: %{
+                     type: %{to: "book"},
+                     name: %{to: "The Book"},
+                     page: %{to: 1}
+                   }
+                 },
+                 from: %{type: "link", value: "https://www.just-a-link.com"}
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+
+    test "update resource by updating a union embedded resource and changing from non-embedded type to non-embedded type",
+         ctx do
+      ctx.resource.create!(%{
+        subject: "subject",
+        body: "body",
+        source: "https://www.just-a-link.com"
+      })
+      |> ctx.resource.update!(%{
+        source: "https://www.just-another-link.com"
+      })
+
+      assert %{
+               source: %{
+                 from: %{type: "link", value: "https://www.just-a-link.com"},
+                 to: %{type: "link", value: "https://www.just-another-link.com"}
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+  end
+
+  describe "tracking changes an array of embedded resources" do
+    test "create a new resource with an array of embedded resources", ctx do
+      ctx.resource.create!(%{
+        tags: [%{tag: "Ash"}, %{tag: "Phoenix"}]
+      })
+
+      assert %{
+               tags: %{
+                 to: [
+                   %{created: %{tag: %{to: "Ash"}, id: %{to: _id1}}, index: %{to: 0}},
+                   %{created: %{tag: %{to: "Phoenix"}, id: %{to: _id2}}, index: %{to: 1}}
+                 ]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+
+    test "update an array of embedded resources", ctx do
+      res =
+        ctx.resource.create!(%{
+          tags: [%{tag: "Ash"}, %{tag: "Phoenix"}]
+        })
+
+      %{tags: [%{id: ash_id}, %{id: phx_id}]} = res
+
+      ctx.resource.update!(res, %{
+        tags: [%{tag: "Ash", id: ash_id}, %{tag: "Nerves"}, %{tag: "Phx", id: phx_id}]
+      })
+
+      assert %{
+               tags: %{
+                 to: [
+                   %{
+                     unchanged: %{tag: %{unchanged: "Ash"}, id: %{unchanged: ^ash_id}},
+                     index: %{unchanged: 0}
+                   },
+                   %{created: %{tag: %{to: "Nerves"}, id: %{to: _nerves_id}}, index: %{to: 1}},
+                   %{
+                     updated: %{tag: %{to: "Phx"}, id: %{unchanged: ^phx_id}},
+                     index: %{to: 2, from: 1}
+                   }
+                 ]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+
+    test "update resource by adding to an empty array of embedded resourcces", ctx do
+      res =
+        ctx.resource.create!(%{
+          tags: []
+        })
+
+      ctx.resource.update!(res, %{
+        tags: [%{tag: "Ash"}]
+      })
+
+      assert %{
+               tags: %{
+                 to: [
+                   %{created: %{tag: %{to: "Ash"}, id: %{to: _ash_id}}, index: %{to: 0}}
+                 ]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+
+    # test "update resource by removing from an array of embedded resources", ctx do
+    #   ctx.resource.create!(%{
+    #     tags: [%{tag: "Ash"}],
+    #     lucky_numbers: [7]
+    #   })
+    #   |> ctx.resource.update!(%{
+    #     tags: []
     #   })
 
     #   assert %{
-    #            source: %{
-    #              type: %{to: "book"},
-    #              created: %{
-    #                type: %{to: "book"},
-    #                name: %{to: "The Book"},
-    #                page: %{to: 1}
-    #              },
-    #              from: %{type: "link", value: "https://www.just-a-link.com"}
+    #            tags: %{
+    #              to: [
+    #                %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
+    #              ]
     #            }
     #          } = last_version_changes(ctx.api, ctx.version_resource)
     # end
 
-    # test "update resource by updating a union embedded resource and changing from non-embedded type to non-embedded type", ctx do
-    #   res = ctx.resource.create!(%{
-    #     subject: "subject",
-    #     body: "body",
-    #     source: "https://www.just-a-link.com"
-    #   })
+    #   test "update an array of embedded resources to nil", ctx do
+    #     res =
+    #       ctx.resource.create!(%{
+    #         tags: [%{tag: "Ash"}]
+    #       })
 
-    #   ctx.resource.update!(res, %{
-    #     source: "https://www.just-another-link.com"
-    #   })
+    #     ctx.resource.update!(res, %{
+    #       tags: nil
+    #     })
 
-    #   assert %{
-    #     source: %{
-    #       from: %{type: "link", value: "https://www.just-a-link.com"},
-    #       to: %{type: "link", value: "https://www.just-another-link.com"}
-    #     }
-    #   } = last_version_changes(ctx.api, ctx.version_resource)
-    # end
+    #     assert %{
+    #              tags: %{
+    #                to: nil,
+    #                from: [
+    #                  %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
+    #                ]
+    #              }
+    #            } = last_version_changes(ctx.api, ctx.version_resource)
+    #   end
   end
 
   describe "change tracking an array of union attributes" do

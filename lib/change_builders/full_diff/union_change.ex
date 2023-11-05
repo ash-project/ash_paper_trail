@@ -27,7 +27,6 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
 
   def build(attribute, changeset) do
     dump_union_data_value(changeset, attribute)
-    |> IO.inspect(label: "#{attribute.name} dump_union_data_value")
     |> union_change_map()
   end
 
@@ -58,59 +57,103 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
   def dump_union_type_value(nil, _attribute), do: {:non_embedded, nil, nil}
 
   def dump_union_type_value(value, attribute) do
-    %{"type" => type, "value" => value} = dump_value(value, attribute)
+    %{"type" => type, "value" => dumped_value} = dump_value(value, attribute)
 
     if embedded_union?(attribute.type, type) do
-      {:embedded, type, value}
+      primary_key = primary_keys(value, dumped_value) |> IO.inspect(label: "primary_key")
+      {:embedded, type, primary_key, dumped_value}
     else
-      {:non_embedded, type, value}
+      {:non_embedded, type, dumped_value}
     end
   end
 
   # def union_change_map({{_data_present, _data_type, _data}, { _value_present, _value_type, _value}}),
 
+  # Non-present to still no value
   def union_change_map({{:not_present}, {:not_present}}),
     do: %{to: nil}
 
+  # Non-present to nil
+  def union_change_map({{:not_present}, {:non_embedded, nil, nil}}),
+    do: %{to: nil}
+
+  # Not present to non_embedded
   def union_change_map({{:not_present}, {:non_embedded, type, value}}),
     do: %{to: %{type: to_string(type), value: value}}
 
-  def union_change_map({{:not_present}, {:embedded, type, value}}),
+  # Not present to embedded
+  def union_change_map({{:not_present}, {:embedded, type, _pk, value}}),
     do: %{created: %{type: to_string(type), value: attribute_changes(%{}, value)}}
 
+  # nil unchanged
   def union_change_map({{:non_embedded, nil, nil}, {:not_present}}),
     do: %{unchanged: nil}
 
-  def union_change_map({{:non_embedded, nil, nil}, {:embedded, type, value}}),
+  # nil to nil
+  def union_change_map({{:non_embedded, nil, nil}, {:non_embedded, nil, nil}}),
+    do: %{unchanged: nil}
+
+  # nil to embedded
+  def union_change_map({{:non_embedded, nil, nil}, {:embedded, type, _pk, value}}),
     do: %{
       from: nil,
       created: %{type: to_string(type), value: attribute_changes(%{}, value)}
     }
 
+  # nil to non_embedded
+  def union_change_map({{:non_embedded, nil, nil}, {:non_embedded, type, value}}),
+    do: %{
+      from: nil,
+      to: %{type: to_string(type), value: value}
+    }
+
+  # non_embedded to not present
   def union_change_map({{:non_embedded, type, data}, {:not_present}}),
     do: %{unchanged: %{type: to_string(type), value: data}}
 
+  # non_embedded to nil
+  def union_change_map({{:non_embedded, type, data}, {:non_embedded, nil, nil}}),
+    do: %{
+      from: %{type: to_string(type), value: data},
+      to: nil
+    }
+
+  # non_embedded to same non_embedded
+  def union_change_map({{:non_embedded, type, data}, {:non_embedded, type, data}}),
+    do: %{unchanged: %{type: to_string(type), value: data}}
+
+  # non_embedded to different non_embedded
   def union_change_map({{:non_embedded, data_type, data}, {:non_embedded, value_type, value}}),
     do: %{
       from: %{type: to_string(data_type), value: data},
       to: %{type: to_string(value_type), value: value}
     }
 
-  def union_change_map({{:embedded, type, data}, {:not_present}}),
+  # non_embedded to embedded
+  def union_change_map({{:non_embedded, data_type, data}, {:embedded, value_type, _pk, value}}),
+    do: %{
+      from: %{type: to_string(data_type), value: data},
+      created: %{type: to_string(value_type), value: attribute_changes(%{}, value)}
+    }
+
+  # embedded to not present
+  def union_change_map({{:embedded, type, _pk, data}, {:not_present}}),
     do: %{
       unchanged: %{type: to_string(type), value: attribute_changes(data, data)}
     }
 
-  def union_change_map({{:embedded, data_type, data}, {:embedded, value_type, value}}),
+  # embedded to nil
+  def union_change_map({{:embedded, type, _pk, data}, {:non_embedded, nil, nil}}),
     do: %{
       destroyed: %{
-        type: to_string(data_type),
+        type: to_string(type),
         value: attribute_changes(data, nil)
       },
-      created: %{type: to_string(value_type), value: attribute_changes(%{}, value)}
+      to: nil
     }
 
-  def union_change_map({{:embedded, data_type, data}, {:non_embedded, value_type, value}}),
+  # embedded to non_embedded
+  def union_change_map({{:embedded, data_type, _pk, data}, {:non_embedded, value_type, value}}),
     do: %{
       destroyed: %{
         type: to_string(data_type),
@@ -119,153 +162,26 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
       to: %{type: to_string(value_type), value: value}
     }
 
-  def union_change_map({data, value}),
-    do: %{data: data, value: value}
+  # embedded to same embedded
+  def union_change_map({{:embedded, type, pk, data}, {:embedded, type, pk, data}}),
+    do: %{
+      unchanged: %{
+        type: to_string(type),
+        value: attribute_changes(data, data)
+      }
+    }
 
-  # def union_change_map(
-  #       data_present,
-  #       false,
-  #       _data_type,
-  #       data,
-  #       value_present,
-  #       false,
-  #       _value_type,
-  #       value
-  #     ),
-  #     do: attribute_change_map({data_present, data, value_present, value})
-
-  # def union_change_map(
-  #       _data_present,
-  #       _data_embedded,
-  #       _data_type,
-  #       nil,
-  #       _value_present,
-  #       _value_embedded,
-  #       _value_type,
-  #       nil
-  #     ),
-  #     do: %{unchanged: nil}
-
-  # def union_change_map(
-  #       true = _data_present,
-  #       _data_embedded,
-  #       _data_type,
-  #       nil,
-  #       true = _value_present,
-  #       true = _value_embedded,
-  #       value_type,
-  #       %{} = value
-  #     ),
-  #     do: %{
-  #       created: build_embedded_attribute_changes(%{}, value),
-  #       from: nil,
-  #       type: %{to: to_string(value_type)}
-  #     }
-
-  # def union_change_map(
-  #       true = _data_present,
-  #       false = _data_embedded,
-  #       _data_type,
-  #       data,
-  #       true = _value_present,
-  #       true = _value_embedded,
-  #       value_type,
-  #       %{} = value
-  #     ),
-  #     do: %{
-  #       created: build_embedded_attribute_changes(%{}, value),
-  #       type: %{to: to_string(value_type)},
-  #       from: %{type: to_string(data[:type]), value: data[:value]}
-  #     }
-
-  # def union_change_map(
-  #       false = _data_present,
-  #       _data_embedded,
-  #       _data_type,
-  #       nil,
-  #       _value_present,
-  #       _value_embedded,
-  #       value_type,
-  #       %{} = value
-  #     ),
-  #     do: %{
-  #       created: build_embedded_attribute_changes(%{}, value),
-  #       type: %{to: to_string(value_type)}
-  #     }
-
-  # def union_change_map(
-  #       _data_present,
-  #       _data_embedded,
-  #       _data_type,
-  #       %{} = data,
-  #       _value_present,
-  #       _value_embedded,
-  #       _value_type,
-  #       nil
-  #     ),
-  #     do: %{destroyed: build_embedded_attribute_changes(data, %{})}
-
-  # def union_change_map(
-  #       _data_present,
-  #       _data_embedded,
-  #       data_type,
-  #       %{} = data,
-  #       _value_present,
-  #       _value_embedded,
-  #       data_type,
-  #       data
-  #     ),
-  #     do: %{
-  #       unchanged: build_embedded_attribute_changes(data, data),
-  #       type: %{unchanged: to_string(data_type)}
-  #     }
-
-  # def union_change_map(
-  #       _data_present,
-  #       _data_embedded,
-  #       data_type,
-  #       %{} = data,
-  #       _value_present,
-  #       _value_embedded,
-  #       data_type,
-  #       %{} = value
-  #     ),
-  #     do: %{
-  #       updated: build_embedded_attribute_changes(data, value),
-  #       type: %{unchanged: to_string(data_type)}
-  #     }
-
-  # def union_change_map(
-  #       true,
-  #       _data_embedded,
-  #       data_type,
-  #       %{} = data,
-  #       _value_present,
-  #       true,
-  #       value_type,
-  #       %{} = value
-  #     ),
-  #     do: %{
-  #       created: build_embedded_attribute_changes(%{}, value),
-  #       destroyed: build_embedded_attribute_changes(data, %{}),
-  #       type: %{from: to_string(data_type), to: to_string(value_type)}
-  #     }
-
-  # def union_change_map(
-  #       true,
-  #       _data_embedded,
-  #       data_type,
-  #       %{} = data,
-  #       _value_present,
-  #       false,
-  #       _value_type,
-  #       %{} = value
-  #     ),
-  #     do: %{
-  #       to: %{type: to_string(value[:type]), value: value[:value]},
-  #       destroyed: build_embedded_attribute_changes(data, %{}),
-  #       type: %{from: to_string(data_type)}
-  #     }
+  # embedded to different embedded
+  def union_change_map(
+        {{:embedded, data_type, _data_pk, data}, {:embedded, value_type, _value_pk, value}}
+      ),
+      do: %{
+        destroyed: %{
+          type: to_string(data_type),
+          value: attribute_changes(data, nil)
+        },
+        created: %{type: to_string(value_type), value: attribute_changes(%{}, value)}
+      }
 
   defp embedded_union?(type, subtype) do
     with true <- is_union?(type),

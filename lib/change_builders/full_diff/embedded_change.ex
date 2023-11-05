@@ -13,7 +13,6 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.EmbeddedChange do
 
   def build(attribute, changeset) do
     dump_data_value(changeset, attribute)
-    |> IO.inspect(label: "#{attribute.name} dump_data_value")
     |> embedded_change_map()
   end
 end

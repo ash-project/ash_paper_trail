@@ -47,20 +47,16 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff do
 
     cond do
       array && (is_union?(type) || is_embedded?(type)) ->
-        IO.inspect(attribute.name, label: "array changes")
         ArrayChange.build(attribute, changeset)
 
       is_embedded?(attribute.type) ->
-        IO.inspect(attribute.name, label: "embedded changes")
         EmbeddedChange.build(attribute, changeset)
 
       # embedded types are special in that they have a value and a type
       is_union?(attribute.type) ->
-        IO.inspect(attribute.name, label: "union changes")
         UnionChange.build(attribute, changeset)
 
       true ->
-        IO.inspect(attribute.name, label: "simple changes")
         SimpleChange.build(attribute, changeset)
     end
   end
