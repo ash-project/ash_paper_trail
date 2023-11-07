@@ -11,6 +11,21 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
 
   With each element of the array represented as a change:
 
+  A nil item added:
+    %{ to: nil, index: %{to: index} }
+
+  A nil item unchanged:
+    %{ unchanged: nil, index: %{unchanged: index} }
+
+  A union item when added:
+    %{ to: %{type: type, value: value }, index: %{to: index} }
+
+  A union item when unchanged:
+    %{ unchanged: %{type: type, value: value }, index: %{unchanged: index} }
+
+  A union item when removed:
+    %{ from: %{type: type, value: value }, index: %{from: index} }
+
   An embedded item added:
     %{ created: %{ ...attrs...}, index: %{to: index} }
 

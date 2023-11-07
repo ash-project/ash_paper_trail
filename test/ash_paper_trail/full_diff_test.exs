@@ -645,20 +645,20 @@ defmodule AshPaperTrail.FullDiffTest do
   end
 
   describe "change tracking an array of union attributes" do
-    # test "update resource by creating with an array of unions", ctx do
-    #   ctx.resource.create!(%{
-    #     reactions: [2, "like"]
-    #   })
+    test "update resource by creating with an array of unions", ctx do
+      ctx.resource.create!(%{
+        reactions: [2, "like"]
+      })
 
-    #   assert %{
-    #            reactions: %{
-    #              to: [
-    #                %{to: %{type: "score", value: 2}, index: %{to: 0}},
-    #                %{to: %{type: "comment", value: "like"}, index: %{to: 1}}
-    #              ]
-    #            }
-    #          } = last_version_changes(ctx.api, ctx.version_resource)
-    # end
+      assert %{
+               reactions: %{
+                 to: [
+                   %{to: %{type: "score", value: 2}, index: %{to: 0}},
+                   %{to: %{type: "comment", value: "like"}, index: %{to: 1}}
+                 ]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
 
     # test "update resource by updating an array of unions", ctx do
     #   res =
@@ -737,5 +737,8 @@ defmodule AshPaperTrail.FullDiffTest do
 
     # test "update resource by reordering with a union resource to an embedded array" do
     # end
+  end
+
+  describe "change tracking a composite of simple types" do
   end
 end
