@@ -1,4 +1,4 @@
-defmodule AshPaperTrail.ChangeBuilders.FullDiff.EmbeddedArrayChange do
+defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
   @moduledoc """
   A array of embedded resources be represented as a map:
 

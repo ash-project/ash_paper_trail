@@ -10,7 +10,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff do
     SimpleChange,
     EmbeddedChange,
     UnionChange,
-    EmbeddedArrayChange,
+    ListChange,
     UnionArrayChange
   }
 
@@ -47,7 +47,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff do
         UnionArrayChange.build(attribute, changeset)
 
       array && is_embedded?(type) ->
-        EmbeddedArrayChange.build(attribute, changeset)
+        ListChange.build(attribute, changeset)
 
       is_union?(attribute.type) ->
         UnionChange.build(attribute, changeset)
