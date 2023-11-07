@@ -105,8 +105,10 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.EmbeddedArrayChange do
   defp zip_up_tuples(data_tuples, value_tuples) do
     {zipped_tuples, new_value_tuples} =
       Enum.reduce(data_tuples, {[], value_tuples}, fn data_tuple, {zipped_tuples, value_tuples} ->
-        value_tuple = :not_present
-        {[{data_tuple, value_tuple} | zipped_tuples], value_tuples}
+        {value_tuples, matching_value_tuple} =
+          extract_matching_value_tuple(value_tuples, data_tuple)
+
+        {[{data_tuple, matching_value_tuple} | zipped_tuples], value_tuples}
       end)
 
     # append the new value_tuples to the end of the list
@@ -149,5 +151,51 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.EmbeddedArrayChange do
         %{index: %{unchanged: i}} -> [i, 1]
       end
     end)
+  end
+
+  defp extract_matching_value_tuple(value_tuples, {data_index, _, _, _} = data_tuple) do
+    matching_index = matching_value_indexes(value_tuples, data_tuple) |> nearest_index(data_index)
+
+    case matching_index do
+      nil ->
+        {value_tuples, :not_present}
+
+      index ->
+        Enum.reduce(value_tuples, {[], nil}, fn {i, _, _, _} = tuple,
+                                                {acc, matching_value_tuple} ->
+          cond do
+            matching_value_tuple ->
+              {acc ++ [tuple], matching_value_tuple}
+
+            i == index ->
+              {acc, tuple}
+
+            true ->
+              {acc ++ [tuple], nil}
+          end
+        end)
+    end
+  end
+
+  # Looks at a list of tuples to find ones that match the data, returns
+  # the indexes of the matching tuples.
+  # A tuple looks like: {index, uid, data, dumped_data}
+  defp matching_value_indexes([], _), do: []
+
+  defp matching_value_indexes(value_tuples, {_, data_uid, _, _}) do
+    Enum.reduce(value_tuples, [], fn {index, uid, _, _}, acc ->
+      if data_uid == uid do
+        [index | acc]
+      else
+        acc
+      end
+    end)
+  end
+
+  defp nearest_index([], _), do: nil
+
+  defp nearest_index(indexes, i2) do
+    Enum.sort_by(indexes, fn i1 -> abs(i1 - i2) end)
+    |> List.first()
   end
 end
