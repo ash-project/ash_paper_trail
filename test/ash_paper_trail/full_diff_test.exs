@@ -19,7 +19,7 @@ defmodule AshPaperTrail.FullDiffTest do
                author: %{to: nil},
                published: %{to: false},
                secret: %{to: nil},
-               tags: %{to: []},
+               tags: %{to: nil},
                seo_map: %{to: nil},
                views: %{to: 0},
                lucky_numbers: %{to: [7, 11]}

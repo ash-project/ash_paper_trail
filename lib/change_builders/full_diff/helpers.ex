@@ -327,4 +327,38 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   def build_embedded_array_changes(_dumped_data, dumped_values) do
     %{to: sort_embedded_array_changes(dumped_values)}
   end
+
+  # Builds a simple change map based on the given values.
+  #
+  # change_map({data_present, data, value_present, value})
+
+  def embedded_change_map({:not_present, :not_present}), do: %{to: nil}
+  def embedded_change_map({:not_present, nil}), do: %{to: nil}
+
+  def embedded_change_map({:not_present, {_uid, %{} = value}}),
+    do: %{created: attribute_changes(%{}, value)}
+
+  def embedded_change_map({nil, :not_present}), do: %{unchanged: nil}
+  def embedded_change_map({nil, nil}), do: %{unchanged: nil}
+
+  def embedded_change_map({nil, {_uid, %{} = value}}),
+    do: %{created: attribute_changes(%{}, value), from: nil}
+
+  def embedded_change_map({{_uid, data}, :not_present}),
+    do: %{unchanged: attribute_changes(data, data)}
+
+  def embedded_change_map({{_uid, data}, nil}),
+    do: %{destroyed: attribute_changes(data, nil), to: nil}
+
+  def embedded_change_map({{nil, data}, {nil, value}}),
+    do: %{destroyed: attribute_changes(data, nil), created: attribute_changes(%{}, value)}
+
+  def embedded_change_map({{uid, data}, {uid, data}}),
+    do: %{unchanged: attribute_changes(data, data)}
+
+  def embedded_change_map({{uid, data}, {uid, value}}),
+    do: %{updated: attribute_changes(data, value)}
+
+  def embedded_change_map({{_data_pk, data}, {_value_pk, value}}),
+    do: %{destroyed: attribute_changes(data, nil), created: attribute_changes(%{}, value)}
 end
