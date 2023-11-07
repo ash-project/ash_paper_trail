@@ -347,6 +347,9 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   def embedded_change_map({{_uid, data}, :not_present}),
     do: %{unchanged: attribute_changes(data, data)}
 
+  def embedded_change_map({{_uid, data}}),
+    do: %{destroyed: attribute_changes(data, nil)}
+
   def embedded_change_map({{_uid, data}, nil}),
     do: %{destroyed: attribute_changes(data, nil), to: nil}
 

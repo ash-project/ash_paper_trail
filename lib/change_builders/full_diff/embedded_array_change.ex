@@ -123,7 +123,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.EmbeddedArrayChange do
   end
 
   defp item_change_map({{index, uid, _, dumped_data}, :not_present}) do
-    embedded_change_map({{uid, dumped_data}, :not_present}) |> add_index_change(index, nil)
+    embedded_change_map({{uid, dumped_data}}) |> add_index_change(index, nil)
   end
 
   defp item_change_map({{index, uid, _, dumped_data}, {index2, uid2, _, dumped_value}}) do

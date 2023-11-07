@@ -549,43 +549,43 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    # test "update resource by removing from an array of embedded resources", ctx do
-    #   ctx.resource.create!(%{
-    #     tags: [%{tag: "Ash"}],
-    #     lucky_numbers: [7]
-    #   })
-    #   |> ctx.resource.update!(%{
-    #     tags: []
-    #   })
+    test "update resource by removing from an array of embedded resources", ctx do
+      ctx.resource.create!(%{
+        tags: [%{tag: "Ash"}],
+        lucky_numbers: [7]
+      })
+      |> ctx.resource.update!(%{
+        tags: []
+      })
 
-    #   assert %{
-    #            tags: %{
-    #              to: [
-    #                %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
-    #              ]
-    #            }
-    #          } = last_version_changes(ctx.api, ctx.version_resource)
-    # end
+      assert %{
+               tags: %{
+                 to: [
+                   %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
+                 ]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
 
-    #   test "update an array of embedded resources to nil", ctx do
-    #     res =
-    #       ctx.resource.create!(%{
-    #         tags: [%{tag: "Ash"}]
-    #       })
+      test "update an array of embedded resources to nil", ctx do
+        res =
+          ctx.resource.create!(%{
+            tags: [%{tag: "Ash"}]
+          })
 
-    #     ctx.resource.update!(res, %{
-    #       tags: nil
-    #     })
+        ctx.resource.update!(res, %{
+          tags: nil
+        })
 
-    #     assert %{
-    #              tags: %{
-    #                to: nil,
-    #                from: [
-    #                  %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
-    #                ]
-    #              }
-    #            } = last_version_changes(ctx.api, ctx.version_resource)
-    #   end
+        assert %{
+                 tags: %{
+                   to: nil,
+                   from: [
+                     %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
+                   ]
+                 }
+               } = last_version_changes(ctx.api, ctx.version_resource)
+      end
   end
 
   describe "change tracking an array of union attributes" do
