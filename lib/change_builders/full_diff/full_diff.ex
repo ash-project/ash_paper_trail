@@ -44,7 +44,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff do
 
     cond do
       array && is_union?(type) ->
-        UnionArrayChange.build(attribute, changeset)
+        ListChange.build(attribute, changeset)
 
       array && is_embedded?(type) ->
         ListChange.build(attribute, changeset)

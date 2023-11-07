@@ -1,6 +1,6 @@
 defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
   @moduledoc """
-  A array of embedded resources be represented as a map:
+  A list of changes represented as a map:
 
     %{ to: nil }
     %{ unchanged: nil }
@@ -9,24 +9,24 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
     %{ to: [ ...one.or.more.items.changing... ] }
     %{ unchanged: [ ...no.items.changing... ] }
 
-  With each element of the array represented as a embedded change:
+  With each element of the array represented as a change:
 
-  An item added:
+  An embedded item added:
     %{ created: %{ ...attrs...}, index: %{to: index} }
 
-  An item when unchanged and unmoved:
+  An embedded item when unchanged and unmoved:
     %{ unchanged: %{...attrs...}, index: %{unchanged: index} }
 
-  An item when updated and unmoved:
+  An embedded item when updated and unmoved:
     %{ updated: %{...attrs...}, index: %{unchanged: index} }
 
-  An item when unchanged and moved:
+  An embedded item when unchanged and moved:
     %{ unchanged: %{...attrs...} }, index: %{from: prev, to: index} }
 
-  An item when updated and moved:
+  An embedded item when updated and moved:
     %{ updated: %{...attrs...}, index: %{from: prev, to: index} }
 
-  An item when removed:
+  An embedded item when removed:
     %{ destroyed: value: %{...attrs...}, index: %{from: index} }
   """
 
@@ -89,11 +89,20 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
 
   defp array_change_map({data_tuples, nil}), do: %{from: diff_lists(data_tuples, []), to: nil}
 
-  defp array_change_map({data_tuples, data_tuples}),
-    do: %{unchanged: diff_lists(data_tuples, data_tuples)}
+  defp array_change_map({data_tuples, value_tuples}) do
+    array = diff_lists(data_tuples, value_tuples)
 
-  defp array_change_map({data_tuples, value_tuples}),
-    do: %{to: diff_lists(data_tuples, value_tuples)}
+    if Enum.all?(array, fn change ->
+         case change do
+           %{unchanged: _, index: %{unchanged: _}} -> true
+           _ -> false
+         end
+       end) do
+      %{unchanged: array}
+    else
+      %{to: array}
+    end
+  end
 
   defp diff_lists(data_tuples, value_tuples) do
     zip_up_tuples(data_tuples, value_tuples)

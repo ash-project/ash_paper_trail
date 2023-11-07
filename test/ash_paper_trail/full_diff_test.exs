@@ -530,6 +530,62 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
+    test "update an array with no changes", ctx do
+      res =
+        ctx.resource.create!(%{
+          tags: [%{tag: "Ash"}, %{tag: "Phoenix"}]
+        })
+
+      %{tags: [%{id: ash_id}, %{id: phx_id}]} = res
+
+      ctx.resource.update!(res, %{
+        tags: [%{tag: "Ash", id: ash_id}, %{tag: "Phoenix", id: phx_id}]
+      })
+
+      assert %{
+               tags: %{
+                 unchanged: [
+                   %{
+                     unchanged: %{tag: %{unchanged: "Ash"}, id: %{unchanged: ^ash_id}},
+                     index: %{unchanged: 0}
+                   },
+                   %{
+                     unchanged: %{tag: %{unchanged: "Phoenix"}, id: %{unchanged: ^phx_id}},
+                     index: %{unchanged: 1}
+                   }
+                 ]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+
+    test "update an array with only moves", ctx do
+      res =
+        ctx.resource.create!(%{
+          tags: [%{tag: "Ash"}, %{tag: "Phoenix"}]
+        })
+
+      %{tags: [%{id: ash_id}, %{id: phx_id}]} = res
+
+      ctx.resource.update!(res, %{
+        tags: [%{tag: "Phoenix", id: phx_id}, %{tag: "Ash", id: ash_id}]
+      })
+
+      assert %{
+               tags: %{
+                 to: [
+                   %{
+                     unchanged: %{tag: %{unchanged: "Phoenix"}, id: %{unchanged: ^phx_id}},
+                     index: %{from: 1, to: 0}
+                   },
+                   %{
+                     unchanged: %{tag: %{unchanged: "Ash"}, id: %{unchanged: ^ash_id}},
+                     index: %{from: 0, to: 1}
+                   }
+                 ]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+
     test "update resource by adding to an empty array of embedded resourcces", ctx do
       res =
         ctx.resource.create!(%{
@@ -567,42 +623,42 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-      test "update an array of embedded resources to nil", ctx do
-        res =
-          ctx.resource.create!(%{
-            tags: [%{tag: "Ash"}]
-          })
-
-        ctx.resource.update!(res, %{
-          tags: nil
+    test "update an array of embedded resources to nil", ctx do
+      res =
+        ctx.resource.create!(%{
+          tags: [%{tag: "Ash"}]
         })
 
-        assert %{
-                 tags: %{
-                   to: nil,
-                   from: [
-                     %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
-                   ]
-                 }
-               } = last_version_changes(ctx.api, ctx.version_resource)
-      end
-  end
-
-  describe "change tracking an array of union attributes" do
-    test "update resource by creating with an array of unions", ctx do
-      ctx.resource.create!(%{
-        reactions: [2, "like"]
+      ctx.resource.update!(res, %{
+        tags: nil
       })
 
       assert %{
-               reactions: %{
-                 to: [
-                   %{to: %{type: "score", value: 2}, index: %{to: 0}},
-                   %{to: %{type: "comment", value: "like"}, index: %{to: 1}}
+               tags: %{
+                 to: nil,
+                 from: [
+                   %{destroyed: %{tag: %{from: "Ash"}, id: %{from: _ash_id}}, index: %{from: 0}}
                  ]
                }
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
+  end
+
+  describe "change tracking an array of union attributes" do
+    # test "update resource by creating with an array of unions", ctx do
+    #   ctx.resource.create!(%{
+    #     reactions: [2, "like"]
+    #   })
+
+    #   assert %{
+    #            reactions: %{
+    #              to: [
+    #                %{to: %{type: "score", value: 2}, index: %{to: 0}},
+    #                %{to: %{type: "comment", value: "like"}, index: %{to: 1}}
+    #              ]
+    #            }
+    #          } = last_version_changes(ctx.api, ctx.version_resource)
+    # end
 
     # test "update resource by updating an array of unions", ctx do
     #   res =
