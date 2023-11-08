@@ -315,8 +315,10 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    # THIS TEST FAILS DUE TO A BUG IN ASH
-    #
+    # THIS TEST FAILS DUE TO A BUG IN ASH.
+    # The embedded resource with id: book_id is not being updated, but is
+    # instead being updated and destroyed.
+
     # test "update resource by updating a union embedded resource", ctx do
     #   res =
     #     ctx.resource.create!(%{
@@ -739,22 +741,108 @@ defmodule AshPaperTrail.FullDiffTest do
                      },
                      index: %{to: 1}
                    },
-                   %{type: "link", value: "https://www.just-another-link.com", index: %{to: 3}}
+                   %{
+                     to: %{type: "link", value: "https://www.just-a-link.com"},
+                     index: %{to: 2}
+                   }
                  ]
                }
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    # test "update resource by updating with a union resource to an embedded array" do
+    # THIS TEST FAILS DUE TO A BUG IN ASH.
+    # The embedded resource with id: book_id is not being updated, but is
+    # instead being updated and destroyed.
+
+    # test "update resource by updating union embedded resource in an array", ctx do
+    #   res =
+    #     ctx.resource.create!(%{
+    #       subject: "subject",
+    #       body: "body",
+    #       references: [
+    #         %{type: "book", name: "The Book", page: 1},
+    #         %{type: "blog", name: "The Blog", url: "https://www.myblog.com"},
+    #         "https://www.just-a-link.com"
+    #       ]
+    #     })
+
+    #   %{references: [%{value: %{id: book_id}}, %{value: %{id: blog_id}}, _]} = res
+
+    #   ctx.resource.update!(res, %{
+    #     references: [
+    #       %{type: "blog", name: "The Blog", id: blog_id, url: "https://www.myblog.com"},
+    #       "https://www.just-a-link.com",
+    #       %{type: "book", name: "The New Book", page: 1, id: book_id}
+    #     ]
+    #   })
+
+    #   assert %{
+    #            references: %{
+    #              to: [
+    #                %{
+    #                  unchanged: %{
+    #                    type: "blog",
+    #                    value: %{
+    #                      type: %{unchanged: "blog"},
+    #                      name: %{unchanged: "The Blog"},
+    #                      url: %{unchanged: "https://www.myblog.com"}
+    #                    }
+    #                  },
+    #                  index: %{from: 1, to: 0}
+    #                },
+    #                %{
+    #                  unchanged: %{type: "link", value: "https://www.just-a-link.com"},
+    #                  index: %{from: 2, to: 1}
+    #                },
+    #                %{
+    #                  updated: %{
+    #                    type: "book",
+    #                    value: %{
+    #                      name: %{to: "The New Book"},
+    #                      page: %{unchanged: 1},
+    #                      type: %{unchanged: "book"}
+    #                    }
+    #                  },
+    #                  index: %{from: 0, to: 2}
+    #                }
+    #              ]
+    #            }
+    #          } = last_version_changes(ctx.api, ctx.version_resource)
     # end
 
-    # test "update resource by destroying with a union resource to an embedded array" do
-    # end
+    test "update resource by destroying with a union resource to an embedded array", ctx do
+      res =
+        ctx.resource.create!(%{
+          subject: "subject",
+          body: "body",
+          references: [
+            %{type: "book", name: "The Book", page: 1},
+            %{type: "blog", name: "The Blog", url: "https://www.myblog.com"},
+            "https://www.just-a-link.com"
+          ]
+        })
 
-    # test "update resource by reordering with a union resource to an embedded array" do
+      ctx.resource.update!(res, %{
+        references: []
+      })
+
+      assert %{
+               references: %{
+                 to: [
+                  %{index: %{from: 0}, destroyed: %{type: "book", value: %{id: %{from: _}, name: %{from: "The Book"}, type: %{from: "book"}, page: %{from: 1}}}},
+                  %{index: %{from: 1}, destroyed: %{type: "blog", value: %{id: %{from: _}, name: %{from: "The Blog"}, type: %{from: "blog"}, url: %{from: "https://www.myblog.com"}}}},
+                  %{index: %{from: 2}, from: %{type: "link", value: "https://www.just-a-link.com"}}
+                 ]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+
+    end
+
+    # test "update resource by reordering with a union resource to an embedded array", ctx do
     # end
   end
 
   describe "change tracking a composite of simple types" do
+
   end
 end

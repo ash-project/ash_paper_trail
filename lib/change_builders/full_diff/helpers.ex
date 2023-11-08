@@ -209,7 +209,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
       dumped_value
     end)
     |> Enum.map(fn union_value ->
-      if is_embedded_union?(attribute.type, union_value["type"]) do
+      if embedded_union?(attribute.type, union_value["type"]) do
         {:embedded, union_value["type"], union_value["value"]}
       else
         {:non_embedded, union_value["type"],
@@ -221,7 +221,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   def dump_union_value(value, attribute) do
     union_value = dump_value(value, attribute)
 
-    if is_embedded_union?(attribute.type, union_value["type"]) do
+    if embedded_union?(attribute.type, union_value["type"]) do
       {:embedded, union_value["type"], union_value["value"]}
     else
       {:non_embedded, union_value["type"],
@@ -229,7 +229,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
     end
   end
 
-  defp is_embedded_union?(type, subtype) do
+  def embedded_union?(type, subtype) do
     with true <- is_union?(type),
          true <- :erlang.function_exported(type, :subtype_constraints, 0),
          subtype_constraints <- type.subtype_constraints(),
@@ -394,7 +394,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
     do: %{unchanged: nil}
 
   # nil to embedded
-  def union_change_map({{:non_embedded, nil, nil}, {:embedded, type, _pk, value}}),
+  def union_change_map({{:non_embedded, nil, nil}, {:embedded, type, _uid, value}}),
     do: %{
       from: nil,
       created: %{type: to_string(type), value: attribute_changes(%{}, value)}
@@ -447,6 +447,15 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
       unchanged: %{type: to_string(type), value: attribute_changes(data, data)}
     }
 
+  # embedded to removed
+  def union_change_map({{:embedded, type, _pk, data}, :removed}),
+    do: %{
+      destroyed: %{
+        type: to_string(type),
+        value: attribute_changes(data, nil)
+      }
+    }
+
   # embedded to nil
   def union_change_map({{:embedded, type, _pk, data}, {:non_embedded, nil, nil}}),
     do: %{
@@ -487,18 +496,4 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
         },
         created: %{type: to_string(value_type), value: attribute_changes(%{}, value)}
       }
-
-  def embedded_union?(type, subtype) do
-    with true <- is_union?(type),
-         true <- :erlang.function_exported(type, :subtype_constraints, 0),
-         subtype_constraints <- type.subtype_constraints(),
-         subtypes when not is_nil(subtypes) <- Keyword.get(subtype_constraints, :types),
-         subtype_config when not is_nil(subtype) <- Keyword.get(subtypes, subtype),
-         subtype_config_type when not is_nil(subtype_config_type) <-
-           Keyword.get(subtype_config, :type) do
-      is_embedded?(subtype_config_type)
-    else
-      _ -> false
-    end
-  end
 end
