@@ -413,7 +413,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
 
   def union_change_map({{:non_embedded, type, data}, :removed}),
     do: %{
-      from: %{type: to_string(type), value: data},
+      from: %{type: to_string(type), value: data}
     }
 
   # non_embedded to nil

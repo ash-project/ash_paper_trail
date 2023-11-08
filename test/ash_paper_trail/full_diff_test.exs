@@ -707,25 +707,43 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    # test "create resource with an array of union embedded resources", ctx do
-    #   ctx.resource.create!(%{
-    #     subject: "subject",
-    #     body: "body",
-    #     references: [
-    #       %{type: "book", name: "The Book", page: 1},
-    #       %{type: "blog", name: "The Blog", url: "https://www.myblog.com"},
-    #       "https://www.just-a-link.com"
-    #     ]
-    #   })
+    test "create resource with an array of union embedded resources", ctx do
+      ctx.resource.create!(%{
+        subject: "subject",
+        body: "body",
+        references: [
+          %{type: "book", name: "The Book", page: 1},
+          %{type: "blog", name: "The Blog", url: "https://www.myblog.com"},
+          "https://www.just-a-link.com"
+        ]
+      })
 
-    #   assert %{
-    #     references: %{to: [
-    #       %{created: %{ type: %{to: "book"}, name: %{to: "The Book"}, page: %{to: 1}}, index: %{to: 0}, type: %{to: "book"}},
-    #       %{created: %{ type: %{to: "blog"}, name: %{to: "The Blog"}, url: "https://www.myblog.com"}, index: %{to: 1}, type: %{to: "blog"}},
-    #       %{type: "link", value: "https://www.just-another-link.com", index: %{to: 3}}
-    #     ]}
-    #   } = last_version_changes(ctx.api, ctx.version_resource)
-    # end
+      assert %{
+               references: %{
+                 to: [
+                   %{
+                     created: %{
+                       type: "book",
+                       value: %{name: %{to: "The Book"}, page: %{to: 1}, type: %{to: "book"}}
+                     },
+                     index: %{to: 0}
+                   },
+                   %{
+                     created: %{
+                       type: "blog",
+                       value: %{
+                         type: %{to: "blog"},
+                         name: %{to: "The Blog"},
+                         url: %{to: "https://www.myblog.com"}
+                       }
+                     },
+                     index: %{to: 1}
+                   },
+                   %{type: "link", value: "https://www.just-another-link.com", index: %{to: 3}}
+                 ]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
 
     # test "update resource by updating with a union resource to an embedded array" do
     # end
