@@ -81,13 +81,27 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
     {data_tuples, value_tuples}
   end
 
-  defp dump_array(values, attribute) do
+  defp dump_array(values, %{type: {:array, attr_type}} = attribute) do
+    array_type =
+      cond do
+        is_union?(attr_type) -> :union
+        is_embedded?(attr_type) -> :embedded
+        true -> :simple
+      end
+
     dumped_values = dump_value(values, attribute)
 
     # [{index, uid, data, dumped_data}, ...]
     Enum.zip(values, dumped_values)
     |> Enum.with_index(fn {value, dumped_value}, index ->
-      {index, :embedded, unique_id(value, dumped_value), value, dumped_value}
+      item_type =
+        if array_type == :union && embedded_union?(attribute.type, dumped_value[:type]) do
+          :union_embedded
+        else
+          array_type
+        end
+
+      {index, item_type, unique_id(value, dumped_value), value, dumped_value}
     end)
   end
 
@@ -141,16 +155,44 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
     end)
   end
 
+  # Adding a Union type
+  defp item_change_map({:not_present, {index, :union, _uid, _, dumped_value}}) do
+    union_change_map({:not_present, {:non_embedded, dumped_value["type"], dumped_value["value"]}})
+    |> add_index_change(nil, index)
+  end
+
+  # Adding an embedded type
   defp item_change_map({:not_present, {index, :embedded, uid, _, dumped_value}}) do
     embedded_change_map({:not_present, {uid, dumped_value}}) |> add_index_change(nil, index)
   end
 
+  # Removing a Union type
+  defp item_change_map({{index, :union, _uid, _, dumped_data}, :not_present}) do
+    union_change_map({{:non_embedded, dumped_data["type"], dumped_data["value"]}, :not_present})
+    |> add_index_change(index, nil)
+  end
+
+  # Removing an embedded type
   defp item_change_map({{index, :embedded, uid, _, dumped_data}, :not_present}) do
     embedded_change_map({{uid, dumped_data}}) |> add_index_change(index, nil)
   end
 
-  defp item_change_map({{index, :embedded, uid, _, dumped_data}, {index2, :embedded, uid2, _, dumped_value}}) do
+  # Updating an embedded type
+  defp item_change_map(
+         {{index, :embedded, uid, _, dumped_data}, {index2, :embedded, uid2, _, dumped_value}}
+       ) do
     embedded_change_map({{uid, dumped_data}, {uid2, dumped_value}})
+    |> add_index_change(index, index2)
+  end
+
+  # Updating an embedded type
+  defp item_change_map(
+         {{index, :union, _uid, _, dumped_data}, {index2, :union, _uid2, _, dumped_value}}
+       ) do
+    union_change_map(
+      {{:non_embedded, dumped_data["type"], dumped_data["value"]},
+       {:non_embedded, dumped_value["type"], dumped_value["value"]}}
+    )
     |> add_index_change(index, index2)
   end
 

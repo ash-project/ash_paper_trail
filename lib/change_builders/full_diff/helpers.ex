@@ -280,7 +280,9 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   end
 
   # returns a list of primary keys for the given resource, or nil if there are none
-  def unique_id(%Ash.Union{value: %{__struct__: _} = value}, dumped_value), do: unique_id(value, dumped_value)
+  def unique_id(%Ash.Union{value: %{__struct__: _} = value}, dumped_value),
+    do: unique_id(value, dumped_value)
+
   def unique_id(%Ash.Union{}, dumped_value), do: dumped_value
   def unique_id(nil, _dumped_value), do: nil
 
@@ -300,19 +302,6 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   def build_index_change(from, nil), do: %{from: from}
   def build_index_change(from, from), do: %{unchanged: from}
   def build_index_change(from, to), do: %{from: from, to: to}
-
-  def union_primary_keys(%Ash.Union{} = union, subtype) do
-    with true <- :erlang.function_exported(union, :subtype_constraints, 0),
-         subtype_constraints <- union.subtype_constraints(),
-         subtypes when not is_nil(subtypes) <- Keyword.get(subtype_constraints, :types),
-         subtype_config when not is_nil(subtype) <- Keyword.get(subtypes, subtype),
-         subtype_config_type when not is_nil(subtype_config_type) <-
-           Keyword.get(subtype_config, :type) do
-      primary_keys(subtype_config_type)
-    else
-      _ -> []
-    end
-  end
 
   def map_get_keys(resource, keys) do
     Enum.map(keys, &Map.get(resource, &1))
@@ -377,4 +366,134 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
 
   def embedded_change_map({{_data_pk, data}, {_value_pk, value}}),
     do: %{destroyed: attribute_changes(data, nil), created: attribute_changes(%{}, value)}
+
+  # def union_change_map({{_data_present, _data_type, _data}, { _value_present, _value_type, _value}}),
+
+  # Non-present to still no value
+  def union_change_map({:not_present, :not_present}),
+    do: %{to: nil}
+
+  # Non-present to nil
+  def union_change_map({:not_present, {:non_embedded, nil, nil}}),
+    do: %{to: nil}
+
+  # Not present to non_embedded
+  def union_change_map({:not_present, {:non_embedded, type, value}}),
+    do: %{to: %{type: to_string(type), value: value}}
+
+  # Not present to embedded
+  def union_change_map({:not_present, {:embedded, type, _uid, value}}),
+    do: %{created: %{type: to_string(type), value: attribute_changes(%{}, value)}}
+
+  # nil unchanged
+  def union_change_map({{:non_embedded, nil, nil}, :not_present}),
+    do: %{unchanged: nil}
+
+  # nil to nil
+  def union_change_map({{:non_embedded, nil, nil}, {:non_embedded, nil, nil}}),
+    do: %{unchanged: nil}
+
+  # nil to embedded
+  def union_change_map({{:non_embedded, nil, nil}, {:embedded, type, _pk, value}}),
+    do: %{
+      from: nil,
+      created: %{type: to_string(type), value: attribute_changes(%{}, value)}
+    }
+
+  # nil to non_embedded
+  def union_change_map({{:non_embedded, nil, nil}, {:non_embedded, type, value}}),
+    do: %{
+      from: nil,
+      to: %{type: to_string(type), value: value}
+    }
+
+  # non_embedded to not present
+  def union_change_map({{:non_embedded, type, data}, :not_present}),
+    do: %{unchanged: %{type: to_string(type), value: data}}
+
+  # non_embedded to nil
+  def union_change_map({{:non_embedded, type, data}, {:non_embedded, nil, nil}}),
+    do: %{
+      from: %{type: to_string(type), value: data},
+      to: nil
+    }
+
+  # non_embedded to same non_embedded
+  def union_change_map({{:non_embedded, type, data}, {:non_embedded, type, data}}),
+    do: %{unchanged: %{type: to_string(type), value: data}}
+
+  # non_embedded to different non_embedded
+  def union_change_map({{:non_embedded, data_type, data}, {:non_embedded, value_type, value}}),
+    do: %{
+      from: %{type: to_string(data_type), value: data},
+      to: %{type: to_string(value_type), value: value}
+    }
+
+  # non_embedded to embedded
+  def union_change_map({{:non_embedded, data_type, data}, {:embedded, value_type, _pk, value}}),
+    do: %{
+      from: %{type: to_string(data_type), value: data},
+      created: %{type: to_string(value_type), value: attribute_changes(%{}, value)}
+    }
+
+  # embedded to not present
+  def union_change_map({{:embedded, type, _pk, data}, :not_present}),
+    do: %{
+      unchanged: %{type: to_string(type), value: attribute_changes(data, data)}
+    }
+
+  # embedded to nil
+  def union_change_map({{:embedded, type, _pk, data}, {:non_embedded, nil, nil}}),
+    do: %{
+      destroyed: %{
+        type: to_string(type),
+        value: attribute_changes(data, nil)
+      },
+      to: nil
+    }
+
+  # embedded to non_embedded
+  def union_change_map({{:embedded, data_type, _pk, data}, {:non_embedded, value_type, value}}),
+    do: %{
+      destroyed: %{
+        type: to_string(data_type),
+        value: attribute_changes(data, nil)
+      },
+      to: %{type: to_string(value_type), value: value}
+    }
+
+  # embedded to same embedded
+  def union_change_map({{:embedded, type, pk, data}, {:embedded, type, pk, data}}),
+    do: %{
+      unchanged: %{
+        type: to_string(type),
+        value: attribute_changes(data, data)
+      }
+    }
+
+  # embedded to different embedded
+  def union_change_map(
+        {{:embedded, data_type, _data_pk, data}, {:embedded, value_type, _value_pk, value}}
+      ),
+      do: %{
+        destroyed: %{
+          type: to_string(data_type),
+          value: attribute_changes(data, nil)
+        },
+        created: %{type: to_string(value_type), value: attribute_changes(%{}, value)}
+      }
+
+  def embedded_union?(type, subtype) do
+    with true <- is_union?(type),
+         true <- :erlang.function_exported(type, :subtype_constraints, 0),
+         subtype_constraints <- type.subtype_constraints(),
+         subtypes when not is_nil(subtypes) <- Keyword.get(subtype_constraints, :types),
+         subtype_config when not is_nil(subtype) <- Keyword.get(subtypes, subtype),
+         subtype_config_type when not is_nil(subtype_config_type) <-
+           Keyword.get(subtype_config, :type) do
+      is_embedded?(subtype_config_type)
+    else
+      _ -> false
+    end
+  end
 end

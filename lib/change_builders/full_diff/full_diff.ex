@@ -10,8 +10,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff do
     SimpleChange,
     EmbeddedChange,
     UnionChange,
-    ListChange,
-    UnionArrayChange
+    ListChange
   }
 
   @doc """

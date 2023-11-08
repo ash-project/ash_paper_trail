@@ -350,8 +350,6 @@ defmodule AshPaperTrail.FullDiffTest do
           source: %{type: "book", name: "The Book", page: 1}
         })
 
-      book_id = res.source.value.id
-
       ctx.resource.update!(res, %{
         source: %{type: "book", name: "The Other Book", page: 12}
       })

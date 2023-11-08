@@ -208,4 +208,17 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionArrayChange do
       build_embedded_array_changes(dumped_data, dumped_values)
     end
   end
+
+  def union_primary_keys(%Ash.Union{} = union, subtype) do
+    with true <- :erlang.function_exported(union, :subtype_constraints, 0),
+         subtype_constraints <- union.subtype_constraints(),
+         subtypes when not is_nil(subtypes) <- Keyword.get(subtype_constraints, :types),
+         subtype_config when not is_nil(subtype) <- Keyword.get(subtypes, subtype),
+         subtype_config_type when not is_nil(subtype_config_type) <-
+           Keyword.get(subtype_config, :type) do
+      primary_keys(subtype_config_type)
+    else
+      _ -> []
+    end
+  end
 end
