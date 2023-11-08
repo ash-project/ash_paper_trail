@@ -168,7 +168,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
 
   # Removing a Union type
   defp item_change_map({{index, :union, _uid, _, dumped_data}, :not_present}) do
-    union_change_map({{:non_embedded, dumped_data["type"], dumped_data["value"]}, :not_present})
+    union_change_map({{:non_embedded, dumped_data["type"], dumped_data["value"]}, :removed})
     |> add_index_change(index, nil)
   end
 

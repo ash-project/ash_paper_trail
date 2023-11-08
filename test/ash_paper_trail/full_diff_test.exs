@@ -658,34 +658,34 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    # test "update resource by updating an array of unions", ctx do
-    #   res =
-    #     ctx.resource.create!(%{
-    #       reactions: [2, "like"]
-    #     })
+    test "update resource by updating an array of unions", ctx do
+      res =
+        ctx.resource.create!(%{
+          reactions: [2, "like"]
+        })
 
-    #   ctx.resource.update!(res, %{
-    #     reactions: ["excellent", "like", 3]
-    #   })
+      ctx.resource.update!(res, %{
+        reactions: ["excellent", "like", 3]
+      })
 
-    #   assert %{
-    #            reactions: %{
-    #              to: [
-    #                # 2 was removed from index 0
-    #                %{from: %{type: "score", value: 2}, index: %{from: 0}},
+      assert %{
+               reactions: %{
+                 to: [
+                   # 2 was removed from index 0
+                   %{from: %{type: "score", value: 2}, index: %{from: 0}},
 
-    #                # excellent was added at index 0
-    #                %{to: %{type: "commment", value: "excellent"}, index: %{to: 0}},
+                   # excellent was added at index 0
+                   %{to: %{type: "comment", value: "excellent"}, index: %{to: 0}},
 
-    #                # like was unchanged at index 1
-    #                %{unchanged: %{type: "comment", value: "like"}, index: %{unchanged: 1}},
+                   # like was unchanged at index 1
+                   %{unchanged: %{type: "comment", value: "like"}, index: %{unchanged: 1}},
 
-    #                # 3 was added at index 2
-    #                %{to: %{type: "score", value: 3}, index: %{to: 2}}
-    #              ]
-    #            }
-    #          } = last_version_changes(ctx.api, ctx.version_resource)
-    # end
+                   # 3 was added at index 2
+                   %{to: %{type: "score", value: 3}, index: %{to: 2}}
+                 ]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
 
     # test "update resource by removing from an array of unions", ctx do
     #   res =
