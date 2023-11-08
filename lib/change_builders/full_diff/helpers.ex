@@ -16,7 +16,6 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   end
 
   def dump_value(value, attribute) do
-    IO.inspect(attribute, label: "dumping...")
     {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, attribute.constraints)
     dumped_value
   end
@@ -281,7 +280,8 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   end
 
   # returns a list of primary keys for the given resource, or nil if there are none
-  def unique_id(%Ash.Union{value: value}, dumped_value), do: unique_id(value, dumped_value)
+  def unique_id(%Ash.Union{value: %{__struct__: _} = value}, dumped_value), do: unique_id(value, dumped_value)
+  def unique_id(%Ash.Union{}, dumped_value), do: dumped_value
   def unique_id(nil, _dumped_value), do: nil
 
   def unique_id(%{__struct__: resource}, dump_value) do
@@ -293,6 +293,8 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
         Enum.reduce(primary_keys, [resource], &(&2 ++ [Map.get(dump_value, &1)]))
     end
   end
+
+  def unique_id(simple_value, _dump_value), do: simple_value
 
   def build_index_change(nil, to), do: %{to: to}
   def build_index_change(from, nil), do: %{from: from}

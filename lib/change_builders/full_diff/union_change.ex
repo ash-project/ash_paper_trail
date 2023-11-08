@@ -35,7 +35,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
   defp dump_union_data_value(changeset, attribute) do
     data_tuple =
       if changeset.action_type == :create do
-        {:not_present}
+        :not_present
       else
         data = Ash.Changeset.get_data(changeset, attribute.name)
         dump_union_type_value(data, attribute)
@@ -47,7 +47,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
           dump_union_type_value(value, attribute)
 
         :error ->
-          {:not_present}
+          :not_present
       end
 
     {data_tuple, value_tuple}
@@ -70,23 +70,23 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
   # def union_change_map({{_data_present, _data_type, _data}, { _value_present, _value_type, _value}}),
 
   # Non-present to still no value
-  def union_change_map({{:not_present}, {:not_present}}),
+  def union_change_map({:not_present, :not_present}),
     do: %{to: nil}
 
   # Non-present to nil
-  def union_change_map({{:not_present}, {:non_embedded, nil, nil}}),
+  def union_change_map({:not_present, {:non_embedded, nil, nil}}),
     do: %{to: nil}
 
   # Not present to non_embedded
-  def union_change_map({{:not_present}, {:non_embedded, type, value}}),
+  def union_change_map({:not_present, {:non_embedded, type, value}}),
     do: %{to: %{type: to_string(type), value: value}}
 
   # Not present to embedded
-  def union_change_map({{:not_present}, {:embedded, type, _pk, value}}),
+  def union_change_map({:not_present, {:embedded, type, _pk, value}}),
     do: %{created: %{type: to_string(type), value: attribute_changes(%{}, value)}}
 
   # nil unchanged
-  def union_change_map({{:non_embedded, nil, nil}, {:not_present}}),
+  def union_change_map({{:non_embedded, nil, nil}, :not_present}),
     do: %{unchanged: nil}
 
   # nil to nil
@@ -108,7 +108,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
     }
 
   # non_embedded to not present
-  def union_change_map({{:non_embedded, type, data}, {:not_present}}),
+  def union_change_map({{:non_embedded, type, data}, :not_present}),
     do: %{unchanged: %{type: to_string(type), value: data}}
 
   # non_embedded to nil
@@ -137,7 +137,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
     }
 
   # embedded to not present
-  def union_change_map({{:embedded, type, _pk, data}, {:not_present}}),
+  def union_change_map({{:embedded, type, _pk, data}, :not_present}),
     do: %{
       unchanged: %{type: to_string(type), value: attribute_changes(data, data)}
     }

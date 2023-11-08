@@ -87,7 +87,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
     # [{index, uid, data, dumped_data}, ...]
     Enum.zip(values, dumped_values)
     |> Enum.with_index(fn {value, dumped_value}, index ->
-      {index, unique_id(value, dumped_value), value, dumped_value}
+      {index, :embedded, unique_id(value, dumped_value), value, dumped_value}
     end)
   end
 
@@ -141,16 +141,15 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
     end)
   end
 
-  # These should use embedded_change_map and then add the index
-  defp item_change_map({:not_present, {index, uid, _, dumped_value}}) do
+  defp item_change_map({:not_present, {index, :embedded, uid, _, dumped_value}}) do
     embedded_change_map({:not_present, {uid, dumped_value}}) |> add_index_change(nil, index)
   end
 
-  defp item_change_map({{index, uid, _, dumped_data}, :not_present}) do
+  defp item_change_map({{index, :embedded, uid, _, dumped_data}, :not_present}) do
     embedded_change_map({{uid, dumped_data}}) |> add_index_change(index, nil)
   end
 
-  defp item_change_map({{index, uid, _, dumped_data}, {index2, uid2, _, dumped_value}}) do
+  defp item_change_map({{index, :embedded, uid, _, dumped_data}, {index2, :embedded, uid2, _, dumped_value}}) do
     embedded_change_map({{uid, dumped_data}, {uid2, dumped_value}})
     |> add_index_change(index, index2)
   end
@@ -177,7 +176,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
     end)
   end
 
-  defp extract_matching_value_tuple(value_tuples, {data_index, _, _, _} = data_tuple) do
+  defp extract_matching_value_tuple(value_tuples, {data_index, _, _, _, _} = data_tuple) do
     matching_index = matching_value_indexes(value_tuples, data_tuple) |> nearest_index(data_index)
 
     case matching_index do
@@ -185,7 +184,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
         {value_tuples, :not_present}
 
       index ->
-        Enum.reduce(value_tuples, {[], nil}, fn {i, _, _, _} = tuple,
+        Enum.reduce(value_tuples, {[], nil}, fn {i, _, _, _, _} = tuple,
                                                 {acc, matching_value_tuple} ->
           cond do
             matching_value_tuple ->
@@ -206,8 +205,8 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
   # A tuple looks like: {index, uid, data, dumped_data}
   defp matching_value_indexes([], _), do: []
 
-  defp matching_value_indexes(value_tuples, {_, data_uid, _, _}) do
-    Enum.reduce(value_tuples, [], fn {index, uid, _, _}, acc ->
+  defp matching_value_indexes(value_tuples, {_, _, data_uid, _, _}) do
+    Enum.reduce(value_tuples, [], fn {index, _, uid, _, _}, acc ->
       if data_uid == uid do
         [index | acc]
       else
