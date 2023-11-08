@@ -687,25 +687,25 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    # test "update resource by removing from an array of unions", ctx do
-    #   res =
-    #     ctx.resource.create!(%{
-    #       reactions: [2, "like"]
-    #     })
+    test "update resource by removing from an array of unions", ctx do
+      res =
+        ctx.resource.create!(%{
+          reactions: [2, "like"]
+        })
 
-    #   ctx.resource.update!(res, %{
-    #     reactions: [2]
-    #   })
+      ctx.resource.update!(res, %{
+        reactions: [2]
+      })
 
-    #   assert %{
-    #            reactions: %{
-    #              to: [
-    #                %{unchanged: %{type: "score", value: 2}, index: %{unchanged: 0}},
-    #                %{from: %{type: "comment", value: "like"}, index: %{from: 1}}
-    #              ]
-    #            }
-    #          } = last_version_changes(ctx.api, ctx.version_resource)
-    # end
+      assert %{
+               reactions: %{
+                 to: [
+                   %{unchanged: %{type: "score", value: 2}, index: %{unchanged: 0}},
+                   %{from: %{type: "comment", value: "like"}, index: %{from: 1}}
+                 ]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
 
     # test "create resource with an array of union embedded resources", ctx do
     #   ctx.resource.create!(%{
