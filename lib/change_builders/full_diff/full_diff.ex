@@ -34,20 +34,12 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff do
     end)
   end
 
+  defp build_attribute_change(%{type: {:array, _}} = attribute, changeset) do
+    ListChange.build(attribute, changeset)
+  end
+
   defp build_attribute_change(attribute, changeset) do
-    {array, type} =
-      case attribute do
-        %{type: {:array, attr_type}} -> {true, attr_type}
-        %{type: attr_type} -> {false, attr_type}
-      end
-
     cond do
-      array && is_union?(type) ->
-        ListChange.build(attribute, changeset)
-
-      array && is_embedded?(type) ->
-        ListChange.build(attribute, changeset)
-
       is_union?(attribute.type) ->
         UnionChange.build(attribute, changeset)
 

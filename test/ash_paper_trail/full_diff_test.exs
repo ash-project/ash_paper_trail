@@ -22,7 +22,7 @@ defmodule AshPaperTrail.FullDiffTest do
                tags: %{to: nil},
                seo_map: %{to: nil},
                views: %{to: 0},
-               lucky_numbers: %{to: [7, 11]}
+               lucky_numbers: %{to: [%{index: %{to: 0}, added: 7}, %{index: %{to: 1}, added: 11}]}
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
@@ -45,7 +45,7 @@ defmodule AshPaperTrail.FullDiffTest do
                seo_map: %{to: %{keywords: ["ash"]}, from: nil},
                source: %{unchanged: nil},
                views: %{from: 0, to: 1},
-               lucky_numbers: %{from: nil, to: [7]}
+               lucky_numbers: %{from: nil, to: [%{index: %{to: 0}, added: 7}]}
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
@@ -69,7 +69,7 @@ defmodule AshPaperTrail.FullDiffTest do
                seo_map: %{unchanged: %{keywords: ["ash"]}},
                source: %{unchanged: nil},
                views: %{unchanged: 1},
-               lucky_numbers: %{unchanged: [7]}
+               lucky_numbers: %{unchanged: [%{index: %{unchanged: 0}, unchanged: 7}]}
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
   end
@@ -829,13 +829,37 @@ defmodule AshPaperTrail.FullDiffTest do
       assert %{
                references: %{
                  to: [
-                  %{index: %{from: 0}, destroyed: %{type: "book", value: %{id: %{from: _}, name: %{from: "The Book"}, type: %{from: "book"}, page: %{from: 1}}}},
-                  %{index: %{from: 1}, destroyed: %{type: "blog", value: %{id: %{from: _}, name: %{from: "The Blog"}, type: %{from: "blog"}, url: %{from: "https://www.myblog.com"}}}},
-                  %{index: %{from: 2}, from: %{type: "link", value: "https://www.just-a-link.com"}}
+                   %{
+                     index: %{from: 0},
+                     destroyed: %{
+                       type: "book",
+                       value: %{
+                         id: %{from: _},
+                         name: %{from: "The Book"},
+                         type: %{from: "book"},
+                         page: %{from: 1}
+                       }
+                     }
+                   },
+                   %{
+                     index: %{from: 1},
+                     destroyed: %{
+                       type: "blog",
+                       value: %{
+                         id: %{from: _},
+                         name: %{from: "The Blog"},
+                         type: %{from: "blog"},
+                         url: %{from: "https://www.myblog.com"}
+                       }
+                     }
+                   },
+                   %{
+                     index: %{from: 2},
+                     from: %{type: "link", value: "https://www.just-a-link.com"}
+                   }
                  ]
                }
              } = last_version_changes(ctx.api, ctx.version_resource)
-
     end
 
     # test "update resource by reordering with a union resource to an embedded array", ctx do
@@ -843,6 +867,16 @@ defmodule AshPaperTrail.FullDiffTest do
   end
 
   describe "change tracking a composite of simple types" do
+    #   A simple item added:
+    #   %{ to: value, index: %{to: index} }
 
+    # A simple item removed:
+    #   %{ from: value, index: %{from: index} }
+
+    # A simple item moved:
+    #   %{ unchanged: value, index: %{from: from, to: to} }
+
+    # A simple item unchanged:
+    #   %{ unchanged: value, index: %{unchanged: index} }
   end
 end

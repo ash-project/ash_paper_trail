@@ -11,11 +11,26 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
 
   With each element of the array represented as a change:
 
+  #TODO: instead of `to:` and `from:` used `added:` and `removed:`
+  #
+
   A nil item added:
     %{ to: nil, index: %{to: index} }
 
   A nil item unchanged:
     %{ unchanged: nil, index: %{unchanged: index} }
+
+  A simple item added:
+    %{ to: value, index: %{to: index} }
+
+  A simple item removed:
+    %{ from: value, index: %{from: index} }
+
+  A simple item moved:
+    %{ unchanged: value, index: %{from: from, to: to} }
+
+  A simple item unchanged:
+    %{ unchanged: value, index: %{unchanged: index} }
 
   A union item when added:
     %{ to: %{type: type, value: value }, index: %{to: index} }
@@ -155,6 +170,11 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
     end)
   end
 
+  # Adding a simple type
+  defp item_change_map({:not_present, {index, :simple, _, _, dumped_value}}) do
+    %{added: dumped_value} |> add_index_change(nil, index)
+  end
+
   # Adding a Union type
   defp item_change_map({:not_present, {index, :union, _uid, _, dumped_value}}) do
     union_change_map({:not_present, {:non_embedded, dumped_value["type"], dumped_value["value"]}})
@@ -174,6 +194,11 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
     embedded_change_map({:not_present, {uid, dumped_value}}) |> add_index_change(nil, index)
   end
 
+  # Removing a simple type
+  defp item_change_map({{index, :simple, _, _, dumped_data}, :not_present}) do
+    %{removed: dumped_data} |> add_index_change(nil, index)
+  end
+
   # Removing a Union type
   defp item_change_map({{index, :union, _uid, _, dumped_data}, :not_present}) do
     union_change_map({{:non_embedded, dumped_data["type"], dumped_data["value"]}, :removed})
@@ -189,6 +214,13 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
   # Removing an embedded type
   defp item_change_map({{index, :embedded, uid, _, dumped_data}, :not_present}) do
     embedded_change_map({{uid, dumped_data}}) |> add_index_change(index, nil)
+  end
+
+  # Removing a simple type
+  defp item_change_map(
+         {{index, :simple, _, _, dumped_data}, {index2, :simple, _, _, dumped_data}}
+       ) do
+    %{unchanged: dumped_data} |> add_index_change(index, index2)
   end
 
   # Updating an embedded type
