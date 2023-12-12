@@ -917,7 +917,10 @@ defmodule AshPaperTrail.FullDiffTest do
 
       assert %{
                lucky_numbers: %{
-                 to: [%{index: %{from: 1, to: 0}, unchanged: 3}, %{index: %{to: 1, from: 0}, unchanged: 2}]
+                 to: [
+                   %{index: %{from: 1, to: 0}, unchanged: 3},
+                   %{index: %{to: 1, from: 0}, unchanged: 2}
+                 ]
                }
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
