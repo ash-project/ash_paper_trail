@@ -4,7 +4,9 @@ defmodule AshPaperTrail.Test.Posts.Api do
   resources do
     allow {__MODULE__, :existing_mfa, [true]}
     resource AshPaperTrail.Test.Posts.Post
+    resource AshPaperTrail.Test.Posts.Post.Version
     resource AshPaperTrail.Test.Posts.FullDiffPost
+    resource AshPaperTrail.Test.Posts.FullDiffPost.Version
   end
 
   def existing_mfa(true) do

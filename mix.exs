@@ -29,7 +29,7 @@ defmodule AshPaperTrail.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, github: "ash-project/ash", branch: "main"},
+      {:ash, "~> 2.17.10"},
       {:ex_doc, "~> 0.22", only: :dev, runtime: false},
       {:ex_check, "~> 0.12.0", only: :dev},
       {:credo, ">= 0.0.0", only: :dev, runtime: false},

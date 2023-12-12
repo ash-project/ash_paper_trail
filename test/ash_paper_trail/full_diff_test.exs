@@ -315,63 +315,27 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    # THIS TEST FAILS DUE TO A BUG IN ASH.
-    # The embedded resource with id: book_id is not being updated, but is
-    # instead being updated and destroyed.
-
-    # test "update resource by updating a union embedded resource", ctx do
-    #   res =
-    #     ctx.resource.create!(%{
-    #       source: %{type: "book", name: "The Book", page: 1}
-    #     })
-
-    #   book_id = res.source.value.id
-
-    #   ctx.resource.update!(res, %{
-    #     source: %{type: "book", name: "The Other Book", page: 12, id: book_id}
-    #   })
-
-    #   assert %{
-    #            source: %{
-    #              updated: %{
-    #                type: "book",
-    #                value: %{
-    #                  type: %{unchanged: "book"},
-    #                  name: %{to: "The Other Book", from: "The Book"},
-    #                  page: %{to: 12, from: 1}
-    #                  id: %{unchanged: ^book_id}
-    #                }
-    #              }
-    #            }
-    #          } = last_version_changes(ctx.api, ctx.version_resource)
-    # end
-
     test "update resource by updating a union embedded resource", ctx do
       res =
         ctx.resource.create!(%{
           source: %{type: "book", name: "The Book", page: 1}
         })
 
+      book_id = res.source.value.id
+
       ctx.resource.update!(res, %{
-        source: %{type: "book", name: "The Other Book", page: 12}
+        source: %{type: "book", name: "The Other Book", page: 12, id: book_id}
       })
 
       assert %{
                source: %{
-                 created: %{
+                 updated: %{
                    type: "book",
                    value: %{
-                     type: %{to: "book"},
-                     name: %{to: "The Other Book"},
-                     page: %{to: 12}
-                   }
-                 },
-                 destroyed: %{
-                   type: "book",
-                   value: %{
-                     type: %{from: "book"},
-                     name: %{from: "The Book"},
-                     page: %{from: 1}
+                     type: %{unchanged: "book"},
+                     name: %{to: "The Other Book", from: "The Book"},
+                     page: %{to: 12, from: 1},
+                     id: %{unchanged: ^book_id}
                    }
                  }
                }
@@ -750,65 +714,61 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    # THIS TEST FAILS DUE TO A BUG IN ASH.
-    # The embedded resource with id: book_id is not being updated, but is
-    # instead being updated and destroyed.
+    test "update resource by updating union embedded resource in an array", ctx do
+      res =
+        ctx.resource.create!(%{
+          subject: "subject",
+          body: "body",
+          references: [
+            %{type: "book", name: "The Book", page: 1},
+            %{type: "blog", name: "The Blog", url: "https://www.myblog.com"},
+            "https://www.just-a-link.com"
+          ]
+        })
 
-    # test "update resource by updating union embedded resource in an array", ctx do
-    #   res =
-    #     ctx.resource.create!(%{
-    #       subject: "subject",
-    #       body: "body",
-    #       references: [
-    #         %{type: "book", name: "The Book", page: 1},
-    #         %{type: "blog", name: "The Blog", url: "https://www.myblog.com"},
-    #         "https://www.just-a-link.com"
-    #       ]
-    #     })
+      %{references: [%{value: %{id: book_id}}, %{value: %{id: blog_id}}, _]} = res
 
-    #   %{references: [%{value: %{id: book_id}}, %{value: %{id: blog_id}}, _]} = res
+      ctx.resource.update!(res, %{
+        references: [
+          %{type: "blog", name: "The Blog", id: blog_id, url: "https://www.myblog.com"},
+          "https://www.just-a-link.com",
+          %{type: "book", name: "The New Book", page: 1, id: book_id}
+        ]
+      })
 
-    #   ctx.resource.update!(res, %{
-    #     references: [
-    #       %{type: "blog", name: "The Blog", id: blog_id, url: "https://www.myblog.com"},
-    #       "https://www.just-a-link.com",
-    #       %{type: "book", name: "The New Book", page: 1, id: book_id}
-    #     ]
-    #   })
-
-    #   assert %{
-    #            references: %{
-    #              to: [
-    #                %{
-    #                  unchanged: %{
-    #                    type: "blog",
-    #                    value: %{
-    #                      type: %{unchanged: "blog"},
-    #                      name: %{unchanged: "The Blog"},
-    #                      url: %{unchanged: "https://www.myblog.com"}
-    #                    }
-    #                  },
-    #                  index: %{from: 1, to: 0}
-    #                },
-    #                %{
-    #                  unchanged: %{type: "link", value: "https://www.just-a-link.com"},
-    #                  index: %{from: 2, to: 1}
-    #                },
-    #                %{
-    #                  updated: %{
-    #                    type: "book",
-    #                    value: %{
-    #                      name: %{to: "The New Book"},
-    #                      page: %{unchanged: 1},
-    #                      type: %{unchanged: "book"}
-    #                    }
-    #                  },
-    #                  index: %{from: 0, to: 2}
-    #                }
-    #              ]
-    #            }
-    #          } = last_version_changes(ctx.api, ctx.version_resource)
-    # end
+      assert %{
+               references: %{
+                 to: [
+                   %{
+                     unchanged: %{
+                       type: "blog",
+                       value: %{
+                         type: %{unchanged: "blog"},
+                         name: %{unchanged: "The Blog"},
+                         url: %{unchanged: "https://www.myblog.com"}
+                       }
+                     },
+                     index: %{from: 1, to: 0}
+                   },
+                   %{
+                     unchanged: %{type: "link", value: "https://www.just-a-link.com"},
+                     index: %{from: 2, to: 1}
+                   },
+                   %{
+                     updated: %{
+                       type: "book",
+                       value: %{
+                         name: %{to: "The New Book"},
+                         page: %{unchanged: 1},
+                         type: %{unchanged: "book"}
+                       }
+                     },
+                     index: %{from: 0, to: 2}
+                   }
+                 ]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
 
     test "update resource by destroying with a union resource to an embedded array", ctx do
       res =
