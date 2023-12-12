@@ -414,11 +414,12 @@ defmodule AshPaperTrail.FullDiffTest do
         source: %{type: "book", name: "The Book", page: 1}
       })
 
+      # TODO change how unions look
       assert %{
                source: %{
-                 created: %{
+                 to: %{
                    type: "book",
-                   value: %{
+                   created: %{
                      type: %{to: "book"},
                      name: %{to: "The Book"},
                      page: %{to: 1}
