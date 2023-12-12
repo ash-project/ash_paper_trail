@@ -168,7 +168,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
 
   # Not present to embedded
   def union_change_map({:not_present, {:embedded, type, _uid, value}}),
-    do: %{created: %{type: to_string(type), value: attribute_changes(%{}, value)}}
+    do: %{to: %{type: to_string(type), created: attribute_changes(%{}, value)}}
 
   # nil unchanged
   def union_change_map({{:non_embedded, nil, nil}, :not_present}),
@@ -182,7 +182,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   def union_change_map({{:non_embedded, nil, nil}, {:embedded, type, _uid, value}}),
     do: %{
       from: nil,
-      created: %{type: to_string(type), value: attribute_changes(%{}, value)}
+      to: %{type: to_string(type), created: attribute_changes(%{}, value)}
     }
 
   # nil to non_embedded
@@ -223,7 +223,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   def union_change_map({{:non_embedded, data_type, data}, {:embedded, value_type, _pk, value}}),
     do: %{
       from: %{type: to_string(data_type), value: data},
-      created: %{type: to_string(value_type), value: attribute_changes(%{}, value)}
+      to: %{type: to_string(value_type), created: attribute_changes(%{}, value)}
     }
 
   # embedded to not present
@@ -235,18 +235,18 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   # embedded to removed
   def union_change_map({{:embedded, type, _pk, data}, :removed}),
     do: %{
-      destroyed: %{
+      from: %{
         type: to_string(type),
-        value: attribute_changes(data, nil)
+        destroyed: attribute_changes(data, nil)
       }
     }
 
   # embedded to nil
   def union_change_map({{:embedded, type, _pk, data}, {:non_embedded, nil, nil}}),
     do: %{
-      destroyed: %{
+      from: %{
         type: to_string(type),
-        value: attribute_changes(data, nil)
+        destroyed: attribute_changes(data, nil)
       },
       to: nil
     }
@@ -254,9 +254,9 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   # embedded to non_embedded
   def union_change_map({{:embedded, data_type, _pk, data}, {:non_embedded, value_type, value}}),
     do: %{
-      destroyed: %{
+      from: %{
         type: to_string(data_type),
-        value: attribute_changes(data, nil)
+        destroyed: attribute_changes(data, nil)
       },
       to: %{type: to_string(value_type), value: value}
     }
@@ -284,10 +284,10 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
         {{:embedded, data_type, _data_pk, data}, {:embedded, value_type, _value_pk, value}}
       ),
       do: %{
-        destroyed: %{
+        from: %{
           type: to_string(data_type),
-          value: attribute_changes(data, nil)
+          destroyed: attribute_changes(data, nil)
         },
-        created: %{type: to_string(value_type), value: attribute_changes(%{}, value)}
+        to: %{type: to_string(value_type), created: attribute_changes(%{}, value)}
       }
 end

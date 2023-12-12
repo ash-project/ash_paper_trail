@@ -251,9 +251,9 @@ defmodule AshPaperTrail.FullDiffTest do
 
       assert %{
                source: %{
-                 created: %{
+                 to: %{
                    type: "book",
-                   value: %{
+                   created: %{
                      type: %{to: "book"},
                      name: %{to: "The Book"},
                      page: %{to: 1},
@@ -277,9 +277,9 @@ defmodule AshPaperTrail.FullDiffTest do
       assert %{
                source: %{
                  from: nil,
-                 created: %{
+                 to: %{
                    type: "book",
-                   value: %{
+                   created: %{
                      type: %{to: "book"},
                      name: %{to: "The Book"},
                      page: %{to: 1},
@@ -355,17 +355,17 @@ defmodule AshPaperTrail.FullDiffTest do
 
       assert %{
                source: %{
-                 destroyed: %{
+                 from: %{
                    type: "book",
-                   value: %{
+                   destroyed: %{
                      type: %{from: "book"},
                      name: %{from: "The Book"},
                      page: %{from: 1}
                    }
                  },
-                 created: %{
+                 to: %{
                    type: "blog",
-                   value: %{
+                   created: %{
                      type: %{to: "blog"},
                      name: %{to: "The Blog"},
                      url: %{to: "https://www.myblog.com"}
@@ -388,9 +388,9 @@ defmodule AshPaperTrail.FullDiffTest do
 
       assert %{
                source: %{
-                 destroyed: %{
+                 from: %{
                    type: "book",
-                   value: %{
+                   destroyed: %{
                      type: %{from: "book"},
                      name: %{from: "The Book"},
                      page: %{from: 1}
@@ -414,7 +414,6 @@ defmodule AshPaperTrail.FullDiffTest do
         source: %{type: "book", name: "The Book", page: 1}
       })
 
-      # TODO change how unions look
       assert %{
                source: %{
                  to: %{
@@ -689,16 +688,16 @@ defmodule AshPaperTrail.FullDiffTest do
                references: %{
                  to: [
                    %{
-                     created: %{
+                     to: %{
                        type: "book",
-                       value: %{name: %{to: "The Book"}, page: %{to: 1}, type: %{to: "book"}}
+                       created: %{name: %{to: "The Book"}, page: %{to: 1}, type: %{to: "book"}}
                      },
                      index: %{to: 0}
                    },
                    %{
-                     created: %{
+                     to: %{
                        type: "blog",
-                       value: %{
+                       created: %{
                          type: %{to: "blog"},
                          name: %{to: "The Blog"},
                          url: %{to: "https://www.myblog.com"}
@@ -792,9 +791,9 @@ defmodule AshPaperTrail.FullDiffTest do
                  to: [
                    %{
                      index: %{from: 0},
-                     destroyed: %{
+                     from: %{
                        type: "book",
-                       value: %{
+                       destroyed: %{
                          id: %{from: _},
                          name: %{from: "The Book"},
                          type: %{from: "book"},
@@ -804,9 +803,9 @@ defmodule AshPaperTrail.FullDiffTest do
                    },
                    %{
                      index: %{from: 1},
-                     destroyed: %{
+                     from: %{
                        type: "blog",
-                       value: %{
+                       destroyed: %{
                          id: %{from: _},
                          name: %{from: "The Blog"},
                          type: %{from: "blog"},
