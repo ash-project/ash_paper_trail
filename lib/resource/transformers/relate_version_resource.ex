@@ -16,9 +16,6 @@ defmodule AshPaperTrail.Resource.Transformers.RelateVersionResource do
          relationship
          | source: Transformer.get_persisted(dsl_state, :module)
        })}
-    else
-      other ->
-        other
     end
   end
 

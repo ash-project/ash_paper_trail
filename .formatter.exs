@@ -1,7 +1,12 @@
 spark_locals_without_parens = [
+  allow_nil?: 1,
+  api: 1,
+  attribute_type: 1,
   attributes_as_attributes: 1,
+  belongs_to_actor: 2,
   belongs_to_actor: 3,
   change_tracking_mode: 1,
+  define_attribute?: 1,
   ignore_attributes: 1,
   mixin: 1,
   on_actions: 1,

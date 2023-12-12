@@ -1,4 +1,5 @@
 defmodule AshPaperTrail.Test.Accounts.NewsFeed do
+  @moduledoc false
   use Ash.Resource,
     data_layer: Ash.DataLayer.Ets,
     validate_api_inclusion?: false

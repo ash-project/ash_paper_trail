@@ -5,7 +5,7 @@ defmodule AshPaperTrail.ChangeBuilders.Snapshot do
 
   def build_attribute_change(attribute, changeset, changes) do
     value = Ash.Changeset.get_attribute(changeset, attribute.name)
-    {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, [])
+    {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, attribute.constraints)
     Map.put(changes, attribute.name, dumped_value)
   end
 end

@@ -3,7 +3,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
   use Spark.Dsl.Transformer
   alias Spark.Dsl.Transformer
 
-  # sobelow_skip ["DOS.StringToAtom"]
+  # sobelow_skip ["DOS.StringToAtom", "RCE.CodeModule"]
   def transform(dsl_state) do
     version_module = AshPaperTrail.Resource.Info.version_resource(dsl_state)
     module = Transformer.get_persisted(dsl_state, :module)

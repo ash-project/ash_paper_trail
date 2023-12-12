@@ -31,22 +31,31 @@ defmodule AshPaperTrail.MixProject do
     [
       {:ash, "~> 2.17.10"},
       {:ex_doc, "~> 0.22", only: :dev, runtime: false},
-      {:ex_check, "~> 0.12.0", only: :dev},
+      {:ex_check, "~> 0.12", only: :dev},
       {:credo, ">= 0.0.0", only: :dev, runtime: false},
       {:dialyxir, ">= 0.0.0", only: :dev, runtime: false},
       {:sobelow, ">= 0.0.0", only: :dev, runtime: false},
-      {:git_ops, "~> 2.5.1", only: :dev},
-      {:excoveralls, "~> 0.13.0", only: [:dev, :test]}
+      {:git_ops, "~> 2.5", only: :dev},
+      {:excoveralls, "~> 0.13", only: [:dev, :test]}
     ]
   end
 
   defp aliases do
     [
       sobelow: "sobelow --skip",
-      docs: ["docs", "ash.replace_doc_links"],
+      docs: [
+        "spark.cheat_sheets",
+        "docs",
+        "spark.replace_doc_links",
+        "spark.cheat_sheets_in_search"
+      ],
       credo: "credo --strict",
       "spark.formatter":
-        "spark.formatter --extensions AshPaperTrail.Resource,AshPaperTrail.Registry"
+        "spark.formatter --extensions AshPaperTrail.Resource,AshPaperTrail.Registry,AshPaperTrail.Api",
+      "spark.cheat_sheets_in_search":
+        "spark.cheat_sheets_in_search --extensions AshPaperTrail.Resource,AshPaperTrail.Registry,AshPaperTrail.Api",
+      "spark.cheat_sheets":
+        "spark.cheat_sheets --extensions AshPaperTrail.Resource,AshPaperTrail.Registry,AshPaperTrail.Api"
     ]
   end
 end

@@ -1,4 +1,5 @@
 defmodule AshPaperTrail.Test.Posts.Api do
+  @moduledoc false
   use Ash.Api, extensions: [AshPaperTrail.Api], validate_config_inclusion?: false
 
   resources do
