@@ -822,21 +822,104 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.api, ctx.version_resource)
     end
 
-    # test "update resource by reordering with a union resource to an embedded array", ctx do
-    # end
+    test "update resource by reordering with a union resource in an embedded array", ctx do
+      res =
+        ctx.resource.create!(%{
+          subject: "subject",
+          body: "body",
+          references: [
+            %{type: "book", name: "The Book", page: 1},
+            %{type: "blog", name: "The Blog", url: "https://www.myblog.com"},
+            "https://www.just-a-link.com"
+          ]
+        })
+
+      [%{type: :book, value: %{id: book_id}}, %{type: :blog, value: %{id: blog_id}}, _link] =
+        res.references
+
+      ctx.resource.update!(res, %{
+        references: [
+          "https://www.just-a-link.com",
+          %{type: "book", name: "The Book", page: 1, id: book_id},
+          %{type: "blog", name: "The Blog", url: "https://www.myblog.com", id: blog_id}
+        ]
+      })
+
+      assert %{
+               references: %{
+                 to: [
+                   %{
+                     index: %{to: 0, from: 2},
+                     unchanged: %{type: "link", value: "https://www.just-a-link.com"}
+                   },
+                   %{
+                     index: %{to: 1, from: 0},
+                     unchanged: %{
+                       type: "book",
+                       value: %{
+                         id: %{unchanged: ^book_id},
+                         name: %{unchanged: "The Book"},
+                         type: %{unchanged: "book"},
+                         page: %{unchanged: 1}
+                       }
+                     }
+                   },
+                   %{
+                     index: %{to: 2, from: 1},
+                     unchanged: %{
+                       type: "blog",
+                       value: %{
+                         id: %{unchanged: ^blog_id},
+                         name: %{unchanged: "The Blog"},
+                         type: %{unchanged: "blog"},
+                         url: %{unchanged: "https://www.myblog.com"}
+                       }
+                     }
+                   }
+                 ]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
   end
 
   describe "change tracking a composite of simple types" do
-    #   A simple item added:
-    #   %{ to: value, index: %{to: index} }
+    test "add simple item to a composite array", ctx do
+      res = ctx.resource.create!(%{lucky_numbers: [2]})
 
-    # A simple item removed:
-    #   %{ from: value, index: %{from: index} }
+      assert %{lucky_numbers: %{to: [%{added: 2, index: %{to: 0}}]}} =
+               last_version_changes(ctx.api, ctx.version_resource)
 
-    # A simple item moved:
-    #   %{ unchanged: value, index: %{from: from, to: to} }
+      ctx.resource.update!(res, %{lucky_numbers: [2, 3]})
 
-    # A simple item unchanged:
-    #   %{ unchanged: value, index: %{unchanged: index} }
+      assert %{
+               lucky_numbers: %{
+                 to: [%{unchanged: 2, index: %{unchanged: 0}}, %{index: %{to: 1}, added: 3}]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+
+    test "remove simple item to a composite array", ctx do
+      res = ctx.resource.create!(%{lucky_numbers: [2, 3]})
+
+      ctx.resource.update!(res, %{lucky_numbers: [2]})
+
+      assert %{
+               lucky_numbers: %{
+                 to: [%{index: %{unchanged: 0}, unchanged: 2}, %{index: %{to: 1}, removed: 3}]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
+
+    test "move simple items in a composite array", ctx do
+      res = ctx.resource.create!(%{lucky_numbers: [2, 3]})
+
+      ctx.resource.update!(res, %{lucky_numbers: [3, 2]})
+
+      assert %{
+               lucky_numbers: %{
+                 to: [%{index: %{from: 1, to: 0}, unchanged: 3}, %{index: %{to: 1, from: 0}, unchanged: 2}]
+               }
+             } = last_version_changes(ctx.api, ctx.version_resource)
+    end
   end
 end
