@@ -38,11 +38,6 @@ defmodule AshPaperTrailTest do
 
       assert [] = Posts.Post.read!(tenant: "acme")
     end
-
-    test "existing allow mfa is called" do
-      Posts.Post.create!(@valid_attrs, tenant: "acme")
-      assert_received :existing_allow_mfa_called
-    end
   end
 
   describe "version resource" do

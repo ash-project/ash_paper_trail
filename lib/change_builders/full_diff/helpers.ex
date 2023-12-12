@@ -270,6 +270,15 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
       }
     }
 
+  # embedded to updated embedded
+  def union_change_map({{:embedded, type, pk, data}, {:embedded, type, pk, value}}),
+    do: %{
+      updated: %{
+        type: to_string(type),
+        value: attribute_changes(data, value)
+      }
+    }
+
   # embedded to different embedded
   def union_change_map(
         {{:embedded, data_type, _data_pk, data}, {:embedded, value_type, _value_pk, value}}
