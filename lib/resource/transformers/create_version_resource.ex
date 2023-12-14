@@ -14,6 +14,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     reference_source? = AshPaperTrail.Resource.Info.reference_source?(dsl_state)
     store_action_name? = AshPaperTrail.Resource.Info.store_action_name?(dsl_state)
     version_extensions = AshPaperTrail.Resource.Info.version_extensions(dsl_state)
+    store_inputs? = AshPaperTrail.Resource.Info.store_inputs?(dsl_state)
 
     attributes =
       dsl_state
@@ -160,6 +161,12 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
               sensitive?(attr.sensitive?)
               constraints(attr.constraints)
               always_select?(attr.always_select?)
+            end
+          end
+
+          if unquote(store_inputs?) do
+            attribute :inputs, :map do
+              sensitive? true
             end
           end
 
