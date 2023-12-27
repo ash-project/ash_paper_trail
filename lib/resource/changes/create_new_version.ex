@@ -60,11 +60,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     changes =
       resource_attributes
       |> Enum.reject(&(&1.name in to_skip))
-      |> Enum.filter(
-        &(change_tracking_mode == :snapshot ||
-            Ash.Changeset.changing_attribute?(changeset, &1.name))
-      )
-      |> Enum.reduce(%{}, &build_changes(changeset, &1, &2))
+      |> build_changes(change_tracking_mode, changeset)
 
     input =
       Enum.reduce(belongs_to_actors, input, fn belongs_to_actor, input ->
@@ -123,9 +119,15 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     }
   end
 
-  defp build_changes(changeset, attribute, changes) do
-    value = Ash.Changeset.get_attribute(changeset, attribute.name)
-    {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, attribute.constraints)
-    Map.put(changes, attribute.name, dumped_value)
+  defp build_changes(attributes, :changes_only, changeset) do
+    AshPaperTrail.ChangeBuilders.ChangesOnly.build_changes(attributes, changeset)
+  end
+
+  defp build_changes(attributes, :snapshot, changeset) do
+    AshPaperTrail.ChangeBuilders.Snapshot.build_changes(attributes, changeset)
+  end
+
+  defp build_changes(attributes, :full_diff, changeset) do
+    AshPaperTrail.ChangeBuilders.FullDiff.build_changes(attributes, changeset)
   end
 end

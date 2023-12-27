@@ -1,6 +1,6 @@
-defmodule AshPaperTrail.Test.Posts.Post do
+defmodule AshPaperTrail.Test.Posts.FullDiffPost do
   @moduledoc """
-    A page is like a post but uses the change_tracking_mode :changes_only
+    A page is like a post but uses the change_tracking_mode :full_diff
   """
 
   use Ash.Resource,
@@ -14,12 +14,7 @@ defmodule AshPaperTrail.Test.Posts.Post do
 
   paper_trail do
     attributes_as_attributes [:subject, :body, :tenant]
-    change_tracking_mode :changes_only
-    store_action_name? true
-    belongs_to_actor :user, AshPaperTrail.Test.Accounts.User, api: AshPaperTrail.Test.Accounts.Api
-
-    belongs_to_actor :news_feed, AshPaperTrail.Test.Accounts.NewsFeed,
-      api: AshPaperTrail.Test.Accounts.Api
+    change_tracking_mode :full_diff
   end
 
   code_interface do
@@ -41,24 +36,14 @@ defmodule AshPaperTrail.Test.Posts.Post do
     end
   end
 
-  multitenancy do
-    strategy :attribute
-    attribute :tenant
-    parse_attribute {AshPaperTrail.Test.Tenant, :parse_tenant, []}
-  end
-
   attributes do
     uuid_primary_key :id
 
     attribute :tenant, :string
 
-    attribute :subject, :string do
-      allow_nil? false
-    end
+    attribute :subject, :string, default: ""
 
-    attribute :body, :string do
-      allow_nil? false
-    end
+    attribute :body, :string, default: ""
 
     attribute :secret, :string do
       private? true
@@ -69,13 +54,42 @@ defmodule AshPaperTrail.Test.Posts.Post do
     end
 
     attribute :tags, {:array, AshPaperTrail.Test.Posts.Tag} do
+      allow_nil? true
+    end
+
+    attribute :moderator_reaction, AshPaperTrail.Test.Posts.Reaction do
+      allow_nil? true
+    end
+
+    attribute :reactions, {:array, AshPaperTrail.Test.Posts.Reaction} do
       allow_nil? false
       default []
+    end
+
+    attribute :source, AshPaperTrail.Test.Posts.Source do
+      allow_nil? true
+    end
+
+    attribute :references, {:array, AshPaperTrail.Test.Posts.Source} do
+      allow_nil? true
     end
 
     attribute :published, :boolean do
       allow_nil? false
       default false
+    end
+
+    attribute :seo_map, :map do
+      allow_nil? true
+    end
+
+    attribute :views, :integer do
+      allow_nil? false
+      default 0
+    end
+
+    attribute :lucky_numbers, {:array, :integer} do
+      allow_nil? true
     end
   end
 end

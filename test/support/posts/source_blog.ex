@@ -1,5 +1,4 @@
-defmodule AshPaperTrail.Test.Posts.Tag do
-  @moduledoc false
+defmodule AshPaperTrail.Test.Posts.SourceBlog do
   use Ash.Resource,
     data_layer: :embedded,
     validate_api_inclusion?: false
@@ -7,6 +6,8 @@ defmodule AshPaperTrail.Test.Posts.Tag do
   attributes do
     uuid_primary_key :id
 
-    attribute :tag, :string
+    attribute :type, :string
+    attribute :name, :string
+    attribute :url, :string
   end
 end

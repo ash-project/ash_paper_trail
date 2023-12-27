@@ -60,15 +60,28 @@ A section for configuring how versioning is derived for the resource.
       
   </td>
   <td style="text-align: left">
-    <code class="inline">:snapshot | :changes_only</code>
+    <code class="inline">:snapshot | :changes_only | :full_diff</code>
   </td>
   <td style="text-align: left">
     <code class="inline">:snapshot</code>
   </td>
   <td style="text-align: left" colspan=2>
-    The mode to use for change tracking. Valid options are `:snapshot` and `:changes_only`.
-`:snapshot` will store the entire resource in the `changes` attribute, while `:changes_only`
-will only store the attributes that have changed.
+    Changes are stored in a map attribute called `changes`.  The `change_tracking_mode` 
+determines what's stored. Valid options are `:snapshot` and `:changes_only` and `:full_diff`.
+
+:snapshot will json dump the contents of every attribute whether they changed or not.
+
+`{ subject: "new subject", body: "unchanged body", author: { name: "bob"}}`
+
+:changes_only will json dump the contents of only the attributes that have changed. 
+Note if any part of an embedded attribute and array of embedded attributes, changes then
+the entire top level attribute is dumped.
+
+`{ subject: "new subject" }`
+
+:full_diff will json dump the contents of each attribute.
+`{ subject: { from: "subject", to: "new subject" }, body: { unchanged: "unchanged_body" }}, author: { changes: { unchanged: "bob" }}`
+
 
   </td>
 </tr>
@@ -236,8 +249,7 @@ belongs_to_actor :user, MyApp.Users.User, api: MyApp.Users
 
 
 
-
-### Options
+### Arguments
 
 <table>
   <thead>
@@ -251,7 +263,7 @@ belongs_to_actor :user, MyApp.Users.User, api: MyApp.Users
   <tbody>
     <tr>
   <td style="text-align: left">
-    <a id="name-destination-name" href="#name-destination-name">
+    <a id="paper_trail-belongs_to_actor-name" href="#paper_trail-belongs_to_actor-name">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         name
       </span>
@@ -272,7 +284,41 @@ belongs_to_actor :user, MyApp.Users.User, api: MyApp.Users
 
 <tr>
   <td style="text-align: left">
-    <a id="name-destination-allow_nil?" href="#name-destination-allow_nil?">
+    <a id="paper_trail-belongs_to_actor-destination" href="#paper_trail-belongs_to_actor-destination">
+      <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
+        destination
+      </span>
+    </a>
+      
+  </td>
+  <td style="text-align: left">
+    <code class="inline">module</code>
+  </td>
+  <td style="text-align: left">
+    
+  </td>
+  <td style="text-align: left" colspan=2>
+    The resource of the actor (e.g. MyApp.Users.User)
+  </td>
+</tr>
+
+  </tbody>
+</table>
+### Options
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th colspan=2>Docs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+  <td style="text-align: left">
+    <a id="paper_trail-belongs_to_actor-allow_nil?" href="#paper_trail-belongs_to_actor-allow_nil?">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         allow_nil?
       </span>
@@ -292,7 +338,7 @@ belongs_to_actor :user, MyApp.Users.User, api: MyApp.Users
 
 <tr>
   <td style="text-align: left">
-    <a id="name-destination-api" href="#name-destination-api">
+    <a id="paper_trail-belongs_to_actor-api" href="#paper_trail-belongs_to_actor-api">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         api
       </span>
@@ -313,7 +359,7 @@ belongs_to_actor :user, MyApp.Users.User, api: MyApp.Users
 
 <tr>
   <td style="text-align: left">
-    <a id="name-destination-attribute_type" href="#name-destination-attribute_type">
+    <a id="paper_trail-belongs_to_actor-attribute_type" href="#paper_trail-belongs_to_actor-attribute_type">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         attribute_type
       </span>
@@ -333,7 +379,7 @@ belongs_to_actor :user, MyApp.Users.User, api: MyApp.Users
 
 <tr>
   <td style="text-align: left">
-    <a id="name-destination-define_attribute?" href="#name-destination-define_attribute?">
+    <a id="paper_trail-belongs_to_actor-define_attribute?" href="#paper_trail-belongs_to_actor-define_attribute?">
       <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
         define_attribute?
       </span>
@@ -348,26 +394,6 @@ belongs_to_actor :user, MyApp.Users.User, api: MyApp.Users
   </td>
   <td style="text-align: left" colspan=2>
     If set to `false` an attribute is not created on the resource for this relationship, and one must be manually added in `attributes`, invalidating many other options.
-  </td>
-</tr>
-
-<tr>
-  <td style="text-align: left">
-    <a id="name-destination-destination" href="#name-destination-destination">
-      <span style="font-family: Inconsolata, Menlo, Courier, monospace;">
-        destination
-      </span>
-    </a>
-      
-  </td>
-  <td style="text-align: left">
-    <code class="inline">module</code>
-  </td>
-  <td style="text-align: left">
-    
-  </td>
-  <td style="text-align: left" colspan=2>
-    The resource of the actor (e.g. MyApp.Users.User)
   </td>
 </tr>
 
