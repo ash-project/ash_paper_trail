@@ -1,4 +1,5 @@
 defmodule AshPaperTrail.Test.Posts.SourceBook do
+  @moduledoc false
   use Ash.Resource,
     data_layer: :embedded,
     validate_api_inclusion?: false

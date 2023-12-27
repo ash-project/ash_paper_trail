@@ -7,10 +7,10 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff do
   import AshPaperTrail.ChangeBuilders.FullDiff.Helpers
 
   alias AshPaperTrail.ChangeBuilders.FullDiff.{
-    SimpleChange,
     EmbeddedChange,
-    UnionChange,
-    ListChange
+    ListChange,
+    SimpleChange,
+    UnionChange
   }
 
   @doc """
