@@ -9,7 +9,8 @@ defmodule AshPaperTrail.Resource.Transformers.RelateVersionResource do
            Transformer.build_entity(Ash.Resource.Dsl, [:relationships], :has_many,
              name: :paper_trail_versions,
              destination: AshPaperTrail.Resource.Info.version_resource(dsl_state),
-             destination_attribute: :version_source_id
+             destination_attribute: :version_source_id,
+             sort: [version_inserted_at: :asc]
            ) do
       {:ok,
        Transformer.add_entity(dsl_state, [:relationships], %{
