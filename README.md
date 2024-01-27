@@ -45,7 +45,7 @@ resources do
 end
 ```
 
-If the Api uses a registry, consider removing the registry and going with one the options above. This third option is not deprecated and only for backwards compatibility. Add the `AshPaperTrail.Registry` extension to the registry. 
+If the Api uses a registry, consider removing the registry and going with one the options above. This third option is deprecated and only for backwards compatibility. Add the `AshPaperTrail.Registry` extension to the registry. 
 
 ```elixir
 use Ash.Registry,
