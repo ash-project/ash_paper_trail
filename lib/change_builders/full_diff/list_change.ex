@@ -99,8 +99,8 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
   defp dump_array(values, %{type: {:array, attr_type}} = attribute) do
     array_type =
       cond do
-        is_union?(attr_type) -> :union
-        is_embedded?(attr_type) -> :embedded
+        union?(attr_type) -> :union
+        embedded?(attr_type) -> :embedded
         true -> :simple
       end
 

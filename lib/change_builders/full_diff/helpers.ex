@@ -30,22 +30,22 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   def attribute_change_map({true, data, true, data}), do: %{unchanged: data}
   def attribute_change_map({true, data, true, value}), do: %{from: data, to: value}
 
-  def is_union?(type) do
+  def union?(type) do
     type == Ash.Type.Union or
       (Ash.Type.NewType.new_type?(type) && Ash.Type.NewType.subtype_of(type) == Ash.Type.Union)
   end
 
-  def is_embedded?(type), do: Ash.Type.embedded_type?(type)
+  def embedded?(type), do: Ash.Type.embedded_type?(type)
 
   def embedded_union?(type, subtype) do
-    with true <- is_union?(type),
+    with true <- union?(type),
          true <- :erlang.function_exported(type, :subtype_constraints, 0),
          subtype_constraints <- type.subtype_constraints(),
          subtypes when not is_nil(subtypes) <- Keyword.get(subtype_constraints, :types),
          subtype_config when not is_nil(subtype) <- Keyword.get(subtypes, subtype),
          subtype_config_type when not is_nil(subtype_config_type) <-
            Keyword.get(subtype_config, :type) do
-      is_embedded?(subtype_config_type)
+      embedded?(subtype_config_type)
     else
       _ -> false
     end

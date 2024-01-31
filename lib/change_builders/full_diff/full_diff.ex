@@ -40,10 +40,10 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff do
 
   defp build_attribute_change(attribute, changeset) do
     cond do
-      is_union?(attribute.type) ->
+      union?(attribute.type) ->
         UnionChange.build(attribute, changeset)
 
-      is_embedded?(attribute.type) ->
+      embedded?(attribute.type) ->
         EmbeddedChange.build(attribute, changeset)
 
       true ->
