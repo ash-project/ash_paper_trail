@@ -86,12 +86,12 @@ defmodule AshPaperTrail.MixProject do
   defp deps do
     [
       {:ash, "~> 2.18"},
-      {:ex_doc, "~> 0.22", only: :dev, runtime: false},
-      {:ex_check, "~> 0.12", only: :dev},
-      {:credo, ">= 0.0.0", only: :dev, runtime: false},
-      {:dialyxir, ">= 0.0.0", only: :dev, runtime: false},
-      {:sobelow, ">= 0.0.0", only: :dev, runtime: false},
-      {:git_ops, "~> 2.5", only: :dev},
+      {:ex_doc, "~> 0.22", only: [:dev, :test], runtime: false},
+      {:ex_check, "~> 0.12", only: [:dev, :test]},
+      {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
+      {:dialyxir, ">= 0.0.0", only: [:dev, :test], runtime: false},
+      {:sobelow, ">= 0.0.0", only: [:dev, :test], runtime: false},
+      {:git_ops, "~> 2.5", only: [:dev, :test]},
       {:excoveralls, "~> 0.13", only: [:dev, :test]}
     ]
   end
