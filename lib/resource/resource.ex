@@ -6,15 +6,15 @@ defmodule AshPaperTrail.Resource do
   @belongs_to_actor %Spark.Dsl.Entity{
     name: :belongs_to_actor,
     describe: """
-    Creates a belongs_to relationship for the actor resource. When creating a new version, if the actor on the action is set and 
-    matches the resource type, the version will be related to the actor. If your actors are polymorphic or varying types, declare a 
+    Creates a belongs_to relationship for the actor resource. When creating a new version, if the actor on the action is set and
+    matches the resource type, the version will be related to the actor. If your actors are polymorphic or varying types, declare a
     belongs_to_actor for each type.
 
     A reference is also created with `on_delete: :nilify` and `on_update: :update`
 
     If you need more complex relationships, set `define_attribute? false` and add the relationship via a mixin.
 
-    If your actor is not a resource, add a mixin and with a change for all creates that sets the actor's to one your attributes. 
+    If your actor is not a resource, add a mixin and with a change for all creates that sets the actor's to one your attributes.
     The actor on the version changeset is set.
     """,
     examples: [
@@ -43,24 +43,8 @@ defmodule AshPaperTrail.Resource do
       change_tracking_mode: [
         type: {:one_of, [:snapshot, :changes_only, :full_diff]},
         default: :snapshot,
-        doc: """
-        Changes are stored in a map attribute called `changes`.  The `change_tracking_mode` 
-        determines what's stored. Valid options are `:snapshot` and `:changes_only` and `:full_diff`.
-
-        :snapshot will json dump the contents of every attribute whether they changed or not.
-
-        `{ subject: "new subject", body: "unchanged body", author: { name: "bob"}}`
-
-        :changes_only will json dump the contents of only the attributes that have changed. 
-        Note if any part of an embedded attribute and array of embedded attributes, changes then
-        the entire top level attribute is dumped.
-
-        `{ subject: "new subject" }`
-
-        :full_diff will json dump the contents of each attribute.
-        `{ subject: { from: "subject", to: "new subject" }, body: { unchanged: "unchanged_body" }}, author: { changes: { unchanged: "bob" }}`
-
-        """
+        doc:
+          "Changes are stored in a map attribute called `changes`.  The `change_tracking_mode` determines what's stored. See the getting started guide for more."
       ],
       ignore_attributes: [
         type: {:list, :atom},
@@ -85,21 +69,14 @@ defmodule AshPaperTrail.Resource do
       reference_source?: [
         type: :boolean,
         default: true,
-        doc: """
-        Whether or not to create a foreign key reference from the version to the source.
-        This should be set to `false` if you are allowing actual deletion of data. Pair
-        this extension with `AshArchival` to get soft destroys and referential integrity.
-
-        Only relevant for resources using the AshPostgres data layer.
-        """
+        doc:
+          "Whether or not to create a foreign key reference from the version to the source.  This should be set to `false` if you are allowing actual deletion of data. Only relevant for resources using the AshPostgres data layer."
       ],
       store_action_name?: [
         type: :boolean,
         default: false,
-        doc: """
-        Whether or not to add the `version_action_name` attribute to the  version resource. This is
-        useful for auditing purposes. The `version_action_type` attribute is always stored.
-        """
+        doc:
+          "Whether or not to add the `version_action_name` attribute to the  version resource. This is useful for auditing purposes. The `version_action_type` attribute is always stored."
       ],
       version_extensions: [
         type: :keyword_list,
