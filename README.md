@@ -12,7 +12,7 @@ First, add `ash_paper_trail` dependency
 def deps do
   [
     ...
-    {:ash_paper_trail, git: "https://github.com/ash-project/ash_paper_trail"}
+    {:ash_paper_trail, "~> 0.1.0"}
   ]
 end
 ```

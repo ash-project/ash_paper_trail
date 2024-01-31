@@ -1,0 +1,43 @@
+# Change Log
+
+All notable changes to this project will be documented in this file.
+See [Conventional Commits](Https://conventionalcommits.org) for commit guidelines.
+
+<!-- changelog -->
+
+## [v0.1.0](https://github.com/ash-project/ash_paper_trail/compare/v0.1.0...v0.1.0) (2024-01-31)
+### Breaking Changes:
+
+* remove defaults for ignored_attributes (#27)
+
+
+
+### Features:
+
+* Full diff change tracking mode (#18)
+
+### Bug Fixes:
+
+* Honour upstream attribute constraints. (#31)
+
+* properly set added relationship sources
+
+* take only existing attributes for private attributes
+
+* update deps and fix introspection
+
+### Improvements:
+
+* belongs_to_actor (#16)
+
+* add store_action_name option (#14)
+
+* support embedded resources (#10)
+
+* use api resources or registry (#6)
+
+* update to latest ash and use new docs
+
+* flesh out options/tools
+
+* make it all work, add some tests

@@ -1,10 +1,12 @@
 defmodule AshPaperTrail.MixProject do
   use Mix.Project
 
+  @version "0.1.0"
+
   def project do
     [
       app: :ash_paper_trail,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.14",
       aliases: aliases(),
       start_permanent: Mix.env() == :prod,
