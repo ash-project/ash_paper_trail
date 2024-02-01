@@ -46,6 +46,14 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
     mixin = AshPaperTrail.Resource.Info.mixin(dsl_state) || AshPaperTrail.EmptyUse
 
+    first_pkey_attr = Enum.find(attributes, & &1.primary_key?)
+
+    first_pkey_attr_type =
+      first_pkey_attr && first_pkey_attr.type
+
+    first_pkey_attr_constraints =
+      first_pkey_attr && first_pkey_attr.constraints
+
     destination_attribute =
       case Ash.Resource.Info.primary_key(dsl_state) do
         [key] ->
@@ -163,6 +171,13 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
             end
           end
 
+          unless unquote(is_nil(first_pkey_attr)) do
+            attribute :version_source_id, unquote(Macro.escape(first_pkey_attr_type)) do
+              constraints unquote(Macro.escape(first_pkey_attr_constraints))
+              allow_nil? false
+            end
+          end
+
           attribute :changes, :map do
             sensitive? unquote(sensitive_changes?)
           end
@@ -180,6 +195,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
             destination_attribute(unquote(destination_attribute))
             allow_nil?(false)
             attribute_writable?(true)
+            source_attribute(:version_source_id)
           end
 
           for actor_relationship <- unquote(Macro.escape(belongs_to_actors)) do
