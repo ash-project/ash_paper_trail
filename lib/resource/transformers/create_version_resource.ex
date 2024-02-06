@@ -46,18 +46,10 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
     mixin = AshPaperTrail.Resource.Info.mixin(dsl_state) || AshPaperTrail.EmptyUse
 
-    first_pkey_attr = Enum.find(attributes, & &1.primary_key?)
-
-    first_pkey_attr_type =
-      first_pkey_attr && first_pkey_attr.type
-
-    first_pkey_attr_constraints =
-      first_pkey_attr && first_pkey_attr.constraints
-
     destination_attribute =
       case Ash.Resource.Info.primary_key(dsl_state) do
         [key] ->
-          key
+          Ash.Resource.Info.attribute(dsl_state, key)
 
         keys ->
           raise Spark.Error.DslError,
@@ -171,11 +163,9 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
             end
           end
 
-          unless unquote(is_nil(first_pkey_attr)) do
-            attribute :version_source_id, unquote(Macro.escape(first_pkey_attr_type)) do
-              constraints unquote(Macro.escape(first_pkey_attr_constraints))
-              allow_nil? false
-            end
+          attribute :version_source_id, unquote(Macro.escape(destination_attribute.type)) do
+            constraints unquote(Macro.escape(destination_attribute.constraints))
+            allow_nil? false
           end
 
           attribute :changes, :map do
@@ -192,7 +182,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
         relationships do
           belongs_to :version_source, unquote(module) do
-            destination_attribute(unquote(destination_attribute))
+            destination_attribute(unquote(destination_attribute.name))
             allow_nil?(false)
             attribute_writable?(true)
             source_attribute(:version_source_id)
