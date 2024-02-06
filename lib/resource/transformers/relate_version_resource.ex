@@ -5,11 +5,13 @@ defmodule AshPaperTrail.Resource.Transformers.RelateVersionResource do
 
   # sobelow_skip ["DOS.StringToAtom"]
   def transform(dsl_state) do
-    with {:ok, relationship} <-
+    with {:ok, source_attribute} <- validate_source_attribute(dsl_state),
+         {:ok, relationship} <-
            Transformer.build_entity(Ash.Resource.Dsl, [:relationships], :has_many,
              name: :paper_trail_versions,
              destination: AshPaperTrail.Resource.Info.version_resource(dsl_state),
-             destination_attribute: :version_source_id
+             destination_attribute: :version_source_id,
+             source_attribute: source_attribute
            ) do
       {:ok,
        Transformer.add_entity(dsl_state, [:relationships], %{
@@ -23,4 +25,15 @@ defmodule AshPaperTrail.Resource.Transformers.RelateVersionResource do
   def before?(_), do: false
 
   def after?(_), do: true
+
+  defp validate_source_attribute(dsl_state) do
+    case Ash.Resource.Info.primary_key(dsl_state) do
+      [key] ->
+        {:ok, key}
+
+      keys ->
+        {:error,
+         "Only resources with a single primary key are currently supported. Got keys #{inspect(keys)}"}
+    end
+  end
 end
