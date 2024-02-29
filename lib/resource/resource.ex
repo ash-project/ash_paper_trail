@@ -54,10 +54,10 @@ defmodule AshPaperTrail.Resource do
         """
       ],
       mixin: [
-        type: :atom,
+        type: {:or, [:atom, :mfa]},
         default: nil,
         doc: """
-        A module that defines a `using` macro that will be mixed into the version resource.
+        A module that defines a `using` macro or {module, function, arguments} tuple that will be mixed into the version resource.
         """
       ],
       on_actions: [
