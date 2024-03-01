@@ -25,7 +25,7 @@ defmodule AshPaperTrail.Resource.Info do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :ignore_attributes, [])
   end
 
-  @spec mixin(Spark.Dsl.t() | Ash.Resource.t()) :: mfa | nil
+  @spec mixin(Spark.Dsl.t() | Ash.Resource.t()) :: {module, atom, list} | module | nil
   def mixin(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :mixin, nil)
   end

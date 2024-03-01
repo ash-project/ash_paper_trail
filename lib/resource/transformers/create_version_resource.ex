@@ -44,7 +44,20 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
     multitenant? = not is_nil(Ash.Resource.Info.multitenancy_strategy(dsl_state))
 
-    mixin = AshPaperTrail.Resource.Info.mixin(dsl_state) || AshPaperTrail.EmptyUse
+    mixin =
+      case AshPaperTrail.Resource.Info.mixin(dsl_state) do
+        {m, f, a} ->
+          apply(m, f, a)
+
+        nil ->
+          quote do
+          end
+
+        module when is_atom(module) ->
+          quote do
+            use unquote(module)
+          end
+      end
 
     destination_attribute =
       case Ash.Resource.Info.primary_key(dsl_state) do
@@ -68,14 +81,6 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
               Keyword.put(version_extensions, :data_layer, data_layer)
               |> Keyword.put(:validate_api_inclusion?, false)
             )
-
-        case unquote(Macro.escape(mixin)) do
-          {m, f, a} ->
-            apply(m, f, a)
-
-          _ ->
-            nil
-        end
 
         def resource_version?, do: true
 
@@ -199,7 +204,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           end
         end
 
-        use unquote(mixin)
+        unquote(mixin)
       end,
       Macro.Env.location(__ENV__)
     )

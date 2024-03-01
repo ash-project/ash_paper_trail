@@ -90,16 +90,17 @@ Valid options are `:snapshot` and `:changes_only` and `:full_diff`.
 `{ subject: "new subject", body: "unchanged body", author: { name: "bob"}}`
 
 ### Changes Only
+
 `:changes_only` will json dump the contents of only the attributes that have changed.
 Note if any part of an embedded attribute and array of embedded attributes, changes then the entire top level attribute is dumped.
 
 `{ subject: "new subject" }`
 
 ### Full Diff
+
 `:full_diff` will json dump the contents of each attribute.
 
 `{ subject: { from: "subject", to: "new subject" }, body: { unchanged: "unchanged_body" }}, author: { changes: { unchanged: "bob" }}`
-
 
 ## Associating Versions with Actors
 
@@ -130,7 +131,7 @@ For example:
 
 ```elixir
 paper_trail do
-  mixin MyApp.MyResource.PaperTrailMixin
+  mixin {MyApp.MyResource.PaperTrailMixin, :graphql, [:my_resource_version]}
   version_extensions extensions: [AshGraphql.Resource]
 end
 ```
@@ -140,10 +141,10 @@ And then you can define a module like so:
 ```elixir
 defmodule MyApp.MyResource.PaperTrailMixin do
 
-  defmacro __using__(_) do
+  def graphql(type) do
     quote do
       graphql do
-        type :my_resource_version
+        type unquote(type)
 
         queries do
           list :list_versions, action: :read
