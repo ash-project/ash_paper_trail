@@ -12,7 +12,7 @@ First, add `ash_paper_trail` dependency
 def deps do
   [
     ...
-    {:ash_paper_trail, "~> 0.1.1"}
+    {:ash_paper_trail, "~> 0.1.2-rc.0"}
   ]
 end
 ```

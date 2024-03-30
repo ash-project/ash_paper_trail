@@ -1,7 +1,7 @@
 defmodule AshPaperTrail.MixProject do
   use Mix.Project
 
-  @version "0.1.1"
+  @version "0.1.2-rc.0"
 
   @description """
   Creates and manage a version tracking resource for a given resource.

@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.1.2-rc.0](https://github.com/ash-project/ash_paper_trail/compare/v0.1.1...v0.1.2-rc.0) (2024-03-30)
+
+
+
+
+### Improvements:
+
+* update to Ash 3.0
+
 ## [v0.1.1](https://github.com/ash-project/ash_paper_trail/compare/v0.1.0...v0.1.1) (2024-03-30)
 
 
