@@ -17,7 +17,10 @@ defmodule AshPaperTrail.Test.Posts.Post do
     attributes_as_attributes [:subject, :body, :tenant]
     change_tracking_mode :changes_only
     store_action_name? true
-    belongs_to_actor :user, AshPaperTrail.Test.Accounts.User, domain: AshPaperTrail.Test.Accounts.Domain, public?: true
+
+    belongs_to_actor :user, AshPaperTrail.Test.Accounts.User,
+      domain: AshPaperTrail.Test.Accounts.Domain,
+      public?: true
 
     belongs_to_actor :news_feed, AshPaperTrail.Test.Accounts.NewsFeed,
       public?: true,
@@ -25,7 +28,6 @@ defmodule AshPaperTrail.Test.Posts.Post do
   end
 
   code_interface do
-
     define :create
     define :read
     define :update

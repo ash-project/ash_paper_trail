@@ -19,7 +19,6 @@ defmodule AshPaperTrail.Test.Posts.FullDiffPost do
   end
 
   code_interface do
-
     define :create
     define :read
     define :update

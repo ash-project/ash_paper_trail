@@ -54,7 +54,7 @@ The actor on the version changeset is set.
 
 ### Examples
 ```
-belongs_to_actor :user, MyApp.Users.User, api: MyApp.Users
+belongs_to_actor :user, MyApp.Users.User, domain: MyApp.Users
 ```
 
 
@@ -70,8 +70,9 @@ belongs_to_actor :user, MyApp.Users.User, api: MyApp.Users
 | Name | Type | Default | Docs |
 |------|------|---------|------|
 | [`allow_nil?`](#paper_trail-belongs_to_actor-allow_nil?){: #paper_trail-belongs_to_actor-allow_nil? } | `boolean` | `true` | Whether this relationship must always be present, e.g: must be included on creation, and never removed (it may be modified). The generated attribute will not allow nil values. |
-| [`api`](#paper_trail-belongs_to_actor-api){: #paper_trail-belongs_to_actor-api } | `atom` |  | The API module to use when working with the related entity. |
+| [`domain`](#paper_trail-belongs_to_actor-domain){: #paper_trail-belongs_to_actor-domain } | `atom` |  | The Domain module to use when working with the related entity. |
 | [`attribute_type`](#paper_trail-belongs_to_actor-attribute_type){: #paper_trail-belongs_to_actor-attribute_type } | `any` | `:uuid` | The type of the generated created attribute. See `Ash.Type` for more. |
+| [`public?`](#paper_trail-belongs_to_actor-public?){: #paper_trail-belongs_to_actor-public? } | `boolean` | `false` | Whether this relationship should be included in public interfaces |
 | [`define_attribute?`](#paper_trail-belongs_to_actor-define_attribute?){: #paper_trail-belongs_to_actor-define_attribute? } | `boolean` | `true` | If set to `false` an attribute is not created on the resource for this relationship, and one must be manually added in `attributes`, invalidating many other options. |
 
 

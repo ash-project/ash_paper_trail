@@ -10,7 +10,6 @@ defmodule AshPaperTrail.Test.Accounts.User do
   end
 
   code_interface do
-
     define :create
     define :read
   end
