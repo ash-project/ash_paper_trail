@@ -508,6 +508,7 @@ defmodule AshPaperTrail.FullDiffTest do
       %{tags: [%{id: ash_id}, %{id: phx_id}]} = res
 
       ctx.resource.update!(res, %{
+        subject: "new subject!",
         tags: [%{tag: "Ash", id: ash_id}, %{tag: "Phoenix", id: phx_id}]
       })
 
