@@ -1,6 +1,6 @@
-defmodule AshPaperTrail.Test.Accounts.Api do
+defmodule AshPaperTrail.Test.Accounts.Domain do
   @moduledoc false
-  use Ash.Api, validate_config_inclusion?: false
+  use Ash.Domain, validate_config_inclusion?: false
 
   resources do
     resource AshPaperTrail.Test.Accounts.User

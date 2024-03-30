@@ -18,7 +18,7 @@ defmodule AshPaperTrail.Resource do
     The actor on the version changeset is set.
     """,
     examples: [
-      "belongs_to_actor :user, MyApp.Users.User, api: MyApp.Users"
+      "belongs_to_actor :user, MyApp.Users.User, domain: MyApp.Users"
     ],
     no_depend_modules: [:destination],
     target: AshPaperTrail.Resource.BelongsToActor,

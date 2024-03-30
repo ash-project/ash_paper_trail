@@ -3,16 +3,18 @@ defmodule AshPaperTrail.Resource.BelongsToActor do
 
   defstruct [
     :allow_nil?,
-    :api,
+    :domain,
     :attribute_type,
     :destination,
     :define_attribute?,
+    :public?,
     :name
   ]
 
   @type t :: %__MODULE__{
           allow_nil?: boolean,
-          api: atom,
+          public?: boolean,
+          domain: atom,
           attribute_type: term,
           destination: Ash.Resource.t(),
           define_attribute?: boolean,
@@ -31,16 +33,21 @@ defmodule AshPaperTrail.Resource.BelongsToActor do
       doc:
         "Whether this relationship must always be present, e.g: must be included on creation, and never removed (it may be modified). The generated attribute will not allow nil values."
     ],
-    api: [
+    domain: [
       type: :atom,
       doc: """
-      The API module to use when working with the related entity.
+      The Domain module to use when working with the related entity.
       """
     ],
     attribute_type: [
       type: :any,
       default: Application.compile_env(:ash, :default_belongs_to_type, :uuid),
       doc: "The type of the generated created attribute. See `Ash.Type` for more."
+    ],
+    public?: [
+      type: :boolean,
+      default: false,
+      doc: "Whether this relationship should be included in public interfaces"
     ],
     define_attribute?: [
       type: :boolean,

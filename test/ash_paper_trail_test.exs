@@ -7,11 +7,10 @@ defmodule AshPaperTrailTest do
   @valid_attrs %{
     subject: "subject",
     body: "body",
-    secret: "password",
     author: %{first_name: "John", last_name: "Doe"},
     tags: [%{tag: "ash"}, %{tag: "phoenix"}]
   }
-  describe "operations over resource api (without a registry)" do
+  describe "operations over resource api" do
     test "creates work as normal" do
       assert %{subject: "subject", body: "body"} =
                Posts.Post.create!(@valid_attrs, tenant: "acme")
@@ -63,7 +62,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Articles.Api.read!(Posts.Post.Version, tenant: "acme")
+               Ash.read!(Posts.Post.Version, tenant: "acme")
     end
 
     test "a new version is created on update" do
@@ -89,7 +88,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Posts.Api.read!(Posts.Post.Version, tenant: "acme")
+               Ash.read!(Posts.Post.Version, tenant: "acme")
                |> Enum.sort_by(& &1.version_inserted_at)
     end
 
@@ -100,7 +99,7 @@ defmodule AshPaperTrailTest do
       Posts.Post.publish!(post, %{}, tenant: "acme")
 
       [publish_version] =
-        Posts.Api.read!(Posts.Post.Version, tenant: "acme")
+        Ash.read!(Posts.Post.Version, tenant: "acme")
         |> Enum.filter(&(&1.version_action_type == :update))
 
       assert %{version_action_type: :update, version_action_name: :publish} = publish_version
@@ -126,7 +125,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Posts.Api.read!(Posts.Post.Version, tenant: "acme")
+               Ash.read!(Posts.Post.Version, tenant: "acme")
                |> Enum.sort_by(& &1.version_inserted_at)
     end
   end
@@ -139,7 +138,7 @@ defmodule AshPaperTrailTest do
       Posts.Post.update!(post, %{subject: "new subject"}, tenant: "acme")
 
       [updated_version] =
-        Posts.Api.read!(Posts.Post.Version, tenant: "acme")
+        Ash.read!(Posts.Post.Version, tenant: "acme")
         |> Enum.filter(&(&1.version_action_type == :update))
 
       assert [:subject] = Map.keys(updated_version.changes)
@@ -154,7 +153,7 @@ defmodule AshPaperTrailTest do
       Articles.Article.update!(article, %{subject: "new subject"})
 
       [updated_version] =
-        Articles.Api.read!(Articles.Article.Version)
+        Ash.read!(Articles.Article.Version)
         |> Enum.filter(&(&1.version_action_type == :update))
 
       assert [:body, :subject] =
@@ -172,7 +171,7 @@ defmodule AshPaperTrailTest do
         name = belongs_to_actor.name
         destination = belongs_to_actor.destination
         attribute_type = belongs_to_actor.attribute_type
-        api = belongs_to_actor.api
+        domain = belongs_to_actor.domain
         allow_nil? = belongs_to_actor.allow_nil?
 
         assert %Ash.Resource.Relationships.BelongsTo{
@@ -180,7 +179,7 @@ defmodule AshPaperTrailTest do
                  destination: ^destination,
                  attribute_type: ^attribute_type,
                  source: AshPaperTrail.Test.Posts.Post.Version,
-                 api: ^api,
+                 domain: ^domain,
                  allow_nil?: ^allow_nil?,
                  attribute_writable?: true
                } = Enum.find(relationships_on_version, &(&1.name == name))
@@ -229,35 +228,9 @@ defmodule AshPaperTrailTest do
             news_feed_id: nil
           }
         ] =
-          Posts.Api.read!(Posts.Post.Version, tenant: "acme")
+          Ash.read!(Posts.Post.Version, tenant: "acme")
           |> Enum.sort_by(& &1.version_inserted_at)
       )
-    end
-  end
-
-  describe "operations over resource with an Api Registry (Not Recommended)" do
-    test "creates work as normal" do
-      assert %{subject: "subject", body: "body"} = Articles.Article.create!("subject", "body")
-      assert [%{subject: "subject", body: "body"}] = Articles.Article.read!()
-    end
-
-    test "updates work as normal" do
-      assert %{subject: "subject", body: "body"} =
-               post = Articles.Article.create!("subject", "body")
-
-      assert %{subject: "new subject", body: "new body"} =
-               Articles.Article.update!(post, %{subject: "new subject", body: "new body"})
-
-      assert [%{subject: "new subject", body: "new body"}] = Articles.Article.read!()
-    end
-
-    test "destroys work as normal" do
-      assert %{subject: "subject", body: "body"} =
-               post = Articles.Article.create!("subject", "body")
-
-      assert :ok = Articles.Article.destroy!(post)
-
-      assert [] = Articles.Article.read!()
     end
   end
 end

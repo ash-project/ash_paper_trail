@@ -78,8 +78,10 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
       quote do
         use Ash.Resource,
             unquote(
-              Keyword.put(version_extensions, :data_layer, data_layer)
-              |> Keyword.put(:validate_api_inclusion?, false)
+              version_extensions
+              |> Keyword.put(:data_layer, data_layer)
+              |> Keyword.put(:domain, Ash.Resource.Info.domain(dsl_state))
+              |> Keyword.put(:validate_domain_inclusion?, false)
             )
 
         def resource_version?, do: true
@@ -145,11 +147,13 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           attribute :version_action_type, :atom do
             constraints(one_of: [:create, :update, :destroy])
             allow_nil?(false)
+            public? true
           end
 
           if unquote(store_action_name?) do
             attribute :version_action_name, :atom do
               allow_nil?(false)
+              public? true
             end
           end
 
@@ -158,7 +162,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
               allow_nil?(attr.allow_nil?)
               generated?(attr.generated?)
               primary_key?(attr.primary_key?)
-              private?(attr.private?)
+              public?(attr.public?)
               writable?(true)
               default(attr.default)
               description(attr.description || "")
@@ -170,10 +174,12 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
           attribute :version_source_id, unquote(Macro.escape(destination_attribute.type)) do
             constraints unquote(Macro.escape(destination_attribute.constraints))
+            public? true
             allow_nil? false
           end
 
           attribute :changes, :map do
+            public? true
             sensitive? unquote(sensitive_changes?)
           end
 
@@ -182,11 +188,13 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
         end
 
         actions do
+          default_accept :*
           defaults([:create, :read, :update])
         end
 
         relationships do
           belongs_to :version_source, unquote(module) do
+            public? true
             destination_attribute(unquote(destination_attribute.name))
             allow_nil?(false)
             attribute_writable?(true)
@@ -195,10 +203,11 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
           for actor_relationship <- unquote(Macro.escape(belongs_to_actors)) do
             belongs_to actor_relationship.name, actor_relationship.destination do
-              api(actor_relationship.api)
+              domain(actor_relationship.domain)
               define_attribute?(actor_relationship.define_attribute?)
               allow_nil?(actor_relationship.allow_nil?)
               attribute_type(actor_relationship.attribute_type)
+              public?(actor_relationship.public?)
               attribute_writable?(true)
             end
           end

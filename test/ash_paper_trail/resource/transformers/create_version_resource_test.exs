@@ -3,16 +3,23 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResourceTest do
 
   defmodule Tag do
     use Ash.Resource,
+      domain: AshPaperTrail.Resource.Transformers.CreateVersionResourceTest.Domain,
       data_layer: Ash.DataLayer.Ets,
       extensions: [AshPaperTrail.Resource],
-      validate_api_inclusion?: false
+      validate_domain_inclusion?: false
 
     ets do
       private? true
     end
 
+    actions do
+      default_accept :*
+      defaults [:create, :update, :destroy, :read]
+    end
+
     attributes do
       attribute :name, :string do
+        public? true
         allow_nil? false
         primary_key? true
         constraints max_length: 20
@@ -20,8 +27,8 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResourceTest do
     end
   end
 
-  defmodule Api do
-    use Ash.Api, extensions: [AshPaperTrail.Api], validate_config_inclusion?: false
+  defmodule Domain do
+    use Ash.Domain, extensions: [AshPaperTrail.Domain], validate_config_inclusion?: false
 
     resources do
       resource Tag

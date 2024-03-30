@@ -1,6 +1,6 @@
 spark_locals_without_parens = [
   allow_nil?: 1,
-  api: 1,
+  domain: 1,
   attribute_type: 1,
   attributes_as_attributes: 1,
   belongs_to_actor: 2,

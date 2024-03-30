@@ -1,28 +1,27 @@
 defmodule AshPaperTrail.Test.Accounts.NewsFeed do
   @moduledoc false
   use Ash.Resource,
+    domain: AshPaperTrail.Test.Accounts.Domain,
     data_layer: Ash.DataLayer.Ets,
-    validate_api_inclusion?: false
+    validate_domain_inclusion?: false
 
   ets do
     private? true
   end
 
   code_interface do
-    define_for AshPaperTrail.Test.Accounts.Api
-
     define :create
     define :read
   end
 
   actions do
-    defaults [:create, :read]
     default_accept [:organization]
+    defaults [:create, :read]
   end
 
   attributes do
-    uuid_primary_key :id
+    uuid_primary_key :id, writable?: true
 
-    attribute :organization, :string
+    attribute :organization, :string, public?: true
   end
 end

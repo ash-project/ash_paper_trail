@@ -2,13 +2,13 @@ defmodule AshPaperTrail.Test.Posts.SourceBlog do
   @moduledoc false
   use Ash.Resource,
     data_layer: :embedded,
-    validate_api_inclusion?: false
+    validate_domain_inclusion?: false
 
   attributes do
-    uuid_primary_key :id
+    uuid_primary_key :id, writable?: true
 
-    attribute :type, :string
-    attribute :name, :string
-    attribute :url, :string
+    attribute :type, :string, public?: true
+    attribute :name, :string, public?: true
+    attribute :url, :string, public?: true
   end
 end

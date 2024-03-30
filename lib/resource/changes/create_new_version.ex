@@ -87,10 +87,12 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       |> Ash.Changeset.for_create(:create, input,
         tenant: changeset.tenant,
         authorize?: false,
-        actor: actor
+        actor: actor,
+        domain: changeset.domain,
+        skip_unknown_inputs: Map.keys(input)
       )
       |> Ash.Changeset.force_change_attributes(Map.take(private, version_resource_attributes))
-      |> changeset.api.create!(return_notifications?: true)
+      |> Ash.create!(return_notifications?: true)
 
     notifications
   end

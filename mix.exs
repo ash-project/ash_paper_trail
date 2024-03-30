@@ -85,7 +85,8 @@ defmodule AshPaperTrail.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, "~> 2.18"},
+      # {:ash, "~> 3.0.0-rc.5"},
+      {:ash, path: "../ash", override: true},
       {:ex_doc, "~> 0.22", only: [:dev, :test], runtime: false},
       {:ex_check, "~> 0.12", only: [:dev, :test]},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
@@ -107,11 +108,11 @@ defmodule AshPaperTrail.MixProject do
       ],
       credo: "credo --strict",
       "spark.formatter":
-        "spark.formatter --extensions AshPaperTrail.Resource,AshPaperTrail.Registry,AshPaperTrail.Api",
+        "spark.formatter --extensions AshPaperTrail.Resource,AshPaperTrail.Domain",
       "spark.cheat_sheets_in_search":
-        "spark.cheat_sheets_in_search --extensions AshPaperTrail.Resource,AshPaperTrail.Registry,AshPaperTrail.Api",
+        "spark.cheat_sheets_in_search --extensions AshPaperTrail.Resource,AshPaperTrail.Domain",
       "spark.cheat_sheets":
-        "spark.cheat_sheets --extensions AshPaperTrail.Resource,AshPaperTrail.Registry,AshPaperTrail.Api"
+        "spark.cheat_sheets --extensions AshPaperTrail.Resource,AshPaperTrail.Domain"
     ]
   end
 end

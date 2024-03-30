@@ -4,9 +4,10 @@ defmodule AshPaperTrail.Test.Posts.FullDiffPost do
   """
 
   use Ash.Resource,
+    domain: AshPaperTrail.Test.Posts.Domain,
     data_layer: Ash.DataLayer.Ets,
     extensions: [AshPaperTrail.Resource],
-    validate_api_inclusion?: false
+    validate_domain_inclusion?: false
 
   ets do
     private? true
@@ -18,7 +19,6 @@ defmodule AshPaperTrail.Test.Posts.FullDiffPost do
   end
 
   code_interface do
-    define_for AshPaperTrail.Test.Posts.Api
 
     define :create
     define :read
@@ -28,6 +28,7 @@ defmodule AshPaperTrail.Test.Posts.FullDiffPost do
   end
 
   actions do
+    default_accept :*
     defaults [:create, :read, :update, :destroy]
 
     update :publish do
@@ -37,58 +38,66 @@ defmodule AshPaperTrail.Test.Posts.FullDiffPost do
   end
 
   attributes do
-    uuid_primary_key :id
+    uuid_primary_key :id, writable?: true
 
-    attribute :tenant, :string
+    attribute :tenant, :string, public?: true
 
-    attribute :subject, :string, default: ""
+    attribute :subject, :string, default: "", public?: true
 
-    attribute :body, :string, default: ""
+    attribute :body, :string, default: "", public?: true
 
-    attribute :secret, :string do
-      private? true
-    end
+    attribute :secret, :string, public?: true
 
     attribute :author, AshPaperTrail.Test.Posts.Author do
+      public? true
       allow_nil? true
     end
 
     attribute :tags, {:array, AshPaperTrail.Test.Posts.Tag} do
+      public? true
       allow_nil? true
     end
 
     attribute :moderator_reaction, AshPaperTrail.Test.Posts.Reaction do
+      public? true
       allow_nil? true
     end
 
     attribute :reactions, {:array, AshPaperTrail.Test.Posts.Reaction} do
+      public? true
       allow_nil? false
       default []
     end
 
     attribute :source, AshPaperTrail.Test.Posts.Source do
+      public? true
       allow_nil? true
     end
 
     attribute :references, {:array, AshPaperTrail.Test.Posts.Source} do
+      public? true
       allow_nil? true
     end
 
     attribute :published, :boolean do
+      public? true
       allow_nil? false
       default false
     end
 
     attribute :seo_map, :map do
+      public? true
       allow_nil? true
     end
 
     attribute :views, :integer do
+      public? true
       allow_nil? false
       default 0
     end
 
     attribute :lucky_numbers, {:array, :integer} do
+      public? true
       allow_nil? true
     end
   end

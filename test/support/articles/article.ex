@@ -1,9 +1,10 @@
 defmodule AshPaperTrail.Test.Articles.Article do
   @moduledoc false
   use Ash.Resource,
+    domain: AshPaperTrail.Test.Articles.Domain,
     data_layer: Ash.DataLayer.Ets,
     extensions: [AshPaperTrail.Resource],
-    validate_api_inclusion?: false
+    validate_domain_inclusion?: false
 
   ets do
     private? true
@@ -15,8 +16,6 @@ defmodule AshPaperTrail.Test.Articles.Article do
   end
 
   code_interface do
-    define_for AshPaperTrail.Test.Articles.Api
-
     define :create, args: [:subject, :body]
     define :read
     define :update
@@ -24,17 +23,20 @@ defmodule AshPaperTrail.Test.Articles.Article do
   end
 
   actions do
+    default_accept :*
     defaults [:create, :read, :update, :destroy]
   end
 
   attributes do
-    uuid_primary_key :id
+    uuid_primary_key :id, writable?: true
 
     attribute :subject, :string do
+      public? true
       allow_nil? false
     end
 
     attribute :body, :string do
+      public? true
       allow_nil? false
     end
   end
