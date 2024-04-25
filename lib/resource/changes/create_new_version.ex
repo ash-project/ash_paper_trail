@@ -97,20 +97,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     notifications
   end
 
-  defp build_inputs(
-         changeset,
-         %{private?: true} = attribute,
-         {input, private}
-       ) do
-    {input,
-     Map.put(
-       private,
-       attribute.name,
-       Ash.Changeset.get_attribute(changeset, attribute.name)
-     )}
-  end
-
-  defp build_inputs(changeset, attribute, {input, private}) do
+  defp build_inputs(changeset, %{public?: true} = attribute, {input, private}) do
     {
       Map.put(
         input,
@@ -119,6 +106,15 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       ),
       private
     }
+  end
+
+  defp build_inputs(changeset, attribute, {input, private}) do
+    {input,
+     Map.put(
+       private,
+       attribute.name,
+       Ash.Changeset.get_attribute(changeset, attribute.name)
+     )}
   end
 
   defp build_changes(attributes, :changes_only, changeset) do
