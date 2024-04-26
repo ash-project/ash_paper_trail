@@ -54,7 +54,7 @@ defmodule AshPaperTrail.Test.Posts.Post do
     uuid_primary_key :id, writable?: true
 
     attribute :tenant, :string do
-      public? true
+      allow_nil? false
     end
 
     attribute :subject, :string do
