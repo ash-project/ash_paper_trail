@@ -15,15 +15,14 @@ defmodule AshPaperTrail.Test.Posts.Post do
 
   paper_trail do
     attributes_as_attributes [:subject, :body, :tenant]
+    ignore_attributes [:inserted_at]
     change_tracking_mode :changes_only
     store_action_name? true
 
     belongs_to_actor :user, AshPaperTrail.Test.Accounts.User,
-      domain: AshPaperTrail.Test.Accounts.Domain,
-      public?: true
+      domain: AshPaperTrail.Test.Accounts.Domain
 
     belongs_to_actor :news_feed, AshPaperTrail.Test.Accounts.NewsFeed,
-      public?: true,
       domain: AshPaperTrail.Test.Accounts.Domain
   end
 
@@ -86,5 +85,7 @@ defmodule AshPaperTrail.Test.Posts.Post do
       allow_nil? false
       default false
     end
+
+    create_timestamp :inserted_at
   end
 end
