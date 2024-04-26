@@ -15,6 +15,7 @@ defmodule AshPaperTrail.Test.Posts.Post do
 
   paper_trail do
     attributes_as_attributes [:subject, :body, :tenant]
+    ignore_attributes [:inserted_at]
     change_tracking_mode :changes_only
     store_action_name? true
 
@@ -84,5 +85,7 @@ defmodule AshPaperTrail.Test.Posts.Post do
       allow_nil? false
       default false
     end
+
+    create_timestamp :inserted_at
   end
 end
