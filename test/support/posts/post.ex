@@ -19,11 +19,9 @@ defmodule AshPaperTrail.Test.Posts.Post do
     store_action_name? true
 
     belongs_to_actor :user, AshPaperTrail.Test.Accounts.User,
-      domain: AshPaperTrail.Test.Accounts.Domain,
-      public?: true
+      domain: AshPaperTrail.Test.Accounts.Domain
 
     belongs_to_actor :news_feed, AshPaperTrail.Test.Accounts.NewsFeed,
-      public?: true,
       domain: AshPaperTrail.Test.Accounts.Domain
   end
 
