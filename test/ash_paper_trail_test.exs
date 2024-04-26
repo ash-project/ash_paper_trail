@@ -12,10 +12,11 @@ defmodule AshPaperTrailTest do
   }
   describe "operations over resource api" do
     test "creates work as normal" do
-      assert %{subject: "subject", body: "body"} =
+      assert %{subject: "subject", body: "body", tenant: "acme"} =
                Posts.Post.create!(@valid_attrs, tenant: "acme")
 
-      assert [%{subject: "subject", body: "body"}] = Posts.Post.read!(tenant: "acme")
+      assert [%{subject: "subject", body: "body", tenant: "acme"}] =
+               Posts.Post.read!(tenant: "acme")
     end
 
     test "updates work as normal" do
