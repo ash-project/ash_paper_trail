@@ -20,18 +20,6 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
       |> Ash.Resource.Info.attributes()
       |> Enum.filter(&(&1.name in attributes_as_attributes))
 
-    accept =
-      [
-        :version_action_type,
-        if(store_action_name?, do: :version_action_name, else: nil),
-        attributes |> Enum.map(& &1.name),
-        :version_source_id,
-        :changes,
-        belongs_to_actors |> Enum.map(&:"#{&1.name}_id")
-      ]
-      |> List.flatten()
-      |> Enum.reject(&is_nil/1)
-
     sensitive_changes? =
       dsl_state
       |> Ash.Resource.Info.attributes()
@@ -55,6 +43,28 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
       end
 
     multitenant? = not is_nil(Ash.Resource.Info.multitenancy_strategy(dsl_state))
+
+    accept =
+      [
+        :version_action_type,
+        if(store_action_name?, do: :version_action_name, else: nil),
+        attributes |> Enum.map(& &1.name),
+        :version_source_id,
+        :changes,
+        belongs_to_actors |> Enum.map(&:"#{&1.name}_id")
+      ]
+      |> List.flatten()
+      |> Enum.reject(&is_nil/1)
+      |> then(fn accept ->
+        case multitenant? do
+          true ->
+            multitenancy_attribute = Ash.Resource.Info.multitenancy_attribute(dsl_state)
+            accept |> Enum.reject(&(&1 == multitenancy_attribute))
+
+          false ->
+            accept
+        end
+      end)
 
     mixin =
       case AshPaperTrail.Resource.Info.mixin(dsl_state) do
