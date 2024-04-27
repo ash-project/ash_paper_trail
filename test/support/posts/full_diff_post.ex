@@ -31,6 +31,7 @@ defmodule AshPaperTrail.Test.Posts.FullDiffPost do
     defaults [:create, :read, :update, :destroy]
 
     update :publish do
+      require_atomic? false
       accept []
       change set_attribute(:published, true)
     end
