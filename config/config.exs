@@ -15,6 +15,7 @@ if Mix.env() == :dev do
 end
 
 if Mix.env() == :test do
+  config :logger, level: :warning
   config :ash, :disable_async?, true
   config :ash_paper_trail, :change_tracking_mode, :changes_only
 end
