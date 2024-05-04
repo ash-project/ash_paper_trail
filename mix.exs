@@ -4,7 +4,7 @@ defmodule AshPaperTrail.MixProject do
   @version "0.1.2-rc.0"
 
   @description """
-  Creates and manage a version tracking resource for a given resource.
+  The extension for keeping an audit log of changes to your Ash resources.
   """
 
   def project do
@@ -38,12 +38,15 @@ defmodule AshPaperTrail.MixProject do
 
   defp docs do
     [
-      main: "get-started-with-paper-trail",
+      main: "readme",
       source_ref: "v#{@version}",
       logo: "logos/small-logo.png",
       extra_section: "GUIDES",
       extras: [
-        "documentation/tutorials/get-started-with-paper-trail.md"
+        {"README.md", title: "Home"},
+        "documentation/tutorials/getting-started-with-ash-paper-trail.md",
+        "documentation/dsls/DSL:-AshPaperTrail.Resource.md",
+        "documentation/dsls/DSL:-AshPaperTrail.Domain.md"
       ],
       groups_for_extras: [
         Tutorials: ~r'documentation/tutorials',

@@ -1,20 +1,20 @@
+![Logo](https://github.com/ash-project/ash/blob/main/logos/cropped-for-header-black-text.png?raw=true#gh-light-mode-only)
+![Logo](https://github.com/ash-project/ash/blob/main/logos/cropped-for-header-white-text.png?raw=true#gh-dark-mode-only)
+
+![Elixir CI](https://github.com/ash-project/ash_paper_trail/workflows/CI/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Hex version badge](https://img.shields.io/hexpm/v/ash_paper_trail.svg)](https://hex.pm/packages/ash_paper_trail)
+[![Hexdocs badge](https://img.shields.io/badge/docs-hexdocs-purple)](https://hexdocs.pm/ash_paper_trail)
+
 # AshPaperTrail
 
-Creates and manage a version tracking resource for a given resource.
+Welcome! This is the extension for keeping an audit log of changes to your [Ash](https://hexdocs.pm/ash) resources.
 
-The version resource's changes attribute will be a dumped map of the original resource. You can configure it to be a complete snapshot or just the changes.
+## Tutorials
 
-## Setup
+- [Getting Started with AshPaperTrail](documentation/tutorials/getting-started-with-ash-paper-trail.md)
 
-First, add `ash_paper_trail` dependency
+## Reference
 
-```
-def deps do
-  [
-    ...
-    {:ash_paper_trail, "~> 0.1.2-rc.0"}
-  ]
-end
-```
-
-The follow the [getting started guide](documentation/tutorials/get-started-with-paper-trail.md)
+- [AshPaperTrail.Resource DSL](documentation/dsls/DSL:-AshPaperTrail.Resource.md)
+- [AshPaperTrail.Domain DSL](documentation/dsls/DSL:-AshPaperTrail.Domain.md)

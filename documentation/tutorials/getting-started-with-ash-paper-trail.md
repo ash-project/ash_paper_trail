@@ -1,4 +1,4 @@
-# Get started with paper trail
+# Getting started with AshPaperTrail
 
 Then, add the `AshPaperTrail.Resource` extension to any resource you would like to version and configure the change tracking mode
 
