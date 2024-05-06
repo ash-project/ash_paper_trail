@@ -1,5 +1,11 @@
 # Getting started with AshPaperTrail
 
+First, add the dependency to your `mix.exs`
+
+```elixir
+{:ash_paper_trail, "~> 0.1.2-rc.0"}
+```
+
 Then, add the `AshPaperTrail.Resource` extension to any resource you would like to version and configure the change tracking mode
 
 ```elixir
