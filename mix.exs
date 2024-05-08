@@ -46,13 +46,17 @@ defmodule AshPaperTrail.MixProject do
         {"README.md", title: "Home"},
         "documentation/tutorials/getting-started-with-ash-paper-trail.md",
         "documentation/dsls/DSL:-AshPaperTrail.Resource.md",
-        "documentation/dsls/DSL:-AshPaperTrail.Domain.md"
+        "documentation/dsls/DSL:-AshPaperTrail.Domain.md",
+        "CHANGELOG.md"
       ],
       groups_for_extras: [
         Tutorials: ~r'documentation/tutorials',
         "How To": ~r'documentation/how_to',
         Topics: ~r'documentation/topics',
-        DSLs: ~r'documentation/dsls'
+        DSLs: ~r'documentation/dsls',
+        "About AshPaperTrail": [
+          "CHANGELOG.md"
+        ]
       ],
       before_closing_head_tag: fn type ->
         if type == :html do
