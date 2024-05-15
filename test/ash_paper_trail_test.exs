@@ -130,6 +130,7 @@ defmodule AshPaperTrailTest do
       } =
         Ash.bulk_update!([post], :update, %{subject: "new subject", body: "new body"},
           tenant: "acme",
+          strategy: :stream,
           return_records?: true,
           return_errors?: true
         )
@@ -150,9 +151,21 @@ defmodule AshPaperTrailTest do
                  version_action_type: :create,
                  version_action_name: :create,
                  version_source_id: ^post_id
+               },
+               %{
+                 subject: "new subject",
+                 body: "new body",
+                 changes: %{
+                   subject: "new subject",
+                   body: "new body"
+                 },
+                 version_action_type: :update,
+                 version_action_name: :update,
+                 version_source_id: ^post_id
                }
              ] =
                Ash.read!(Posts.Post.Version, tenant: "acme")
+               |> Enum.sort_by(& &1.version_action_type)
     end
 
     test "a new version is created on a bulk update with query" do
@@ -166,6 +179,7 @@ defmodule AshPaperTrailTest do
         |> Ash.Query.filter(id: post_id)
         |> Ash.bulk_update!(:update, %{subject: "new subject", body: "new body"},
           tenant: "acme",
+          strategy: :stream,
           return_records?: true,
           return_errors?: true
         )
@@ -186,9 +200,21 @@ defmodule AshPaperTrailTest do
                  version_action_type: :create,
                  version_action_name: :create,
                  version_source_id: ^post_id
+               },
+               %{
+                 subject: "new subject",
+                 body: "new body",
+                 changes: %{
+                   subject: "new subject",
+                   body: "new body"
+                 },
+                 version_action_type: :update,
+                 version_action_name: :update,
+                 version_source_id: ^post_id
                }
              ] =
                Ash.read!(Posts.Post.Version, tenant: "acme")
+               |> Enum.sort_by(& &1.version_action_type)
     end
 
     test "the action name is stored" do
@@ -234,7 +260,12 @@ defmodule AshPaperTrailTest do
 
       %Ash.BulkResult{
         status: :success
-      } = Ash.bulk_destroy!([post], :destroy, %{}, tenant: "acme", return_errors?: true)
+      } =
+        Ash.bulk_destroy!([post], :destroy, %{},
+          strategy: :stream,
+          tenant: "acme",
+          return_errors?: true
+        )
 
       assert [
                %{
@@ -263,7 +294,11 @@ defmodule AshPaperTrailTest do
       } =
         Posts.Post
         |> Ash.Query.filter(id: post_id)
-        |> Ash.bulk_destroy!(:destroy, %{}, tenant: "acme", return_errors?: true)
+        |> Ash.bulk_destroy!(:destroy, %{},
+          strategy: :stream,
+          tenant: "acme",
+          return_errors?: true
+        )
 
       assert [
                %{
