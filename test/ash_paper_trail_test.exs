@@ -1,6 +1,7 @@
 defmodule AshPaperTrailTest do
   @moduledoc false
   use ExUnit.Case
+  require Ash.Query
 
   alias AshPaperTrail.Test.{Accounts, Articles, Posts}
 
@@ -66,6 +67,33 @@ defmodule AshPaperTrailTest do
                Ash.read!(Posts.Post.Version, tenant: "acme")
     end
 
+    test "a new version is created on a bulk create" do
+      %Ash.BulkResult{
+        status: :success
+      } =
+        Ash.bulk_create!([@valid_attrs], Posts.Post, :create, tenant: "acme")
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 changes: %{
+                   subject: "subject",
+                   body: "body",
+                   author: %{first_name: "John", last_name: "Doe"},
+                   tags: [
+                     %{tag: "ash", id: _tag_id1},
+                     %{tag: "phoenix", id: _tag_id2}
+                   ]
+                 },
+                 version_action_type: :create,
+                 version_action_name: :create,
+                 version_source_id: _post_id
+               }
+             ] =
+               Ash.read!(Posts.Post.Version, tenant: "acme")
+    end
+
     test "a new version is created on update" do
       assert %{subject: "subject", body: "body", id: post_id} =
                post = Posts.Post.create!(@valid_attrs, tenant: "acme")
@@ -93,6 +121,76 @@ defmodule AshPaperTrailTest do
                |> Enum.sort_by(& &1.version_inserted_at)
     end
 
+    test "a new version is created on a bulk update with enumerable" do
+      %{subject: "subject", body: "body", id: post_id} =
+        post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      %Ash.BulkResult{
+        status: :success
+      } =
+        Ash.bulk_update!([post], :update, %{subject: "new subject", body: "new body"},
+          tenant: "acme",
+          return_records?: true,
+          return_errors?: true
+        )
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 changes: %{
+                   subject: "subject",
+                   body: "body",
+                   author: %{first_name: "John", last_name: "Doe"},
+                   tags: [
+                     %{tag: "ash", id: _tag_id1},
+                     %{tag: "phoenix", id: _tag_id2}
+                   ]
+                 },
+                 version_action_type: :create,
+                 version_action_name: :create,
+                 version_source_id: ^post_id
+               }
+             ] =
+               Ash.read!(Posts.Post.Version, tenant: "acme")
+    end
+
+    test "a new version is created on a bulk update with query" do
+      %{subject: "subject", body: "body", id: post_id} =
+        Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      %Ash.BulkResult{
+        status: :success
+      } =
+        Posts.Post
+        |> Ash.Query.filter(id: post_id)
+        |> Ash.bulk_update!(:update, %{subject: "new subject", body: "new body"},
+          tenant: "acme",
+          return_records?: true,
+          return_errors?: true
+        )
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 changes: %{
+                   subject: "subject",
+                   body: "body",
+                   author: %{first_name: "John", last_name: "Doe"},
+                   tags: [
+                     %{tag: "ash", id: _tag_id1},
+                     %{tag: "phoenix", id: _tag_id2}
+                   ]
+                 },
+                 version_action_type: :create,
+                 version_action_name: :create,
+                 version_source_id: ^post_id
+               }
+             ] =
+               Ash.read!(Posts.Post.Version, tenant: "acme")
+    end
+
     test "the action name is stored" do
       assert AshPaperTrail.Resource.Info.store_action_name?(Posts.Post) == true
 
@@ -111,6 +209,61 @@ defmodule AshPaperTrailTest do
                post = Posts.Post.create!(@valid_attrs, tenant: "acme")
 
       assert :ok = Posts.Post.destroy!(post, tenant: "acme")
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               },
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :destroy,
+                 version_source_id: ^post_id
+               }
+             ] =
+               Ash.read!(Posts.Post.Version, tenant: "acme")
+               |> Enum.sort_by(& &1.version_inserted_at)
+    end
+
+    test "a new version is created on destroy with enumerable" do
+      %{subject: "subject", body: "body", id: post_id} =
+        post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      %Ash.BulkResult{
+        status: :success
+      } = Ash.bulk_destroy!([post], :destroy, %{}, tenant: "acme", return_errors?: true)
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               },
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :destroy,
+                 version_source_id: ^post_id
+               }
+             ] =
+               Ash.read!(Posts.Post.Version, tenant: "acme")
+               |> Enum.sort_by(& &1.version_inserted_at)
+    end
+
+    test "a new version is created on destroy with query" do
+      %{subject: "subject", body: "body", id: post_id} =
+        Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      %Ash.BulkResult{
+        status: :success
+      } =
+        Posts.Post
+        |> Ash.Query.filter(id: post_id)
+        |> Ash.bulk_destroy!(:destroy, %{}, tenant: "acme", return_errors?: true)
 
       assert [
                %{
