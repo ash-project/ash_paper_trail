@@ -5,6 +5,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
   require Ash.Query
   require Logger
 
+  @impl true
   def change(changeset, _, _) do
     if changeset.action_type in [:create, :destroy] ||
          (changeset.action_type == :update &&
