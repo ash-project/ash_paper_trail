@@ -87,7 +87,6 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       version_changeset
       |> Ash.Changeset.for_create(:create, input,
         tenant: changeset.tenant,
-        authorize?: false,
         actor: actor,
         domain: changeset.domain,
         skip_unknown_inputs: Map.keys(input)
