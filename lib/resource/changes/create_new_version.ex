@@ -87,7 +87,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       version_changeset
       |> Ash.Changeset.for_create(:create, input,
         tenant: changeset.tenant,
-        authorize?: false,
+        authorize?: authorize?(changeset.domain),
         actor: actor,
         domain: changeset.domain,
         skip_unknown_inputs: Map.keys(input)
@@ -129,4 +129,6 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
   defp build_changes(attributes, :full_diff, changeset) do
     AshPaperTrail.ChangeBuilders.FullDiff.build_changes(attributes, changeset)
   end
+
+  defp authorize?(domain), do: Ash.Domain.Info.authorize(domain) == :always
 end
