@@ -85,6 +85,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
     {_, notifications} =
       version_changeset
+      |> Ash.Changeset.set_context(%{ash_paper_trail?: true})
       |> Ash.Changeset.for_create(:create, input,
         tenant: changeset.tenant,
         authorize?: authorize?(changeset.domain),
