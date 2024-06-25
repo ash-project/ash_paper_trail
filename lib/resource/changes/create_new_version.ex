@@ -16,6 +16,11 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     end
   end
 
+  @impl true
+  def atomic(changeset, opts, context) do
+    change(changeset, opts, context)
+  end
+
   defp create_new_version(changeset) do
     Ash.Changeset.after_action(changeset, fn changeset, result ->
       if changeset.action_type in [:create, :destroy] ||
