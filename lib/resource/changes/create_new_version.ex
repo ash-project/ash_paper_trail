@@ -18,7 +18,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   @impl true
   def atomic(changeset, opts, context) do
-    change(changeset, opts, context)
+    {:ok, change(changeset, opts, context)}
   end
 
   defp create_new_version(changeset) do
