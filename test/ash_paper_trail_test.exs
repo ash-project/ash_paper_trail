@@ -438,7 +438,7 @@ defmodule AshPaperTrailTest do
              post = Posts.Post.create!(@valid_attrs, tenant: "acme")
 
     Ash.bulk_destroy!([post], :destroy, %{},
-      strategy: [:stream, :atomic, :atomic_batches],
+      strategy: [:atomic],
       return_errors?: true,
       tenant: "acme"
     )

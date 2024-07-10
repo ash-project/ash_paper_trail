@@ -24,7 +24,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff do
     }
 
   """
-  def build_changes(attributes, changeset) do
+  def build_changes(attributes, changeset, _result) do
     Enum.reduce(attributes, %{}, fn attribute, changes ->
       Map.put(
         changes,

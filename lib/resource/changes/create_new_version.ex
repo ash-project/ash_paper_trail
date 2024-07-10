@@ -18,7 +18,13 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   @impl true
   def atomic(changeset, opts, context) do
-    {:ok, change(changeset, opts, context)}
+    change_tracking_mode = AshPaperTrail.Resource.Info.change_tracking_mode(changeset.resource)
+
+    if change_tracking_mode == :full_diff do
+      {:not_atomic, "Cannot perform full_diff change tracking with AshPaperTrail atomically."}
+    else
+      {:ok, change(changeset, opts, context)}
+    end
   end
 
   defp create_new_version(changeset) do
@@ -61,12 +67,12 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     {input, private} =
       resource_attributes
       |> Enum.filter(&(&1.name in attributes_as_attributes))
-      |> Enum.reduce({%{}, %{}}, &build_inputs(changeset, &1, &2))
+      |> Enum.reduce({%{}, %{}}, &build_inputs(&1, &2, result))
 
     changes =
       resource_attributes
       |> Enum.reject(&(&1.name in to_skip))
-      |> build_changes(change_tracking_mode, changeset)
+      |> build_changes(change_tracking_mode, changeset, result)
 
     input =
       Enum.reduce(belongs_to_actors, input, fn belongs_to_actor, input ->
@@ -104,36 +110,36 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     notifications
   end
 
-  defp build_inputs(changeset, %{public?: true} = attribute, {input, private}) do
+  defp build_inputs(%{public?: true} = attribute, {input, private}, result) do
     {
       Map.put(
         input,
         attribute.name,
-        Ash.Changeset.get_attribute(changeset, attribute.name)
+        Map.get(result, attribute.name)
       ),
       private
     }
   end
 
-  defp build_inputs(changeset, attribute, {input, private}) do
+  defp build_inputs(attribute, {input, private}, result) do
     {input,
      Map.put(
        private,
        attribute.name,
-       Ash.Changeset.get_attribute(changeset, attribute.name)
+       Map.get(result, attribute.name)
      )}
   end
 
-  defp build_changes(attributes, :changes_only, changeset) do
-    AshPaperTrail.ChangeBuilders.ChangesOnly.build_changes(attributes, changeset)
+  defp build_changes(attributes, :changes_only, changeset, result) do
+    AshPaperTrail.ChangeBuilders.ChangesOnly.build_changes(attributes, changeset, result)
   end
 
-  defp build_changes(attributes, :snapshot, changeset) do
-    AshPaperTrail.ChangeBuilders.Snapshot.build_changes(attributes, changeset)
+  defp build_changes(attributes, :snapshot, changeset, result) do
+    AshPaperTrail.ChangeBuilders.Snapshot.build_changes(attributes, changeset, result)
   end
 
-  defp build_changes(attributes, :full_diff, changeset) do
-    AshPaperTrail.ChangeBuilders.FullDiff.build_changes(attributes, changeset)
+  defp build_changes(attributes, :full_diff, changeset, result) do
+    AshPaperTrail.ChangeBuilders.FullDiff.build_changes(attributes, changeset, result)
   end
 
   defp authorize?(domain), do: Ash.Domain.Info.authorize(domain) == :always

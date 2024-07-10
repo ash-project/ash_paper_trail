@@ -51,7 +51,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
         attributes |> Enum.map(& &1.name),
         :version_source_id,
         :changes,
-        belongs_to_actors |> Enum.map(&:"#{&1.name}_id")
+        belongs_to_actors |> Enum.map( &String.to_existing_atom("#{&1.name}_id"))
       ]
       |> List.flatten()
       |> Enum.reject(&is_nil/1)
