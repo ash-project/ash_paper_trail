@@ -1,7 +1,7 @@
 defmodule AshPaperTrail.MixProject do
   use Mix.Project
 
-  @version "0.1.3"
+  @version "0.1.4"
 
   @description """
   The extension for keeping an audit log of changes to your Ash resources.

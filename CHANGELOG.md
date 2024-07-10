@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.1.4](https://github.com/ash-project/ash_paper_trail/compare/v0.1.3...v0.1.4) (2024-07-10)
+
+
+
+
+### Bug Fixes:
+
+* use `String.to_atom/1` instead of `to_existing_atom`
+
 ## [v0.1.3](https://github.com/ash-project/ash_paper_trail/compare/v0.1.2...v0.1.3) (2024-07-10)
 
 
