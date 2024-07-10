@@ -17,8 +17,12 @@ defmodule AshPaperTrail.Domain.Transformers.AllowResourceVersions do
           if version_resource in resources do
             {:ok, dsl_state}
           else
-            entity = Transformer.build_entity!(Ash.Domain.Dsl, [:resources], :resource, resource: version_resource)
-            {:ok, Transformer.add_entity(dsl_state, [:resources], entity) |> IO.inspect()}
+            entity =
+              Transformer.build_entity!(Ash.Domain.Dsl, [:resources], :resource,
+                resource: version_resource
+              )
+
+            {:ok, Transformer.add_entity(dsl_state, [:resources], entity)}
           end
         else
           {:ok, dsl_state}

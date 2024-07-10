@@ -18,6 +18,7 @@ defmodule AshPaperTrail.Test.Posts.Post do
     ignore_attributes [:inserted_at]
     change_tracking_mode :changes_only
     store_action_name? true
+    relationship_opts public?: true
 
     belongs_to_actor :user, AshPaperTrail.Test.Accounts.User,
       domain: AshPaperTrail.Test.Accounts.Domain

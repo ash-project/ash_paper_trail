@@ -140,6 +140,7 @@ For example:
 ```elixir
 paper_trail do
   mixin {MyApp.MyResource.PaperTrailMixin, :graphql, [:my_resource_version]}
+  relationship_opts public?: true
   version_extensions extensions: [AshGraphql.Resource]
 end
 ```

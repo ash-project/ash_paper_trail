@@ -72,6 +72,11 @@ defmodule AshPaperTrail.Resource do
         doc:
           "Whether or not to create a foreign key reference from the version to the source.  This should be set to `false` if you are allowing actual deletion of data. Only relevant for resources using the AshPostgres data layer."
       ],
+      relationship_opts: [
+        type: :keyword_list,
+        doc:
+          "Options to pass to the has_many :paper_trail_versions relationship that is created on this resource. For example, `public?: true` to expose the relationship over graphql. See `d:Ash.Resource.Dsl.relationships.has_many`."
+      ],
       store_action_name?: [
         type: :boolean,
         default: false,
