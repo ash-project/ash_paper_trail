@@ -5,6 +5,29 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.1.3](https://github.com/ash-project/ash_paper_trail/compare/v0.1.2...v0.1.3) (2024-07-10)
+
+
+
+
+### Bug Fixes:
+
+* fix bulk destroy handling
+
+* Check if `Ash.Domain` requires authorization (#82)
+
+### Improvements:
+
+* pick new values off of result
+
+* allow opts to be passed to the generated relationship (#92)
+
+* add `include_versions?` option
+
+* add `atomic/3` callback to `CreateNewVersion`
+
+* set context that can be used in policies
+
 ## [v0.1.2](https://github.com/ash-project/ash_paper_trail/compare/v0.1.2-rc.0...v0.1.2) (2024-05-10)
 
 
