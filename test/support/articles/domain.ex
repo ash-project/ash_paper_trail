@@ -3,7 +3,7 @@ defmodule AshPaperTrail.Test.Articles.Domain do
   use Ash.Domain, extensions: [AshPaperTrail.Domain], validate_config_inclusion?: false
 
   paper_trail do
-    include_versions? true
+    include_versions?(true)
   end
 
   authorization do
