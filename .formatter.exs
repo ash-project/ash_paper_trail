@@ -8,12 +8,15 @@ spark_locals_without_parens = [
   define_attribute?: 1,
   domain: 1,
   ignore_attributes: 1,
+  include_versions: 1,
   mixin: 1,
   on_actions: 1,
   public?: 1,
   reference_source?: 1,
+  relationship_opts: 1,
   store_action_name?: 1,
-  version_extensions: 1
+  version_extensions: 1,
+  version_resource: 1
 ]
 
 [

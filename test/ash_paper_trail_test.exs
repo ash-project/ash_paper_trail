@@ -319,6 +319,16 @@ defmodule AshPaperTrailTest do
     end
   end
 
+  describe "relationship_opts" do
+    test "when no relationship_opts are given the defaults are used" do
+      refute Ash.Resource.Info.relationship(Articles.Article, :paper_trail_versions).public?
+    end
+
+    test "when public?: true is given it is passed to the relationship" do
+      assert Ash.Resource.Info.relationship(Posts.Post, :paper_trail_versions).public?
+    end
+  end
+
   describe "changes in :changes_only mode" do
     test "the changes only includes attributes that changed" do
       assert AshPaperTrail.Resource.Info.change_tracking_mode(Posts.Post) == :changes_only

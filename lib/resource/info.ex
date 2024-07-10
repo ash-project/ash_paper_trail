@@ -44,6 +44,11 @@ defmodule AshPaperTrail.Resource.Info do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :reference_source?, true)
   end
 
+  @spec relationship_opts(Spark.Dsl.t() | Ash.Resource.t()) :: Keyword.t()
+  def relationship_opts(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :relationship_opts, [])
+  end
+
   @spec store_action_name?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
   def store_action_name?(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :store_action_name?, false)
