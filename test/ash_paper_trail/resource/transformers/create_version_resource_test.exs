@@ -47,7 +47,11 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResourceTest do
     end
 
     test "uses resource primary key constraints", %{version_source_id: version_source_id} do
-      assert version_source_id.constraints == [allow_empty?: false, trim?: true, max_length: 20]
+      assert Keyword.equal?(version_source_id.constraints,
+               allow_empty?: false,
+               trim?: true,
+               max_length: 20
+             )
     end
   end
 end
