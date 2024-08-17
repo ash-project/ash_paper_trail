@@ -94,6 +94,8 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
         changes: changes
       })
 
+    input = private |> Map.take(version_resource_attributes) |> Map.merge(input)
+
     {_, notifications} =
       version_changeset
       |> Ash.Changeset.set_context(%{ash_paper_trail?: true})
@@ -104,7 +106,6 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
         domain: changeset.domain,
         skip_unknown_inputs: Map.keys(input)
       )
-      |> Ash.Changeset.force_change_attributes(Map.take(private, version_resource_attributes))
       |> Ash.create!(return_notifications?: true)
 
     notifications
