@@ -112,6 +112,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           multitenancy do
             strategy(unquote(Ash.Resource.Info.multitenancy_strategy(dsl_state)))
             attribute(unquote(Ash.Resource.Info.multitenancy_attribute(dsl_state)))
+            global?(unquote(Ash.Resource.Info.multitenancy_global?(dsl_state)))
 
             parse_attribute(
               unquote(Macro.escape(Ash.Resource.Info.multitenancy_parse_attribute(dsl_state)))
