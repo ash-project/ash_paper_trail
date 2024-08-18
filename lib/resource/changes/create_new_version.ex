@@ -64,10 +64,11 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       changeset.resource
       |> Ash.Resource.Info.attributes()
 
-    {input, private} =
-      resource_attributes
-      |> Enum.filter(&(&1.name in attributes_as_attributes))
-      |> Enum.reduce({%{}, %{}}, &build_inputs(&1, &2, result))
+    input =
+      version_resource_attributes
+      |> Enum.filter(&(&1 in attributes_as_attributes))
+      |> Enum.map(&{&1, Map.get(result, &1)})
+      |> Enum.into(%{})
 
     changes =
       resource_attributes
@@ -104,30 +105,9 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
         domain: changeset.domain,
         skip_unknown_inputs: Map.keys(input)
       )
-      |> Ash.Changeset.force_change_attributes(Map.take(private, version_resource_attributes))
       |> Ash.create!(return_notifications?: true)
 
     notifications
-  end
-
-  defp build_inputs(%{public?: true} = attribute, {input, private}, result) do
-    {
-      Map.put(
-        input,
-        attribute.name,
-        Map.get(result, attribute.name)
-      ),
-      private
-    }
-  end
-
-  defp build_inputs(attribute, {input, private}, result) do
-    {input,
-     Map.put(
-       private,
-       attribute.name,
-       Map.get(result, attribute.name)
-     )}
   end
 
   defp build_changes(attributes, :changes_only, changeset, result) do
