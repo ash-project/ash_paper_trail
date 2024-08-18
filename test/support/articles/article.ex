@@ -23,7 +23,7 @@ defmodule AshPaperTrail.Test.Articles.Article do
   end
 
   actions do
-    default_accept :*
+    default_accept [:*, :body]
     defaults [:create, :read, :update, :destroy]
   end
 
@@ -36,7 +36,7 @@ defmodule AshPaperTrail.Test.Articles.Article do
     end
 
     attribute :body, :string do
-      public? true
+      public? false
       allow_nil? false
     end
   end
