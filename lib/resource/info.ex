@@ -1,6 +1,11 @@
 defmodule AshPaperTrail.Resource.Info do
   @moduledoc "Introspection helpers for `AshPaperTrail.Resource`"
 
+  @spec primary_key_type(Spark.Dsl.t() | Ash.Resource.t()) :: atom
+  def primary_key_type(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :primary_key_type, :uuid)
+  end
+
   @spec attributes_as_attributes(Spark.Dsl.t() | Ash.Resource.t()) :: [atom]
   def attributes_as_attributes(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :attributes_as_attributes, [])

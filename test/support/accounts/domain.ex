@@ -4,6 +4,7 @@ defmodule AshPaperTrail.Test.Accounts.Domain do
 
   resources do
     resource AshPaperTrail.Test.Accounts.User
+    resource AshPaperTrail.Test.Accounts.User.Version
     resource AshPaperTrail.Test.Accounts.NewsFeed
   end
 end

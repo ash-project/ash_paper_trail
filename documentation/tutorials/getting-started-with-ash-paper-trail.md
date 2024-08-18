@@ -16,6 +16,7 @@ use Ash.Resource,
   ]
 
   paper_trail do
+    primary_key_type :uuid_v7 # default is :uuid
     change_tracking_mode :changes_only # default is :snapshot
     store_action_name? true # default is false
     ignore_attributes [:inserted_at, :updated_at] # the primary keys are always ignored

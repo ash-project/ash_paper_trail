@@ -64,6 +64,7 @@ belongs_to_actor :user, MyApp.Users.User, domain: MyApp.Users
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
+| [`primary_key_type`](#paper_trail-primary_key_type){: #paper_trail-primary_key_type } | `:uuid \| :uuid_v7 \| :integer` | `:uuid` | Set the type of the column `:id`. |
 | [`name`](#paper_trail-belongs_to_actor-name){: #paper_trail-belongs_to_actor-name .spark-required} | `atom` |  | The name of the relationship to use for the actor (e.g. :user) |
 | [`destination`](#paper_trail-belongs_to_actor-destination){: #paper_trail-belongs_to_actor-destination } | `module` |  | The resource of the actor (e.g. MyApp.Users.User) |
 ### Options
