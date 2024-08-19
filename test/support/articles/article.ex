@@ -11,6 +11,7 @@ defmodule AshPaperTrail.Test.Articles.Article do
   end
 
   paper_trail do
+    primary_key_type :integer
     attributes_as_attributes [:subject, :body]
     change_tracking_mode :snapshot
   end

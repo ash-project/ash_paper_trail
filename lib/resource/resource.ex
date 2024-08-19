@@ -33,6 +33,11 @@ defmodule AshPaperTrail.Resource do
     """,
     entities: [@belongs_to_actor],
     schema: [
+      primary_key_type: [
+        type: :atom,
+        default: :uuid,
+        doc: "Set the type of the column `:id`."
+      ],
       attributes_as_attributes: [
         type: {:list, :atom},
         default: [],

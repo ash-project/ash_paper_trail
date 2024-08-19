@@ -8,6 +8,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     version_module = AshPaperTrail.Resource.Info.version_resource(dsl_state)
     module = Transformer.get_persisted(dsl_state, :module)
 
+    primary_key_type = AshPaperTrail.Resource.Info.primary_key_type(dsl_state)
     ignore_attributes = AshPaperTrail.Resource.Info.ignore_attributes(dsl_state)
     attributes_as_attributes = AshPaperTrail.Resource.Info.attributes_as_attributes(dsl_state)
     belongs_to_actors = AshPaperTrail.Resource.Info.belongs_to_actor(dsl_state)
@@ -165,7 +166,11 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
         end
 
         attributes do
-          uuid_primary_key(:id)
+          case unquote(primary_key_type) do
+            :uuid -> uuid_primary_key :id
+            :uuid_v7 -> uuid_v7_primary_key :id
+            :integer -> integer_primary_key :id
+          end
 
           attribute :version_action_type, :atom do
             constraints(one_of: [:create, :update, :destroy])

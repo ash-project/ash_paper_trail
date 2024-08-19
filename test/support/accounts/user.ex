@@ -3,20 +3,26 @@ defmodule AshPaperTrail.Test.Accounts.User do
   use Ash.Resource,
     domain: AshPaperTrail.Test.Accounts.Domain,
     data_layer: Ash.DataLayer.Ets,
+    extensions: [AshPaperTrail.Resource],
     validate_domain_inclusion?: false
 
   ets do
     private? true
   end
 
+  paper_trail do
+    primary_key_type :uuid_v7
+  end
+
   code_interface do
     define :create
     define :read
+    define :update
   end
 
   actions do
     default_accept [:name]
-    defaults [:create, :read]
+    defaults [:create, :read, :update]
   end
 
   attributes do

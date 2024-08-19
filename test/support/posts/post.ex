@@ -14,6 +14,7 @@ defmodule AshPaperTrail.Test.Posts.Post do
   end
 
   paper_trail do
+    primary_key_type :uuid
     attributes_as_attributes [:subject, :body, :tenant]
     ignore_attributes [:inserted_at]
     change_tracking_mode :changes_only
