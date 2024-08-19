@@ -21,6 +21,7 @@ A section for configuring how versioning is derived for the resource.
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
+| [`primary_key_type`](#paper_trail-primary_key_type){: #paper_trail-primary_key_type } | `atom` | `:uuid` | Set the type of the column `:id`. |
 | [`attributes_as_attributes`](#paper_trail-attributes_as_attributes){: #paper_trail-attributes_as_attributes } | `list(atom)` | `[]` | A set of attributes that should be set as attributes on the version resource, instead of stored in the freeform `changes` map attribute. |
 | [`change_tracking_mode`](#paper_trail-change_tracking_mode){: #paper_trail-change_tracking_mode } | `:snapshot \| :changes_only \| :full_diff` | `:snapshot` | Changes are stored in a map attribute called `changes`.  The `change_tracking_mode` determines what's stored. See the getting started guide for more. |
 | [`ignore_attributes`](#paper_trail-ignore_attributes){: #paper_trail-ignore_attributes } | `list(atom)` | `[]` | A list of attributes that should be ignored. Typically you'll want to ignore your timestamps. The primary key is always ignored. |
@@ -64,7 +65,6 @@ belongs_to_actor :user, MyApp.Users.User, domain: MyApp.Users
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
-| [`primary_key_type`](#paper_trail-primary_key_type){: #paper_trail-primary_key_type } | `:uuid \| :uuid_v7 \| :integer` | `:uuid` | Set the type of the column `:id`. |
 | [`name`](#paper_trail-belongs_to_actor-name){: #paper_trail-belongs_to_actor-name .spark-required} | `atom` |  | The name of the relationship to use for the actor (e.g. :user) |
 | [`destination`](#paper_trail-belongs_to_actor-destination){: #paper_trail-belongs_to_actor-destination } | `module` |  | The resource of the actor (e.g. MyApp.Users.User) |
 ### Options
