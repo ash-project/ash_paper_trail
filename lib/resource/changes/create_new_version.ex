@@ -7,9 +7,10 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   @impl true
   def change(changeset, _, _) do
-    if changeset.action_type in [:create, :destroy] ||
-         (changeset.action_type == :update &&
-            changeset.action.name in AshPaperTrail.Resource.Info.on_actions(changeset.resource)) do
+    if changeset.action.name not in AshPaperTrail.Resource.Info.ignore_actions(changeset.resource) &&
+         (changeset.action_type in [:create, :destroy] ||
+            (changeset.action_type == :update &&
+               changeset.action.name in AshPaperTrail.Resource.Info.on_actions(changeset.resource))) do
       create_new_version(changeset)
     else
       changeset

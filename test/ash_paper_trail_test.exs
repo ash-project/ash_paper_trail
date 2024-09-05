@@ -508,4 +508,25 @@ defmodule AshPaperTrailTest do
       assert is_nil(updated_version.id)
     end
   end
+
+  describe "ignore_actions" do
+    test "no new version is created on destroy" do
+      assert %{subject: "subject", body: "body"} =
+               article = Articles.Article.create!("subject", "body")
+
+      assert :ok = Articles.Article.destroy!(article)
+
+      versions = Ash.read!(Articles.Article.Version) |> Enum.sort_by(& &1.version_inserted_at)
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :create
+               }
+             ] = versions
+
+      refute Enum.any?(versions, &(&1.version_action_type == :destroy))
+    end
+  end
 end

@@ -13,6 +13,7 @@ defmodule AshPaperTrail.Test.Articles.Article do
   paper_trail do
     primary_key_type :integer
     attributes_as_attributes [:subject, :body]
+    ignore_actions [:destroy]
     change_tracking_mode :snapshot
   end
 
