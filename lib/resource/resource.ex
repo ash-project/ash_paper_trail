@@ -58,6 +58,13 @@ defmodule AshPaperTrail.Resource do
         A list of attributes that should be ignored. Typically you'll want to ignore your timestamps. The primary key is always ignored.
         """
       ],
+      ignore_actions: [
+        type: {:list, :atom},
+        default: [],
+        doc: """
+        A list of actions that should not produce new versions. By default, no actions are ignored.
+        """
+      ],
       mixin: [
         type: {:or, [:atom, :mfa]},
         default: nil,

@@ -7,6 +7,7 @@ spark_locals_without_parens = [
   change_tracking_mode: 1,
   define_attribute?: 1,
   domain: 1,
+  ignore_actions: 1,
   ignore_attributes: 1,
   include_versions?: 1,
   mixin: 1,

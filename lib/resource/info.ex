@@ -30,6 +30,11 @@ defmodule AshPaperTrail.Resource.Info do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :ignore_attributes, [])
   end
 
+  @spec ignore_actions(Spark.Dsl.t() | Ash.Resource.t()) :: [atom]
+  def ignore_actions(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :ignore_actions, [])
+  end
+
   @spec mixin(Spark.Dsl.t() | Ash.Resource.t()) :: {module, atom, list} | module | nil
   def mixin(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :mixin, nil)

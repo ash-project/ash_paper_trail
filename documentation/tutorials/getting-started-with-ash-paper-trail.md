@@ -20,6 +20,7 @@ use Ash.Resource,
     change_tracking_mode :changes_only # default is :snapshot
     store_action_name? true # default is false
     ignore_attributes [:inserted_at, :updated_at] # the primary keys are always ignored
+    ignore_actions [:destroy] # default is []
   end
 ```
 
