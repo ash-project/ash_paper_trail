@@ -36,6 +36,13 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
         {false, nil, nil}
       end
 
+    {sqlite?, table, repo} =
+      if data_layer == AshSqlite.DataLayer do
+        {true, apply(AshSqlite.DataLayer.Info, :table, [dsl_state]), apply(AshSqlite.DataLayer.Info, :repo, [dsl_state])}
+      else
+        {false, nil, nil}
+      end
+
     {ets?, private?} =
       if data_layer == Ash.DataLayer.Ets do
         {true, Ash.DataLayer.Ets.Info.private?(dsl_state)}
@@ -130,6 +137,36 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           Code.eval_quoted(
             quote do
               postgres do
+                table(unquote(table) <> "_versions")
+                repo(unquote(repo))
+
+                references do
+                  unless unquote(reference_source?) do
+                    reference(:version_source, ignore?: true)
+                  end
+
+                  for actor_relationship <- unquote(Macro.escape(belongs_to_actors)) do
+                    unless actor_relationship.define_attribute? do
+                      reference(actor_relationship.name, on_delete: :nothing, on_update: :update)
+                    end
+                  end
+                end
+              end
+            end,
+            [],
+            __ENV__
+          )
+        end
+
+        if unquote(sqlite?) do
+          table = unquote(table)
+          repo = unquote(repo)
+          reference_source? = unquote(reference_source?)
+          belongs_to_actors = unquote(Macro.escape(belongs_to_actors))
+
+          Code.eval_quoted(
+            quote do
+              sqlite do
                 table(unquote(table) <> "_versions")
                 repo(unquote(repo))
 
