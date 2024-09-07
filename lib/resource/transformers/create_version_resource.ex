@@ -29,25 +29,21 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
     data_layer = version_extensions[:data_layer] || Ash.DataLayer.data_layer(dsl_state)
 
-    {postgres?, table, repo} =
-      if data_layer == AshPostgres.DataLayer do
-        {true, apply(AshPostgres, :table, [dsl_state]), apply(AshPostgres, :repo, [dsl_state])}
-      else
-        {false, nil, nil}
-      end
+    {data_layer_type, table, repo, private?} =
+      case data_layer do
+        AshPostgres.DataLayer ->
+          {:postgres, apply(AshPostgres, :table, [dsl_state]),
+           apply(AshPostgres, :repo, [dsl_state]), nil}
 
-    {sqlite?, table, repo} =
-      if data_layer == AshSqlite.DataLayer do
-        {true, apply(AshSqlite.DataLayer.Info, :table, [dsl_state]), apply(AshSqlite.DataLayer.Info, :repo, [dsl_state])}
-      else
-        {false, nil, nil}
-      end
+        AshSqlite.DataLayer ->
+          {:sqlite, apply(AshSqlite.DataLayer.Info, :table, [dsl_state]),
+           apply(AshSqlite.DataLayer.Info, :repo, [dsl_state]), nil}
 
-    {ets?, private?} =
-      if data_layer == Ash.DataLayer.Ets do
-        {true, Ash.DataLayer.Ets.Info.private?(dsl_state)}
-      else
-        {false, nil}
+        Ash.DataLayer.Ets ->
+          {:ets, nil, nil, Ash.DataLayer.Ets.Info.private?(dsl_state)}
+
+        _ ->
+          {nil, nil, nil, nil}
       end
 
     multitenant? = not is_nil(Ash.Resource.Info.multitenancy_strategy(dsl_state))
@@ -128,7 +124,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           end
         end
 
-        if unquote(postgres?) do
+        if unquote(data_layer_type == :postgres) do
           table = unquote(table)
           repo = unquote(repo)
           reference_source? = unquote(reference_source?)
@@ -158,7 +154,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           )
         end
 
-        if unquote(sqlite?) do
+        if unquote(data_layer_type == :sqlite) do
           table = unquote(table)
           repo = unquote(repo)
           reference_source? = unquote(reference_source?)
@@ -188,7 +184,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           )
         end
 
-        if unquote(ets?) do
+        if unquote(data_layer_type == :ets) do
           private? = unquote(private?)
 
           Code.eval_quoted(
