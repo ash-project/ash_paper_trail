@@ -29,18 +29,18 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
     data_layer = version_extensions[:data_layer] || Ash.DataLayer.data_layer(dsl_state)
 
-    {postgres?, table, repo} =
-      if data_layer == AshPostgres.DataLayer do
-        {true, apply(AshPostgres, :table, [dsl_state]), apply(AshPostgres, :repo, [dsl_state])}
-      else
-        {false, nil, nil}
-      end
+    {postgres?, sqlite?, table, repo} =
+      cond do
+        data_layer == AshPostgres.DataLayer ->
+          {true, false, apply(AshPostgres, :table, [dsl_state]),
+           apply(AshPostgres, :repo, [dsl_state])}
 
-    {sqlite?, table, repo} =
-      if data_layer == AshSqlite.DataLayer do
-        {true, apply(AshSqlite.DataLayer.Info, :table, [dsl_state]), apply(AshSqlite.DataLayer.Info, :repo, [dsl_state])}
-      else
-        {false, nil, nil}
+        data_layer == AshSqlite.DataLayer ->
+          {false, true, apply(AshSqlite.DataLayer.Info, :table, [dsl_state]),
+           apply(AshSqlite.DataLayer.Info, :repo, [dsl_state])}
+
+        true ->
+          {false, false, nil, nil}
       end
 
     {ets?, private?} =
