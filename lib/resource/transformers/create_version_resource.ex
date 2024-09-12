@@ -146,7 +146,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
                   end
 
                   for actor_relationship <- unquote(Macro.escape(belongs_to_actors)) do
-                    unless actor_relationship.define_attribute? do
+                    if actor_relationship.define_attribute? do
                       reference(actor_relationship.name, on_delete: :nothing, on_update: :update)
                     end
                   end
@@ -176,7 +176,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
                   end
 
                   for actor_relationship <- unquote(Macro.escape(belongs_to_actors)) do
-                    unless actor_relationship.define_attribute? do
+                    if actor_relationship.define_attribute? do
                       reference(actor_relationship.name, on_delete: :nothing, on_update: :update)
                     end
                   end
