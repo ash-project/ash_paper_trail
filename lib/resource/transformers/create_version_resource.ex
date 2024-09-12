@@ -48,7 +48,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
     data_layer = version_extensions[:data_layer] || Ash.DataLayer.data_layer(dsl_state)
 
-    {postgres?, sqlite?, table, repo} =
+    {postgres?, sqlite?, parent_table, repo} =
       cond do
         data_layer == AshPostgres.DataLayer ->
           {true, false, apply(AshPostgres, :table, [dsl_state]),
@@ -60,6 +60,13 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
         true ->
           {false, false, nil, nil}
+      end
+
+    table =
+      case {Transformer.get_option(dsl_state, [:paper_trail], :table_name), parent_table} do
+        {table, _} when is_binary(table) -> table
+        {_, table} when is_binary(table) -> "#{table}_versions"
+        _ -> nil
       end
 
     {ets?, private?} =
@@ -157,7 +164,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           Code.eval_quoted(
             quote do
               postgres do
-                table(unquote(table) <> "_versions")
+                table(unquote(table))
                 repo(unquote(repo))
 
                 references do
@@ -187,7 +194,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           Code.eval_quoted(
             quote do
               sqlite do
-                table(unquote(table) <> "_versions")
+                table(unquote(table))
                 repo(unquote(repo))
 
                 references do

@@ -112,6 +112,13 @@ defmodule AshPaperTrail.Resource do
         doc: """
         Extensions that should be used by the version resource. For example: `extensions: [AshGraphql.Resource], notifier: [Ash.Notifiers.PubSub]`
         """
+      ],
+      table_name: [
+        type: :string,
+        required: false,
+        doc: """
+        The table to use to store versions if using a SQL-based data layer, derived if not set
+        """
       ]
     ]
   }
