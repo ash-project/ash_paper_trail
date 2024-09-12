@@ -93,6 +93,8 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
         version_source_id: Map.get(result, hd(Ash.Resource.Info.primary_key(changeset.resource))),
         version_action_type: changeset.action.type,
         version_action_name: changeset.action.name,
+        version_resource_identifier:
+          AshPaperTrail.Resource.Info.resource_identifier(changeset.resource),
         changes: changes
       })
 

@@ -16,7 +16,9 @@ spark_locals_without_parens = [
   public?: 1,
   reference_source?: 1,
   relationship_opts: 1,
+  resource_identifier: 1,
   store_action_name?: 1,
+  store_resource_identifier?: 1,
   version_extensions: 1
 ]
 

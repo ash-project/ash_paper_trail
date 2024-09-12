@@ -64,6 +64,16 @@ defmodule AshPaperTrail.Resource.Info do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :store_action_name?, false)
   end
 
+  @spec store_resource_identifier?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
+  def store_resource_identifier?(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :store_resource_identifier?, false)
+  end
+
+  @spec resource_identifier(Spark.Dsl.t() | Ash.Resource.t()) :: atom
+  def resource_identifier(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :resource_identifier)
+  end
+
   @spec version_extensions(Spark.Dsl.t() | Ash.Resource.t()) :: Keyword.t()
   def version_extensions(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :version_extensions, [])
