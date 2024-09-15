@@ -5,6 +5,39 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.2.0](https://github.com/ash-project/ash_paper_trail/compare/v0.1.4...v0.2.0) (2024-09-15)
+
+
+
+
+### Features:
+
+* Add `table_name` and `store_resource_name?` DSL options. (#110)
+
+* Add `store_resource_identifier?` DSL option.
+
+* Add `table_name` DSL option.
+
+* ignore_actions: allow to ignore actions by configuration (#107)
+
+### Bug Fixes:
+
+* define_attribute?: invert if logic (#113)
+
+* Regenerate .formatter.exs
+
+* simplify setting attributes to avoid issue w/ private attributes returning errors (#102)
+
+* small test fix keyword equality (#99)
+
+### Improvements:
+
+* Add builtin support for ash_sqlite. (#108)
+
+* add `:primary_key_type` option
+
+* add global? to multitenancy section (#101)
+
 ## [v0.1.4](https://github.com/ash-project/ash_paper_trail/compare/v0.1.3...v0.1.4) (2024-07-10)
 
 
