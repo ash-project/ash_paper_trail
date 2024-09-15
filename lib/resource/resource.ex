@@ -95,11 +95,29 @@ defmodule AshPaperTrail.Resource do
         doc:
           "Whether or not to add the `version_action_name` attribute to the  version resource. This is useful for auditing purposes. The `version_action_type` attribute is always stored."
       ],
+      store_resource_identifier?: [
+        type: :boolean,
+        default: false,
+        doc:
+          "Whether or not to add the `version_resource_identifier` attribute to the version resource. This is useful for auditing purposes."
+      ],
+      resource_identifier: [
+        type: :atom,
+        doc:
+          "A name to use for this resource in the `version_resource_identifier`. Defaults to `Ash.Resource.Info.short_name/1`."
+      ],
       version_extensions: [
         type: :keyword_list,
         default: [],
         doc: """
         Extensions that should be used by the version resource. For example: `extensions: [AshGraphql.Resource], notifier: [Ash.Notifiers.PubSub]`
+        """
+      ],
+      table_name: [
+        type: :string,
+        required: false,
+        doc: """
+        The table to use to store versions if using a SQL-based data layer, derived if not set
         """
       ]
     ]

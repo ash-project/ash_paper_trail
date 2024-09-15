@@ -14,7 +14,26 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     belongs_to_actors = AshPaperTrail.Resource.Info.belongs_to_actor(dsl_state)
     reference_source? = AshPaperTrail.Resource.Info.reference_source?(dsl_state)
     store_action_name? = AshPaperTrail.Resource.Info.store_action_name?(dsl_state)
+    store_resource_identifier? = AshPaperTrail.Resource.Info.store_resource_identifier?(dsl_state)
     version_extensions = AshPaperTrail.Resource.Info.version_extensions(dsl_state)
+
+    resource_identifier =
+      if store_resource_identifier? do
+        AshPaperTrail.Resource.Info.resource_identifier(dsl_state) ||
+          Ash.Resource.Info.short_name(dsl_state)
+      end
+
+    dsl_state =
+      if resource_identifier do
+        Transformer.set_option(
+          dsl_state,
+          [:paper_trail],
+          :resource_identifier,
+          resource_identifier
+        )
+      else
+        dsl_state
+      end
 
     attributes =
       dsl_state
@@ -29,7 +48,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
     data_layer = version_extensions[:data_layer] || Ash.DataLayer.data_layer(dsl_state)
 
-    {postgres?, sqlite?, table, repo} =
+    {postgres?, sqlite?, parent_table, repo} =
       cond do
         data_layer == AshPostgres.DataLayer ->
           {true, false, apply(AshPostgres, :table, [dsl_state]),
@@ -41,6 +60,13 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
         true ->
           {false, false, nil, nil}
+      end
+
+    table =
+      case {Transformer.get_option(dsl_state, [:paper_trail], :table_name), parent_table} do
+        {table, _} when is_binary(table) -> table
+        {_, table} when is_binary(table) -> "#{table}_versions"
+        _ -> nil
       end
 
     {ets?, private?} =
@@ -56,6 +82,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
       [
         :version_action_type,
         if(store_action_name?, do: :version_action_name, else: nil),
+        if(store_resource_identifier?, do: :version_resource_identifier, else: nil),
         attributes |> Enum.map(& &1.name),
         :version_source_id,
         :changes,
@@ -137,7 +164,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           Code.eval_quoted(
             quote do
               postgres do
-                table(unquote(table) <> "_versions")
+                table(unquote(table))
                 repo(unquote(repo))
 
                 references do
@@ -167,7 +194,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           Code.eval_quoted(
             quote do
               sqlite do
-                table(unquote(table) <> "_versions")
+                table(unquote(table))
                 repo(unquote(repo))
 
                 references do
@@ -218,6 +245,13 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           if unquote(store_action_name?) do
             attribute :version_action_name, :atom do
               allow_nil?(false)
+              public? true
+            end
+          end
+
+          if unquote(store_resource_identifier?) do
+            attribute :version_resource_identifier, :atom do
+              allow_nil? false
               public? true
             end
           end
@@ -278,6 +312,12 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
               public?(actor_relationship.public?)
               attribute_writable?(true)
             end
+          end
+        end
+
+        if unquote(store_resource_identifier?) do
+          resource do
+            base_filter version_resource_name: unquote(resource_identifier)
           end
         end
 
