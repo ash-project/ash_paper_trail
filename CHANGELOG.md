@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.2.1](https://github.com/ash-project/ash_paper_trail/compare/v0.2.0...v0.2.1) (2024-09-16)
+
+
+
+
+### Bug Fixes:
+
+* incorrectly applied base filter. (#114)
+
 ## [v0.2.0](https://github.com/ash-project/ash_paper_trail/compare/v0.1.4...v0.2.0) (2024-09-15)
 
 
