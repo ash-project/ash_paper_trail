@@ -317,7 +317,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
         if unquote(store_resource_identifier?) do
           resource do
-            base_filter version_resource_name: unquote(resource_identifier)
+            base_filter version_resource_identifier: unquote(resource_identifier)
           end
         end
 
