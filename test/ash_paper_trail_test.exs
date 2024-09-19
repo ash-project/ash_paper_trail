@@ -529,4 +529,34 @@ defmodule AshPaperTrailTest do
       refute Enum.any?(versions, &(&1.version_action_type == :destroy))
     end
   end
+
+  describe "sensitive_attributes" do
+    test "when sensitive_attributes is set to display, they are versioned" do
+      post =
+        Posts.Post
+        |> Ash.Changeset.for_create(:create, @valid_attrs)
+        |> Ash.Changeset.force_change_attribute(:secret, "top secret data")
+        |> Ash.Changeset.set_context(%{sensitive_attributes: :display})
+        |> Ash.create!(tenant: "acme", load: [:paper_trail_versions])
+
+      assert [version] = post.paper_trail_versions
+
+      assert version.secret == "top secret data"
+      assert version.changes[:secret] == "top secret data"
+    end
+
+    test "when sensitive_attributes are redacted, they are" do
+      post =
+        Posts.Post
+        |> Ash.Changeset.for_create(:create, @valid_attrs)
+        |> Ash.Changeset.force_change_attribute(:secret, "top secret data")
+        |> Ash.Changeset.set_context(%{sensitive_attributes: :redact})
+        |> Ash.create!(tenant: "acme", load: [:paper_trail_versions])
+
+      assert [version] = post.paper_trail_versions
+
+      refute version.secret
+      assert version.changes[:secret] == "REDACTED"
+    end
+  end
 end

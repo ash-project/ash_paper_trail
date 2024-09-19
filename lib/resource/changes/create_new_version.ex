@@ -61,20 +61,27 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
     actor = changeset.context[:private][:actor]
 
+    sensitive_mode =
+      changeset.context[:sensitive_attributes] ||
+        AshPaperTrail.Resource.Info.sensitive_attributes(changeset.resource)
+
     resource_attributes =
       changeset.resource
       |> Ash.Resource.Info.attributes()
+      |> Map.new(&{&1.name, &1})
 
     input =
       version_resource_attributes
       |> Enum.filter(&(&1 in attributes_as_attributes))
-      |> Enum.map(&{&1, Map.get(result, &1)})
-      |> Enum.into(%{})
+      |> Enum.reject(&(resource_attributes[&1].sensitive? and sensitive_mode == :redact))
+      |> Map.new(&{&1, Map.get(result, &1)})
 
     changes =
       resource_attributes
-      |> Enum.reject(&(&1.name in to_skip))
+      |> Map.drop(to_skip)
+      |> Map.values()
       |> build_changes(change_tracking_mode, changeset, result)
+      |> maybe_redact_changes(resource_attributes, sensitive_mode)
 
     input =
       Enum.reduce(belongs_to_actors, input, fn belongs_to_actor, input ->
@@ -126,4 +133,15 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
   end
 
   defp authorize?(domain), do: Ash.Domain.Info.authorize(domain) == :always
+
+  defp maybe_redact_changes(changes, _, :display), do: changes
+
+  defp maybe_redact_changes(changes, attributes, :redact) do
+    attributes
+    |> Map.values()
+    |> Enum.filter(& &1.sensitive?)
+    |> Enum.reduce(changes, fn attribute, changes ->
+      Map.put(changes, attribute.name, "REDACTED")
+    end)
+  end
 end

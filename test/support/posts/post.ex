@@ -15,7 +15,7 @@ defmodule AshPaperTrail.Test.Posts.Post do
 
   paper_trail do
     primary_key_type :uuid
-    attributes_as_attributes [:subject, :body, :tenant]
+    attributes_as_attributes [:subject, :body, :tenant, :secret]
     ignore_attributes [:inserted_at]
     change_tracking_mode :changes_only
     store_action_name? true
@@ -70,7 +70,7 @@ defmodule AshPaperTrail.Test.Posts.Post do
       allow_nil? false
     end
 
-    attribute :secret, :string
+    attribute :secret, :string, sensitive?: true
 
     attribute :author, AshPaperTrail.Test.Posts.Author do
       public? true

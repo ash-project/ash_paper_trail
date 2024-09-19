@@ -58,6 +58,13 @@ defmodule AshPaperTrail.Resource do
         A list of attributes that should be ignored. Typically you'll want to ignore your timestamps. The primary key is always ignored.
         """
       ],
+      sensitive_attributes: [
+        type: {:in, [:redact, :display]},
+        default: :display,
+        doc: """
+        Controls the behaviour when sensitive attributes are being versioned. By default their values are versioned, but they can be redacted so that you know they changed without knowing the values.
+        """
+      ],
       ignore_actions: [
         type: {:list, :atom},
         default: [],
