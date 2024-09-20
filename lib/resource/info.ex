@@ -69,7 +69,7 @@ defmodule AshPaperTrail.Resource.Info do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :store_resource_identifier?, false)
   end
 
-  @spec sensitive_attributes(Spark.Dsl.t() | Ash.Resource.t()) :: :display | :redact
+  @spec sensitive_attributes(Spark.Dsl.t() | Ash.Resource.t()) :: :display | :ignore | :redact
   def sensitive_attributes(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :sensitive_attributes)
   end
