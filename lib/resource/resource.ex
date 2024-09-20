@@ -59,7 +59,7 @@ defmodule AshPaperTrail.Resource do
         """
       ],
       sensitive_attributes: [
-        type: {:in, [:redact, :display]},
+        type: {:in, [:display, :ignore, :redact]},
         default: :display,
         doc: """
         Controls the behaviour when sensitive attributes are being versioned. By default their values are versioned, but they can be redacted so that you know they changed without knowing the values.

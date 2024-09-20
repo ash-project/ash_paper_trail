@@ -558,5 +558,19 @@ defmodule AshPaperTrailTest do
       refute version.secret
       assert version.changes[:secret] == "REDACTED"
     end
+
+    test "when sensitive_attributes are ignored, they are" do
+      post =
+        Posts.Post
+        |> Ash.Changeset.for_create(:create, @valid_attrs)
+        |> Ash.Changeset.force_change_attribute(:secret, "top secret data")
+        |> Ash.Changeset.set_context(%{sensitive_attributes: :ignore})
+        |> Ash.create!(tenant: "acme", load: [:paper_trail_versions])
+
+      assert [version] = post.paper_trail_versions
+
+      refute version.secret
+      refute is_map_key(version.changes, :secret)
+    end
   end
 end

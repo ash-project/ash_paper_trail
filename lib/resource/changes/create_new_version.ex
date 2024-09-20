@@ -73,7 +73,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     input =
       version_resource_attributes
       |> Enum.filter(&(&1 in attributes_as_attributes))
-      |> Enum.reject(&(resource_attributes[&1].sensitive? and sensitive_mode == :redact))
+      |> Enum.reject(&(resource_attributes[&1].sensitive? and sensitive_mode != :display))
       |> Map.new(&{&1, Map.get(result, &1)})
 
     changes =
@@ -143,5 +143,15 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     |> Enum.reduce(changes, fn attribute, changes ->
       Map.put(changes, attribute.name, "REDACTED")
     end)
+  end
+
+  defp maybe_redact_changes(changes, attributes, :ignore) do
+    sensitive_attributes =
+      attributes
+      |> Map.values()
+      |> Enum.filter(& &1.sensitive?)
+      |> Enum.map(& &1.name)
+
+    Map.drop(changes, sensitive_attributes)
   end
 end
