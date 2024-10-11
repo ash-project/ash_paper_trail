@@ -23,7 +23,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
     if change_tracking_mode == :full_diff do
       {:not_atomic, "Cannot perform full_diff change tracking with AshPaperTrail atomically. " <>
-        "You might want to choose a different tracking mode or declare your actions non-atomic."}
+        "You might want to choose a different tracking mode or set require_atomic? to false on your update actions."}
     else
       {:ok, change(changeset, opts, context)}
     end
