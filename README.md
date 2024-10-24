@@ -16,5 +16,5 @@ Welcome! This is the extension for keeping an audit log of changes to your [Ash]
 
 ## Reference
 
-- [AshPaperTrail.Resource DSL](documentation/dsls/DSL:-AshPaperTrail.Resource.md)
-- [AshPaperTrail.Domain DSL](documentation/dsls/DSL:-AshPaperTrail.Domain.md)
+- [AshPaperTrail.Resource DSL](documentation/dsls/DSL-AshPaperTrail.Resource.md)
+- [AshPaperTrail.Domain DSL](documentation/dsls/DSL-AshPaperTrail.Domain.md)

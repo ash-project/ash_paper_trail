@@ -46,8 +46,8 @@ defmodule AshPaperTrail.MixProject do
       extras: [
         {"README.md", title: "Home"},
         "documentation/tutorials/getting-started-with-ash-paper-trail.md",
-        "documentation/dsls/DSL:-AshPaperTrail.Resource.md",
-        "documentation/dsls/DSL:-AshPaperTrail.Domain.md",
+        "documentation/dsls/DSL-AshPaperTrail.Resource.md",
+        "documentation/dsls/DSL-AshPaperTrail.Domain.md",
         "CHANGELOG.md"
       ],
       groups_for_extras: [
