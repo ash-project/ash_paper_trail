@@ -7,10 +7,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   @impl true
   def change(changeset, _, _) do
-    if changeset.action.name not in AshPaperTrail.Resource.Info.ignore_actions(changeset.resource) &&
-         (changeset.action_type in [:create, :destroy] ||
-            (changeset.action_type == :update &&
-               changeset.action.name in AshPaperTrail.Resource.Info.on_actions(changeset.resource))) do
+    if valid_for_tracking?(changeset) do
       create_new_version(changeset)
     else
       changeset
@@ -21,23 +18,82 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
   def atomic(changeset, opts, context) do
     change_tracking_mode = AshPaperTrail.Resource.Info.change_tracking_mode(changeset.resource)
 
+    has_after_batch_hooks? =
+      Enum.any?(
+        changeset.action.changes ++ Ash.Resource.Info.changes(changeset.resource, :destroy),
+        fn
+          %{change: {module, change_opts}} ->
+            module.has_after_batch?() &&
+              module.batch_callbacks?(Ash.Query.new(changeset.resource), change_opts, context)
+
+          _ ->
+            false
+        end
+      )
+
     if change_tracking_mode == :full_diff do
       {:not_atomic,
        "Cannot perform full_diff change tracking with AshPaperTrail atomically. " <>
          "You might want to choose a different tracking mode or set require_atomic? to false on your update actions."}
     else
-      {:ok, change(changeset, opts, context)}
+      if has_after_batch_hooks? do
+        {:ok, changeset}
+      else
+        {:ok, change(changeset, opts, context)}
+      end
     end
+  end
+
+  @impl true
+  def batch_change(changesets, _opts, _context) do
+    changesets
+  end
+
+  @impl true
+  def after_batch([{changeset, _} | _] = changesets_and_results, _opts, _context) do
+    records = Enum.map(changesets_and_results, &elem(&1, 1))
+    result = Enum.map(records, &{:ok, &1})
+
+    if valid_for_tracking?(changeset) do
+      {version_changeset, inputs, actor} = bulk_build_notifications(changesets_and_results)
+
+      if Enum.any?(inputs) do
+        bulk_create_notifications!(changeset, version_changeset, inputs, actor)
+      end
+    end
+
+    result
+  end
+
+  defp valid_for_tracking?(%Ash.Changeset{} = changeset) do
+    changeset.action.name not in AshPaperTrail.Resource.Info.ignore_actions(changeset.resource) &&
+      (changeset.action_type in [:create, :destroy] ||
+         (changeset.action_type == :update &&
+            changeset.action.name in AshPaperTrail.Resource.Info.on_actions(changeset.resource)))
   end
 
   defp create_new_version(changeset) do
     Ash.Changeset.after_action(changeset, fn changeset, result ->
       if changeset.action_type in [:create, :destroy] ||
            (changeset.action_type == :update && changeset.context.changed?) do
-        {:ok, result, build_notifications(changeset, result)}
+        {version_changeset, input, actor} = build_notifications(changeset, result)
+        {:ok, result, create_notifications!(changeset, version_changeset, input, actor)}
       else
         {:ok, result}
       end
+    end)
+  end
+
+  defp bulk_build_notifications(changesets_and_results) do
+    changesets_and_results
+    |> Enum.filter(fn {changeset, _} ->
+      changeset.action_type in [:create, :destroy] ||
+        (changeset.action_type == :update && Enum.any?(changeset.atomics)) ||
+        (changeset.action_type == :update && changeset.context.changed?)
+    end)
+    |> Enum.map(fn {changeset, result} -> build_notifications(changeset, result) end)
+    |> Enum.reduce({nil, [], nil}, fn {version_changeset, input, actor}, {_, inputs, _} ->
+      {version_changeset, [input | inputs], actor}
     end)
   end
 
@@ -107,6 +163,24 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
         changes: changes
       })
 
+    {version_changeset, input, actor}
+  end
+
+  defp bulk_create_notifications!(changeset, version_changeset, inputs, actor) do
+    opts = [
+      context: %{ash_paper_trail?: true},
+      # return_notifications?: true,
+      authorize?: authorize?(changeset.domain),
+      actor: actor,
+      tenant: changeset.tenant,
+      domain: changeset.domain,
+      skip_unknown_inputs: Enum.flat_map(inputs, &Map.keys(&1))
+    ]
+
+    Ash.bulk_create(inputs, version_changeset.resource, :create, opts)
+  end
+
+  defp create_notifications!(changeset, version_changeset, input, actor) do
     {_, notifications} =
       version_changeset
       |> Ash.Changeset.set_context(%{ash_paper_trail?: true})
