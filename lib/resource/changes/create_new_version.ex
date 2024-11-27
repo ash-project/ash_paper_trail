@@ -70,9 +70,10 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp bulk_build_notifications(changesets_and_results) do
     changesets_and_results
-    |> Enum.filter(fn {changeset, _} ->
+    |> Enum.filter(fn {changeset, _result} ->
       changeset.action_type in [:create, :destroy] ||
-        (changeset.action_type == :update && changeset.context.changed?)
+        (changeset.action_type == :update &&
+           (atomic_query?(changeset.data) || changeset.context.changed?))
     end)
     |> Enum.map(fn {changeset, result} -> build_notifications(changeset, result, bulk?: true) end)
     |> Enum.reduce([], fn input, inputs -> [input | inputs] end)
@@ -212,4 +213,11 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
     Map.drop(changes, sensitive_attributes)
   end
+
+  defp atomic_query?(%Ash.Changeset.OriginalDataNotAvailable{reason: reason})
+       when reason in [:atomic_query_update, :atomic_query_destroy] do
+    true
+  end
+
+  defp atomic_query?(_), do: false
 end
