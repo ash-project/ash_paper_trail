@@ -15,32 +15,16 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
   end
 
   @impl true
-  def atomic(changeset, opts, context) do
+  def atomic(changeset, _opts, _context) do
     change_tracking_mode = AshPaperTrail.Resource.Info.change_tracking_mode(changeset.resource)
-
-    has_after_batch_hooks? =
-      Enum.any?(
-        changeset.action.changes ++ Ash.Resource.Info.changes(changeset.resource, :destroy),
-        fn
-          %{change: {module, change_opts}} ->
-            module.has_after_batch?() &&
-              module.batch_callbacks?(Ash.Query.new(changeset.resource), change_opts, context)
-
-          _ ->
-            false
-        end
-      )
 
     if change_tracking_mode == :full_diff do
       {:not_atomic,
        "Cannot perform full_diff change tracking with AshPaperTrail atomically. " <>
          "You might want to choose a different tracking mode or set require_atomic? to false on your update actions."}
     else
-      if has_after_batch_hooks? do
-        {:ok, changeset}
-      else
-        {:ok, change(changeset, opts, context)}
-      end
+      # Changes will be tracked in after_batch
+      {:ok, changeset}
     end
   end
 
@@ -51,18 +35,18 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   @impl true
   def after_batch([{changeset, _} | _] = changesets_and_results, _opts, _context) do
-    records = Enum.map(changesets_and_results, &elem(&1, 1))
-    result = Enum.map(records, &{:ok, &1})
-
     if valid_for_tracking?(changeset) do
-      {version_changeset, inputs, actor} = bulk_build_notifications(changesets_and_results)
+      inputs = bulk_build_notifications(changesets_and_results)
 
       if Enum.any?(inputs) do
+        version_resource = AshPaperTrail.Resource.Info.version_resource(changeset.resource)
+        version_changeset = Ash.Changeset.new(version_resource)
+        actor = changeset.context[:private][:actor]
         bulk_create_notifications!(changeset, version_changeset, inputs, actor)
       end
     end
 
-    result
+    Enum.map(changesets_and_results, fn {_, result} -> {:ok, result} end)
   end
 
   defp valid_for_tracking?(%Ash.Changeset{} = changeset) do
@@ -88,22 +72,17 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     changesets_and_results
     |> Enum.filter(fn {changeset, _} ->
       changeset.action_type in [:create, :destroy] ||
-        (changeset.action_type == :update && Enum.any?(changeset.atomics)) ||
         (changeset.action_type == :update && changeset.context.changed?)
     end)
-    |> Enum.map(fn {changeset, result} -> build_notifications(changeset, result) end)
-    |> Enum.reduce({nil, [], nil}, fn {version_changeset, input, actor}, {_, inputs, _} ->
-      {version_changeset, [input | inputs], actor}
-    end)
+    |> Enum.map(fn {changeset, result} -> build_notifications(changeset, result, bulk?: true) end)
+    |> Enum.reduce([], fn input, inputs -> [input | inputs] end)
   end
 
-  defp build_notifications(changeset, result) do
+  defp build_notifications(changeset, result, opts \\ []) do
     version_resource = AshPaperTrail.Resource.Info.version_resource(changeset.resource)
 
     version_resource_attributes =
       version_resource |> Ash.Resource.Info.attributes() |> Enum.map(& &1.name)
-
-    version_changeset = Ash.Changeset.new(version_resource)
 
     to_skip =
       Ash.Resource.Info.primary_key(changeset.resource) ++
@@ -163,13 +142,16 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
         changes: changes
       })
 
-    {version_changeset, input, actor}
+    if Keyword.get(opts, :bulk?) do
+      input
+    else
+      {Ash.Changeset.new(version_resource), input, actor}
+    end
   end
 
   defp bulk_create_notifications!(changeset, version_changeset, inputs, actor) do
     opts = [
       context: %{ash_paper_trail?: true},
-      # return_notifications?: true,
       authorize?: authorize?(changeset.domain),
       actor: actor,
       tenant: changeset.tenant,
