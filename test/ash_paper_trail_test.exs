@@ -230,6 +230,79 @@ defmodule AshPaperTrailTest do
       assert %{version_action_type: :update, version_action_name: :publish} = publish_version
     end
 
+    test "the action inputs are stored correctly" do
+      assert AshPaperTrail.Resource.Info.store_action_inputs?(Posts.StoreInputsPost) == true
+
+      attrs =
+        Map.merge(@valid_attrs, %{
+          "secret" => "This will be redacted",
+          "req_arg" => "This is required",
+          "req_sensitive_arg" => "This is required and sensitive"
+        })
+
+      post = Posts.StoreInputsPost.create!(attrs, tenant: "acme")
+
+      [created_version] =
+        Ash.read!(Posts.StoreInputsPost.Version, tenant: "acme")
+
+      assert %{
+               version_action_inputs:
+                 %{
+                   author: %{first_name: "John", last_name: "Doe"},
+                   body: "body",
+                   tags: [%{tag: "ash"}, %{tag: "phoenix"}],
+                   secret: "REDACTED",
+                   subject: "subject",
+                   req_arg: "This is required",
+                   req_sensitive_arg: "REDACTED"
+                 } = action_inputs
+             } = created_version
+
+      # Ensure that only passed attributes/arguments are stored
+      assert not Map.has_key?(action_inputs, :id)
+      assert not Map.has_key?(action_inputs, :published)
+      assert not Map.has_key?(action_inputs, :opt_arg)
+      assert not Map.has_key?(action_inputs, :opt_sensitive_arg)
+      assert action_inputs.author |> Map.keys() |> Enum.count() == 2
+
+      Enum.each(action_inputs.tags, fn tag ->
+        assert tag |> Map.keys() |> Enum.count() == 1
+      end)
+
+      Posts.StoreInputsPost.update!(
+        post,
+        %{
+          subject: "new subject",
+          req_arg: "This is still required",
+          req_sensitive_arg: "This will still be redacted",
+          opt_arg: "This is optional",
+          opt_sensitive_arg: "This will be redacted"
+        },
+        tenant: "acme"
+      )
+
+      [updated_version] =
+        Ash.read!(Posts.StoreInputsPost.Version, tenant: "acme")
+        |> Enum.filter(&(&1.version_action_name == :update))
+
+      assert %{
+               version_action_inputs: %{
+                 subject: "new subject",
+                 req_arg: "This is still required",
+                 req_sensitive_arg: "REDACTED",
+                 opt_arg: "This is optional",
+                 opt_sensitive_arg: "REDACTED"
+               }
+             } = updated_version
+
+      assert not Map.has_key?(updated_version.version_action_inputs, :id)
+      assert not Map.has_key?(updated_version.version_action_inputs, :published)
+      assert not Map.has_key?(updated_version.version_action_inputs, :tags)
+      assert not Map.has_key?(updated_version.version_action_inputs, :author)
+      assert not Map.has_key?(updated_version.version_action_inputs, :secret)
+      assert not Map.has_key?(updated_version.version_action_inputs, :body)
+    end
+
     test "a new version is created on destroy" do
       assert %{subject: "subject", body: "body", id: post_id} =
                post = Posts.Post.create!(@valid_attrs, tenant: "acme")

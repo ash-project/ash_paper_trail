@@ -64,6 +64,11 @@ defmodule AshPaperTrail.Resource.Info do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :store_action_name?, false)
   end
 
+  @spec store_action_inputs?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
+  def store_action_inputs?(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :store_action_inputs?, false)
+  end
+
   @spec store_resource_identifier?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
   def store_resource_identifier?(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :store_resource_identifier?, false)

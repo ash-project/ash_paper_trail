@@ -14,6 +14,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     belongs_to_actors = AshPaperTrail.Resource.Info.belongs_to_actor(dsl_state)
     reference_source? = AshPaperTrail.Resource.Info.reference_source?(dsl_state)
     store_action_name? = AshPaperTrail.Resource.Info.store_action_name?(dsl_state)
+    store_action_inputs? = AshPaperTrail.Resource.Info.store_action_inputs?(dsl_state)
     store_resource_identifier? = AshPaperTrail.Resource.Info.store_resource_identifier?(dsl_state)
     version_extensions = AshPaperTrail.Resource.Info.version_extensions(dsl_state)
 
@@ -82,6 +83,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
       [
         :version_action_type,
         if(store_action_name?, do: :version_action_name, else: nil),
+        if(store_action_inputs?, do: :version_action_inputs, else: nil),
         if(store_resource_identifier?, do: :version_resource_identifier, else: nil),
         attributes |> Enum.map(& &1.name),
         :version_source_id,
@@ -244,6 +246,13 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
           if unquote(store_action_name?) do
             attribute :version_action_name, :atom do
+              allow_nil?(false)
+              public? true
+            end
+          end
+
+          if unquote(store_action_inputs?) do
+            attribute :version_action_inputs, :map do
               allow_nil?(false)
               public? true
             end

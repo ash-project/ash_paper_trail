@@ -121,6 +121,75 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       |> build_changes(change_tracking_mode, changeset, result)
       |> maybe_redact_changes(resource_attributes, sensitive_mode)
 
+    action_input_attrs =
+      changeset.action.accept
+      |> Enum.map(fn attr_name ->
+        attr_info = Ash.Resource.Info.attribute(changeset.resource, attr_name)
+        {present, params_value} = get_raw_params_value_if_present(changeset.params, attr_name)
+
+        %{
+          name: attr_name,
+          type: :attribute,
+          ash_type: attr_info.type,
+          present?: present,
+          params_value: params_value,
+          sensitive?: attr_info.sensitive?
+        }
+      end)
+
+    action_input_args =
+      changeset.action.arguments
+      |> Enum.map(fn arg ->
+        {present, params_value} = get_raw_params_value_if_present(changeset.params, arg.name)
+
+        %{
+          name: arg.name,
+          type: :argument,
+          ash_type: arg.type,
+          present?: present,
+          params_value: params_value,
+          sensitive?: arg.sensitive?
+        }
+      end)
+
+    action_inputs =
+      (action_input_attrs ++ action_input_args)
+      |> Enum.reduce(%{}, fn input, action_inputs ->
+        cond do
+          not input.present? ->
+            action_inputs
+
+          input.sensitive? ->
+            Map.put(action_inputs, input.name, "REDACTED")
+
+          true ->
+            input_value =
+              case input.type do
+                :attribute ->
+                  changeset.casted_attributes[input.name] || changeset.attributes[input.name]
+
+                :argument ->
+                  changeset.casted_arguments[input.name] || changeset.arguments[input.name]
+              end
+
+            constraints =
+              if Ash.Type.NewType.new_type?(input.ash_type) do
+                Ash.Type.NewType.constraints(input.ash_type, [])
+              else
+                Ash.Type.constraints(input.ash_type)
+              end
+
+            case Ash.Type.dump_to_embedded(input.ash_type, input_value, constraints) do
+              {:ok, value} ->
+                casted_params_value = extract_casted_params_values(value, input.params_value)
+                Map.put(action_inputs, input.name, casted_params_value)
+
+              :error ->
+                raise "Unable to serialize input value for #{input.name}"
+            end
+        end
+      end)
+
     input =
       Enum.reduce(belongs_to_actors, input, fn belongs_to_actor, input ->
         with true <- is_struct(actor) && actor.__struct__ == belongs_to_actor.destination,
@@ -138,6 +207,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
         version_source_id: Map.get(result, hd(Ash.Resource.Info.primary_key(changeset.resource))),
         version_action_type: changeset.action.type,
         version_action_name: changeset.action.name,
+        version_action_inputs: action_inputs,
         version_resource_identifier:
           AshPaperTrail.Resource.Info.resource_identifier(changeset.resource),
         changes: changes
@@ -147,6 +217,37 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       input
     else
       {Ash.Changeset.new(version_resource), input, actor}
+    end
+  end
+
+  defp get_raw_params_value_if_present(params, key) when is_atom(key) do
+    key_as_string = Atom.to_string(key)
+
+    present =
+      Map.has_key?(params, key) ||
+        Map.has_key?(params, key_as_string)
+
+    if present do
+      {true, Map.get(params, key) || Map.get(params, key_as_string)}
+    else
+      {false, nil}
+    end
+  end
+
+  defp extract_casted_params_values(casted_value, params_value) do
+    cond do
+      is_map(casted_value) and is_map(params_value) ->
+        params_keys = Map.keys(params_value)
+        Map.take(casted_value, params_keys)
+
+      is_list(casted_value) and is_list(params_value) ->
+        Enum.zip(casted_value, params_value)
+        |> Enum.map(fn {casted_value, params_value} ->
+          extract_casted_params_values(casted_value, params_value)
+        end)
+
+      true ->
+        casted_value
     end
   end
 
