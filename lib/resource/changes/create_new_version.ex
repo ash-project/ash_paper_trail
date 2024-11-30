@@ -238,13 +238,25 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     cond do
       is_map(casted_value) and is_map(params_value) ->
         params_keys = Map.keys(params_value)
+
         Map.take(casted_value, params_keys)
+        |> Enum.map(fn {key, value} ->
+          {key, extract_casted_params_values(value, Map.get(params_value, key))}
+        end)
+        |> Enum.into(%{})
 
       is_list(casted_value) and is_list(params_value) ->
         Enum.zip(casted_value, params_value)
         |> Enum.map(fn {casted_value, params_value} ->
           extract_casted_params_values(casted_value, params_value)
         end)
+
+      is_tuple(casted_value) and is_tuple(params_value) ->
+        Enum.zip(Tuple.to_list(casted_value), Tuple.to_list(params_value))
+        |> Enum.map(fn {casted_value, params_value} ->
+          extract_casted_params_values(casted_value, params_value)
+        end)
+        |> List.to_tuple()
 
       true ->
         casted_value
