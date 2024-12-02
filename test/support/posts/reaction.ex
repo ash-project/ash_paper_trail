@@ -8,6 +8,7 @@ defmodule AshPaperTrail.Test.Posts.Reaction do
   use Ash.Type.NewType,
     subtype_of: :union,
     constraints: [
+      storage: :type_and_value,
       types: [
         score: [
           type: :integer

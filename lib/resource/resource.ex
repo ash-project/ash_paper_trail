@@ -102,6 +102,12 @@ defmodule AshPaperTrail.Resource do
         doc:
           "Whether or not to add the `version_action_name` attribute to the  version resource. This is useful for auditing purposes. The `version_action_type` attribute is always stored."
       ],
+      store_action_inputs?: [
+        type: :boolean,
+        default: false,
+        doc:
+          "Whether or not to add the `version_action_inputs` attribute to the version resource, which will store all attributes and arguments for the called action, redacting any sensitive values. This is useful for auditing purposes. The `version_action_inputs` attribute is always stored."
+      ],
       store_resource_identifier?: [
         type: :boolean,
         default: false,

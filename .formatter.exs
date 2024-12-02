@@ -18,6 +18,7 @@ spark_locals_without_parens = [
   relationship_opts: 1,
   resource_identifier: 1,
   sensitive_attributes: 1,
+  store_action_inputs?: 1,
   store_action_name?: 1,
   store_resource_identifier?: 1,
   table_name: 1,

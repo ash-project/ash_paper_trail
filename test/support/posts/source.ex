@@ -4,6 +4,7 @@ defmodule AshPaperTrail.Test.Posts.Source do
   use Ash.Type.NewType,
     subtype_of: :union,
     constraints: [
+      storage: :type_and_value,
       types: [
         blog: [
           tag: :type,
