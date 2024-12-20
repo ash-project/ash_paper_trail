@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.3.1](https://github.com/ash-project/ash_paper_trail/compare/v0.3.0...v0.3.1) (2024-12-20)
+
+
+
+
+### Improvements:
+
+* "full_diff tracking not atomic" error message (#123)
+
+* "full_diff tracking not atomic" error message
+
 ## [v0.3.0](https://github.com/ash-project/ash_paper_trail/compare/v0.2.1...v0.3.0) (2024-09-20)
 
 
