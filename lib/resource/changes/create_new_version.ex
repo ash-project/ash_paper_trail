@@ -34,6 +34,8 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
   end
 
   @impl true
+  def after_batch([], _, _), do: []
+
   def after_batch([{changeset, _} | _] = changesets_and_results, _opts, _context) do
     if valid_for_tracking?(changeset) do
       inputs = bulk_build_notifications(changesets_and_results)
@@ -236,7 +238,8 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp extract_casted_params_values(casted_value, params_value) do
     cond do
-      is_map(casted_value) and is_map(params_value) ->
+      is_map(casted_value) and is_map(params_value) and not is_struct(params_value) and
+          not is_struct(casted_value) ->
         params_keys = Map.keys(params_value)
 
         Map.take(casted_value, params_keys)
