@@ -14,7 +14,7 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 * Add `store_action_inputs?` option (#136)
 
-* bulk_actions: support bulk actions (#131)
+* support bulk actions (#131)
 
 ### Bug Fixes:
 
