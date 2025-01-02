@@ -155,42 +155,46 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       end)
 
     action_inputs =
-      (action_input_attrs ++ action_input_args)
-      |> Enum.reduce(%{}, fn input, action_inputs ->
-        cond do
-          not input.present? ->
-            action_inputs
+      if AshPaperTrail.Resource.Info.store_action_inputs?(changeset.resource) do
+        (action_input_attrs ++ action_input_args)
+        |> Enum.reduce(%{}, fn input, action_inputs ->
+          cond do
+            not input.present? ->
+              action_inputs
 
-          input.sensitive? ->
-            Map.put(action_inputs, input.name, "REDACTED")
+            input.sensitive? ->
+              Map.put(action_inputs, input.name, "REDACTED")
 
-          true ->
-            input_value =
-              case input.type do
-                :attribute ->
-                  changeset.casted_attributes[input.name] || changeset.attributes[input.name]
+            true ->
+              input_value =
+                case input.type do
+                  :attribute ->
+                    changeset.casted_attributes[input.name] || changeset.attributes[input.name]
 
-                :argument ->
-                  changeset.casted_arguments[input.name] || changeset.arguments[input.name]
+                  :argument ->
+                    changeset.casted_arguments[input.name] || changeset.arguments[input.name]
+                end
+
+              constraints =
+                if Ash.Type.NewType.new_type?(input.ash_type) do
+                  Ash.Type.NewType.constraints(input.ash_type, [])
+                else
+                  Ash.Type.constraints(input.ash_type)
+                end
+
+              case Ash.Type.dump_to_embedded(input.ash_type, input_value, constraints) do
+                {:ok, value} ->
+                  casted_params_value = extract_casted_params_values(value, input.params_value)
+                  Map.put(action_inputs, input.name, casted_params_value)
+
+                :error ->
+                  raise "Unable to serialize input value for #{input.name}"
               end
-
-            constraints =
-              if Ash.Type.NewType.new_type?(input.ash_type) do
-                Ash.Type.NewType.constraints(input.ash_type, [])
-              else
-                Ash.Type.constraints(input.ash_type)
-              end
-
-            case Ash.Type.dump_to_embedded(input.ash_type, input_value, constraints) do
-              {:ok, value} ->
-                casted_params_value = extract_casted_params_values(value, input.params_value)
-                Map.put(action_inputs, input.name, casted_params_value)
-
-              :error ->
-                raise "Unable to serialize input value for #{input.name}"
-            end
-        end
-      end)
+          end
+        end)
+      else
+        %{}
+      end
 
     input =
       Enum.reduce(belongs_to_actors, input, fn belongs_to_actor, input ->
