@@ -5,6 +5,25 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.4.0](https://github.com/ash-project/ash_paper_trail/compare/v0.3.1...v0.4.0) (2025-01-02)
+
+
+
+
+### Features:
+
+* Add `store_action_inputs?` option (#136)
+
+* bulk_actions: support bulk actions (#131)
+
+### Bug Fixes:
+
+* handle empty batch in after batch
+
+* handle struct values in casted params
+
+* batch: handle OriginalDataNotAvailable case (#135)
+
 ## [v0.3.1](https://github.com/ash-project/ash_paper_trail/compare/v0.3.0...v0.3.1) (2024-12-20)
 
 
