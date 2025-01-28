@@ -18,7 +18,7 @@ defmodule AshPaperTrail.MixProject do
       consolidate_protocols: Mix.env() == :prod,
       package: package(),
       deps: deps(),
-      docs: docs(),
+      docs: &docs/0,
       description: @description,
       source_url: "https://github.com/ash-project/ash_paper_trail",
       homepage_url: "https://github.com/ash-project/ash_paper_trail"
@@ -46,8 +46,10 @@ defmodule AshPaperTrail.MixProject do
       extras: [
         {"README.md", title: "Home"},
         "documentation/tutorials/getting-started-with-ash-paper-trail.md",
-        "documentation/dsls/DSL-AshPaperTrail.Resource.md",
-        "documentation/dsls/DSL-AshPaperTrail.Domain.md",
+        {"documentation/dsls/DSL-AshPaperTrail.Resource.md",
+         search_data: Spark.Docs.search_data_for(AshPaperTrail.Resource)},
+        {"documentation/dsls/DSL-AshPaperTrail.Domain.md",
+         search_data: Spark.Docs.search_data_for(AshPaperTrail.Domain)},
         "CHANGELOG.md"
       ],
       groups_for_extras: [
@@ -95,7 +97,7 @@ defmodule AshPaperTrail.MixProject do
     [
       {:ash, ash_version("~> 3.0")},
       {:igniter, "~> 0.5", only: [:dev, :test]},
-      {:ex_doc, "~> 0.22", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.37-rc", only: [:dev, :test], runtime: false},
       {:ex_check, "~> 0.12", only: [:dev, :test]},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:dialyxir, ">= 0.0.0", only: [:dev, :test], runtime: false},
@@ -121,14 +123,11 @@ defmodule AshPaperTrail.MixProject do
       docs: [
         "spark.cheat_sheets",
         "docs",
-        "spark.replace_doc_links",
-        "spark.cheat_sheets_in_search"
+        "spark.replace_doc_links"
       ],
       credo: "credo --strict",
       "spark.formatter":
         "spark.formatter --extensions AshPaperTrail.Resource,AshPaperTrail.Domain",
-      "spark.cheat_sheets_in_search":
-        "spark.cheat_sheets_in_search --extensions AshPaperTrail.Resource,AshPaperTrail.Domain",
       "spark.cheat_sheets":
         "spark.cheat_sheets --extensions AshPaperTrail.Resource,AshPaperTrail.Domain"
     ]
