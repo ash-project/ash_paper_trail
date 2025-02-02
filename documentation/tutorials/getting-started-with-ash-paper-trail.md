@@ -39,7 +39,7 @@ use Ash.Domain,
 
 ### Including all version resources:
 
-Set `include_verisons? true` in the configuration, like so:
+Set `include_versions? true` in the configuration, like so:
 
 ```elixir
 paper_trail do
