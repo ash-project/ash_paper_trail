@@ -3,7 +3,7 @@
 First, add the dependency to your `mix.exs`
 
 ```elixir
-{:ash_paper_trail, "~> 0.5.0"}
+{:ash_paper_trail, "~> 0.5.1"}
 ```
 
 Then, add the `AshPaperTrail.Resource` extension to any resource you would like to version and configure the change tracking mode

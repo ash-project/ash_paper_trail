@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.5.1](https://github.com/ash-project/ash_paper_trail/compare/v0.5.0...v0.5.1) (2025-02-11)
+
+
+
+
+### Bug Fixes:
+
+* ensure bulk create raises errors
+
 ## [v0.5.0](https://github.com/ash-project/ash_paper_trail/compare/v0.4.0...v0.5.0) (2025-01-27)
 
 
