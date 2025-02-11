@@ -44,7 +44,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
         version_resource = AshPaperTrail.Resource.Info.version_resource(changeset.resource)
         version_changeset = Ash.Changeset.new(version_resource)
         actor = changeset.context[:private][:actor]
-        bulk_create_notifications!(changeset, version_changeset, inputs, actor)
+        bulk_create!(changeset, version_changeset, inputs, actor)
       end
     end
 
@@ -63,7 +63,8 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       if changeset.action_type in [:create, :destroy] ||
            (changeset.action_type == :update && changeset.context.changed?) do
         {version_changeset, input, actor} = build_notifications(changeset, result)
-        {:ok, result, create_notifications!(changeset, version_changeset, input, actor)}
+        create!(changeset, version_changeset, input, actor)
+        {:ok, result}
       else
         {:ok, result}
       end
@@ -270,33 +271,33 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     end
   end
 
-  defp bulk_create_notifications!(changeset, version_changeset, inputs, actor) do
+  defp bulk_create!(changeset, version_changeset, inputs, actor) do
     opts = [
       context: %{ash_paper_trail?: true},
       authorize?: authorize?(changeset.domain),
       actor: actor,
       tenant: changeset.tenant,
       domain: changeset.domain,
+      stop_on_error?: true,
+      return_errors?: true,
       skip_unknown_inputs: Enum.flat_map(inputs, &Map.keys(&1))
     ]
 
-    Ash.bulk_create(inputs, version_changeset.resource, :create, opts)
+    Ash.bulk_create!(inputs, version_changeset.resource, :create, opts)
+    |> Map.get(:notifications)
   end
 
-  defp create_notifications!(changeset, version_changeset, input, actor) do
-    {_, notifications} =
-      version_changeset
-      |> Ash.Changeset.set_context(%{ash_paper_trail?: true})
-      |> Ash.Changeset.for_create(:create, input,
-        tenant: changeset.tenant,
-        authorize?: authorize?(changeset.domain),
-        actor: actor,
-        domain: changeset.domain,
-        skip_unknown_inputs: Map.keys(input)
-      )
-      |> Ash.create!(return_notifications?: true)
-
-    notifications
+  defp create!(changeset, version_changeset, input, actor) do
+    version_changeset
+    |> Ash.Changeset.set_context(%{ash_paper_trail?: true})
+    |> Ash.Changeset.for_create(:create, input,
+      tenant: changeset.tenant,
+      authorize?: authorize?(changeset.domain),
+      actor: actor,
+      domain: changeset.domain,
+      skip_unknown_inputs: Map.keys(input)
+    )
+    |> Ash.create!()
   end
 
   defp build_changes(attributes, :changes_only, changeset, result) do
