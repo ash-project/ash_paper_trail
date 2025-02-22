@@ -44,6 +44,10 @@ defmodule AshPaperTrail.Test.Posts.Post do
       require_atomic? false
       accept []
       change set_attribute(:published, true)
+
+      change after_transaction(fn _changeset, res, _ ->
+               res
+             end)
     end
   end
 

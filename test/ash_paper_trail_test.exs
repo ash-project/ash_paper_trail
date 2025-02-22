@@ -168,6 +168,35 @@ defmodule AshPaperTrailTest do
                |> Enum.sort_by(& &1.version_action_type)
     end
 
+    test "a new version is created on a bulk update with enumerable and after_transaction" do
+      %{subject: "subject", body: "body", id: post_id} =
+        post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      %Ash.BulkResult{
+        status: :success
+      } =
+        Ash.bulk_update!([post], :publish, %{},
+          tenant: "acme",
+          strategy: :stream,
+          return_records?: true,
+          return_errors?: true
+        )
+
+      assert [
+               _,
+               %{
+                 changes: %{
+                   published: true
+                 },
+                 version_action_type: :update,
+                 version_action_name: :publish,
+                 version_source_id: ^post_id
+               }
+             ] =
+               Ash.read!(Posts.Post.Version, tenant: "acme")
+               |> Enum.sort_by(& &1.version_action_type)
+    end
+
     test "a new version is created on a bulk update with query" do
       %{subject: "subject", body: "body", id: post_id} =
         Posts.Post.create!(@valid_attrs, tenant: "acme")

@@ -280,10 +280,12 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       domain: changeset.domain,
       stop_on_error?: true,
       return_errors?: true,
+      return_records?: true,
       skip_unknown_inputs: Enum.flat_map(inputs, &Map.keys(&1))
     ]
 
-    Ash.bulk_create!(inputs, version_changeset.resource, :create, opts)
+    inputs
+    |> Ash.bulk_create!(version_changeset.resource, :create, opts)
     |> Map.get(:notifications)
   end
 
