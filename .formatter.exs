@@ -12,6 +12,7 @@ spark_locals_without_parens = [
   include_versions?: 1,
   mixin: 1,
   on_actions: 1,
+  only_when_changed?: 1,
   primary_key_type: 1,
   public?: 1,
   reference_source?: 1,

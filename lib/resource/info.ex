@@ -6,6 +6,11 @@ defmodule AshPaperTrail.Resource.Info do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :primary_key_type, :uuid)
   end
 
+  @spec only_when_changed?(Spark.Dsl.t() | Ash.Resource.t()) :: atom
+  def only_when_changed?(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :only_when_changed?, true)
+  end
+
   @spec attributes_as_attributes(Spark.Dsl.t() | Ash.Resource.t()) :: [atom]
   def attributes_as_attributes(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :attributes_as_attributes, [])

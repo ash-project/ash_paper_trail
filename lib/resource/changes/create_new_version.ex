@@ -60,8 +60,17 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp create_new_version(changeset) do
     Ash.Changeset.after_action(changeset, fn changeset, result ->
+      changed? =
+        if changeset.action_type == :update do
+          if AshPaperTrail.Resource.Info.only_when_changed?(changeset.resource) do
+            changeset.context.changed?
+          else
+            true
+          end
+        end
+
       if changeset.action_type in [:create, :destroy] ||
-           (changeset.action_type == :update && changeset.context.changed?) do
+           (changeset.action_type == :update && changed?) do
         {version_changeset, input, actor} = build_notifications(changeset, result)
         create!(changeset, version_changeset, input, actor)
         {:ok, result}
@@ -74,9 +83,17 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
   defp bulk_build_notifications(changesets_and_results) do
     changesets_and_results
     |> Enum.filter(fn {changeset, _result} ->
+      changed? =
+        if changeset.action_type == :update do
+          if AshPaperTrail.Resource.Info.only_when_changed?(changeset.resource) do
+            atomic_query?(changeset.data) || changeset.context.changed?
+          else
+            true
+          end
+        end
+
       changeset.action_type in [:create, :destroy] ||
-        (changeset.action_type == :update &&
-           (atomic_query?(changeset.data) || changeset.context.changed?))
+        (changeset.action_type == :update && changed?)
     end)
     |> Enum.map(fn {changeset, result} -> build_notifications(changeset, result, bulk?: true) end)
     |> Enum.reduce([], fn input, inputs -> [input | inputs] end)

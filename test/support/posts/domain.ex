@@ -4,6 +4,8 @@ defmodule AshPaperTrail.Test.Posts.Domain do
 
   resources do
     resource AshPaperTrail.Test.Posts.Post
+    resource AshPaperTrail.Test.Posts.BlogPost
+    resource AshPaperTrail.Test.Posts.BlogPost.Version
     resource AshPaperTrail.Test.Posts.Post.Version
     resource AshPaperTrail.Test.Posts.FullDiffPost
     resource AshPaperTrail.Test.Posts.FullDiffPost.Version

@@ -431,6 +431,52 @@ defmodule AshPaperTrailTest do
     end
   end
 
+  describe "only_when_changed?" do
+    test "when set to `true` to versions are not generated when nothing has changed" do
+      assert %{subject: "subject", body: "body", id: post_id} =
+               post = Posts.BlogPost.create!(@valid_attrs, tenant: "acme")
+
+      assert %{subject: "subject", body: "body"} =
+               Posts.BlogPost.update!(post, %{subject: "subject", body: "body"}, tenant: "acme")
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               },
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :update,
+                 version_source_id: ^post_id
+               }
+             ] =
+               Ash.read!(Posts.BlogPost.Version, tenant: "acme")
+               |> Enum.sort_by(& &1.version_inserted_at)
+    end
+
+    test "can be set to `false` to generate versions even when nothing has changed" do
+      assert %{subject: "subject", body: "body", id: post_id} =
+               post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      assert %{subject: "subject", body: "body"} =
+               Posts.Post.update!(post, %{subject: "subject", body: "body"}, tenant: "acme")
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               }
+             ] =
+               Ash.read!(Posts.Post.Version, tenant: "acme")
+               |> Enum.sort_by(& &1.version_inserted_at)
+    end
+  end
+
   describe "changes in :changes_only mode" do
     test "the changes only includes attributes that changed" do
       assert AshPaperTrail.Resource.Info.change_tracking_mode(Posts.Post) == :changes_only

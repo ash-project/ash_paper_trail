@@ -45,6 +45,13 @@ defmodule AshPaperTrail.Resource do
         A set of attributes that should be set as attributes on the version resource, instead of stored in the freeform `changes` map attribute.
         """
       ],
+      only_when_changed?: [
+        type: :boolean,
+        default: true,
+        doc: """
+        Set to false to create version records for actions even when nothing about the data has changed.
+        """
+      ],
       change_tracking_mode: [
         type: {:one_of, [:snapshot, :changes_only, :full_diff]},
         default: :snapshot,
