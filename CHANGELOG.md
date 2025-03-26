@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.5.2](https://github.com/ash-project/ash_paper_trail/compare/v0.5.1...v0.5.2) (2025-03-26)
+
+
+
+
+### Bug Fixes:
+
+* use `unsafe_to_atom?` constraint for when action names are removed
+
+### Improvements:
+
+* add `only_when_changed?` defaulting to `true`
+
 ## [v0.5.1](https://github.com/ash-project/ash_paper_trail/compare/v0.5.0...v0.5.1) (2025-02-11)
 
 
