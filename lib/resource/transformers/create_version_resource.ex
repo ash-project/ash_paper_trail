@@ -246,6 +246,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
           if unquote(store_action_name?) do
             attribute :version_action_name, :atom do
+              constraints unsafe_to_atom?: true
               allow_nil?(false)
               public? true
             end
