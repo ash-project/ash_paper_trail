@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.5.3](https://github.com/ash-project/ash_paper_trail/compare/v0.5.2...v0.5.3) (2025-04-15)
+
+
+
+
+### Improvements:
+
+* support skip_version_when_unchanged? context
+
 ## [v0.5.2](https://github.com/ash-project/ash_paper_trail/compare/v0.5.1...v0.5.2) (2025-03-26)
 
 
