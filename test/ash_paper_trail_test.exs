@@ -459,10 +459,38 @@ defmodule AshPaperTrailTest do
 
     test "can be set to `false` to generate versions even when nothing has changed" do
       assert %{subject: "subject", body: "body", id: post_id} =
-               post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+               post = Posts.BlogPost.create!(@valid_attrs, tenant: "acme")
 
       assert %{subject: "subject", body: "body"} =
-               Posts.Post.update!(post, %{subject: "subject", body: "body"}, tenant: "acme")
+               Posts.BlogPost.update!(post, %{subject: "subject", body: "body"}, tenant: "acme")
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               },
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :update,
+                 version_source_id: ^post_id
+               }
+             ] =
+               Ash.read!(Posts.BlogPost.Version, tenant: "acme")
+               |> Enum.sort_by(& &1.version_inserted_at)
+    end
+
+    test "if set to `false` and the context `:skip_version_when_unchanged?` is set to `true`, a version is not created" do
+      assert %{subject: "subject", body: "body", id: post_id} =
+               post = Posts.BlogPost.create!(@valid_attrs, tenant: "acme")
+
+      assert %{subject: "subject", body: "body"} =
+               Posts.BlogPost.update!(post, %{subject: "subject", body: "body"},
+                 tenant: "acme",
+                 context: %{skip_version_when_unchanged?: true}
+               )
 
       assert [
                %{
@@ -472,7 +500,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Ash.read!(Posts.Post.Version, tenant: "acme")
+               Ash.read!(Posts.BlogPost.Version, tenant: "acme")
                |> Enum.sort_by(& &1.version_inserted_at)
     end
   end

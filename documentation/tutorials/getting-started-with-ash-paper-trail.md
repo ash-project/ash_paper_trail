@@ -165,3 +165,17 @@ defmodule MyApp.MyResource.PaperTrailMixin do
   end
 end
 ```
+
+## Tracking Changes Conditionally
+
+By default changes are tracked for all actions that "change" something. You can change this by setting the
+`only_when_changed?` option to `true` in the `paper_trail` DSL.
+
+You may want to opt into this conditionally. To do this, set the context `%{skip_version_when_unchanged?: true}`.
+For example, one specific action might have a change like this:
+
+```elixir
+change set_context(%{skip_version_when_unchanged?: true})
+```
+
+to instruct `AshPaperTrail` not to create a version if there are no changed for this particular action.

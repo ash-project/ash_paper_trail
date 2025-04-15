@@ -60,14 +60,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp create_new_version(changeset) do
     Ash.Changeset.after_action(changeset, fn changeset, result ->
-      changed? =
-        if changeset.action_type == :update do
-          if AshPaperTrail.Resource.Info.only_when_changed?(changeset.resource) do
-            changeset.context.changed?
-          else
-            true
-          end
-        end
+      changed? = changed?(changeset)
 
       if changeset.action_type in [:create, :destroy] ||
            (changeset.action_type == :update && changed?) do
@@ -83,20 +76,25 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
   defp bulk_build_notifications(changesets_and_results) do
     changesets_and_results
     |> Enum.filter(fn {changeset, _result} ->
-      changed? =
-        if changeset.action_type == :update do
-          if AshPaperTrail.Resource.Info.only_when_changed?(changeset.resource) do
-            atomic_query?(changeset.data) || changeset.context.changed?
-          else
-            true
-          end
-        end
+      changed? = changed?(changeset)
 
       changeset.action_type in [:create, :destroy] ||
         (changeset.action_type == :update && changed?)
     end)
     |> Enum.map(fn {changeset, result} -> build_notifications(changeset, result, bulk?: true) end)
     |> Enum.reduce([], fn input, inputs -> [input | inputs] end)
+  end
+
+  defp changed?(changeset) do
+    if changeset.action_type == :update do
+      if AshPaperTrail.Resource.Info.only_when_changed?(changeset.resource) do
+        changeset.context.changed?
+      else
+        !(changeset.context[:skip_version_when_unchanged?] && !changeset.context.changed?)
+      end
+    else
+      true
+    end
   end
 
   defp build_notifications(changeset, result, opts \\ []) do
@@ -353,11 +351,4 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
     Map.drop(changes, sensitive_attributes)
   end
-
-  defp atomic_query?(%Ash.Changeset.OriginalDataNotAvailable{reason: reason})
-       when reason in [:atomic_query_update, :atomic_query_destroy] do
-    true
-  end
-
-  defp atomic_query?(_), do: false
 end
