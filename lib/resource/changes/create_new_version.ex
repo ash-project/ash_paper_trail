@@ -115,6 +115,9 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     belongs_to_actors =
       AshPaperTrail.Resource.Info.belongs_to_actor(changeset.resource)
 
+    store_actor_informations =
+      AshPaperTrail.Resource.Info.store_actor_information(changeset.resource)
+
     actor = changeset.context[:private][:actor]
 
     sensitive_mode =
@@ -211,6 +214,25 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       else
         %{}
       end
+
+    input =
+      Enum.reduce(store_actor_informations, input, fn store_actor_information, input ->
+        with true <-
+               is_struct(actor) &&
+                 actor.__struct__ == store_actor_information.destination do
+          %{attributes: attributes, name: name} = store_actor_information
+
+          values =
+            Enum.reduce(attributes, %{}, fn attribute_name, acc ->
+              Map.put(acc, attribute_name, Map.get(actor, attribute_name))
+            end)
+
+          Map.put(input, name, values)
+        else
+          _ ->
+            input
+        end
+      end)
 
     input =
       Enum.reduce(belongs_to_actors, input, fn belongs_to_actor, input ->

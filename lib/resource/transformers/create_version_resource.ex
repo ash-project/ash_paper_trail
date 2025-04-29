@@ -17,6 +17,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     store_action_inputs? = AshPaperTrail.Resource.Info.store_action_inputs?(dsl_state)
     store_resource_identifier? = AshPaperTrail.Resource.Info.store_resource_identifier?(dsl_state)
     version_extensions = AshPaperTrail.Resource.Info.version_extensions(dsl_state)
+    store_actor_information = AshPaperTrail.Resource.Info.store_actor_information(dsl_state)
 
     resource_identifier =
       if store_resource_identifier? do
@@ -35,6 +36,8 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
       else
         dsl_state
       end
+
+    actor_information_attribute_names = Enum.map(store_actor_information, & &1.name)
 
     attributes =
       dsl_state
@@ -85,7 +88,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
         if(store_action_name?, do: :version_action_name, else: nil),
         if(store_action_inputs?, do: :version_action_inputs, else: nil),
         if(store_resource_identifier?, do: :version_resource_identifier, else: nil),
-        attributes |> Enum.map(& &1.name),
+        (attributes |> Enum.map(& &1.name)) ++ actor_information_attribute_names,
         :version_source_id,
         :changes,
         belongs_to_actors |> Enum.map(&String.to_atom("#{&1.name}_id"))
@@ -263,6 +266,14 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
             attribute :version_resource_identifier, :atom do
               allow_nil? false
               public? true
+            end
+          end
+
+          for %{name: name, public?: public?} <- unquote(Macro.escape(store_actor_information)) do
+            attribute name, :map do
+              # Allow nil because we only store actor information if the actor is of the expected destination type.
+              allow_nil? true
+              public? public?
             end
           end
 

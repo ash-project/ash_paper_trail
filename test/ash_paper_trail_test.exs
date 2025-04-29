@@ -609,6 +609,66 @@ defmodule AshPaperTrailTest do
     end
   end
 
+  describe "store_actor_information option" do
+    test "creates a map attribute on the version" do
+      assert length(AshPaperTrail.Resource.Info.store_actor_information(Posts.Post)) == 1
+
+      attributes_on_version = Ash.Resource.Info.attributes(Posts.Post.Version)
+
+      [%AshPaperTrail.Resource.StoreActorInformation{name: name, public?: public?}] =
+        AshPaperTrail.Resource.Info.store_actor_information(Posts.Post)
+
+      assert(
+        %Ash.Resource.Attribute{name: ^name, type: Ash.Type.Map, public?: ^public?} =
+          Enum.find(attributes_on_version, &(&1.name == name))
+      )
+    end
+
+    test "sets the attribute on the versions" do
+      user = Accounts.User.create!(%{name: "bob"})
+      user_id = user.id
+      user_name = user.name
+
+      news_feed = Accounts.NewsFeed.create!(%{organization: "ap"})
+
+      post = Posts.Post.create!(@valid_attrs, tenant: "acme", actor: news_feed)
+      post = Posts.Post.publish!(post, tenant: "acme", actor: user)
+
+      post =
+        Posts.Post.update!(post, %{subject: "new subject"}, tenant: "acme", actor: "a string")
+
+      post_id = post.id
+
+      assert(
+        [
+          %{
+            subject: "subject",
+            body: "body",
+            version_action_type: :create,
+            version_source_id: ^post_id,
+            actor_information: nil
+          },
+          %{
+            subject: "subject",
+            body: "body",
+            version_action_type: :update,
+            version_source_id: ^post_id,
+            actor_information: %{id: ^user_id, name: ^user_name}
+          },
+          %{
+            subject: "new subject",
+            body: "body",
+            version_action_type: :update,
+            version_source_id: ^post_id,
+            actor_information: nil
+          }
+        ] =
+          Ash.read!(Posts.Post.Version, tenant: "acme")
+          |> Enum.sort_by(& &1.version_inserted_at)
+      )
+    end
+  end
+
   test "a new version is created on bulk_destroy" do
     assert %{subject: "subject", body: "body", id: post_id} =
              post = Posts.Post.create!(@valid_attrs, tenant: "acme")
