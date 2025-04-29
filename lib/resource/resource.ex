@@ -164,5 +164,6 @@ defmodule AshPaperTrail.Resource do
       AshPaperTrail.Resource.Transformers.RelateVersionResource,
       AshPaperTrail.Resource.Transformers.CreateVersionResource,
       AshPaperTrail.Resource.Transformers.VersionOnChange
-    ]
+    ],
+    verifiers: [AshPaperTrail.Resource.Verifiers.ValidateBelongsToActor]
 end

@@ -21,7 +21,10 @@ defmodule AshPaperTrail.Test.Posts.Post do
     store_action_name? true
     relationship_opts public?: true
 
-    store_actor_information([:id, :name], :actor_information, AshPaperTrail.Test.Accounts.User,
+    store_actor_information(
+      [:id, :name],
+      :actor_information,
+      AshPaperTrail.Test.Accounts.User,
       public?: true
     )
 
