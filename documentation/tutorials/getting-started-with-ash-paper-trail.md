@@ -62,15 +62,40 @@ end
 
 If you are using `AshPostgres`, and you want to support destroy actions, you need to do one of two things:
 
-1. use something like `AshArchival` in conjunction with this resource to ensure that destroy actions are `soft?` and do not actually result in row deletion
+1. (preferred) use the version mixin to set `on_delete: :delete_all` on the ference.
 
-2. configure `AshPaperTrail` not to create references, via:
+```elixir
+paper_trail do
+  mixin {MyApp.MyResource.PaperTrailMixin, :mixin, []}
+end
+
+...
+
+defmodule MyApp.MyResource.PaperTrailMixin do
+  def mixin do
+    # quote here is because we are returning code to be evaluated inside of the
+    # calling module
+    quote do
+      postgres do
+        reference :version_source, on_delete: :delete_all
+      end
+    end
+  end
+end
+```
+
+
+2.  use something like `AshArchival` in conjunction with this resource to ensure that destroy actions are `soft?` and do not actually result in row deletion
+
+3. configure `AshPaperTrail` to ignore the reference, via:
 
 ```elixir
 paper_trail do
   reference_source? false
 end
 ```
+
+and you could then use the `mixin` described below to add `on_delete` options to the reference.
 
 ## Attributes
 

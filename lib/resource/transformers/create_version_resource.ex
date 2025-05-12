@@ -170,7 +170,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
                 repo(unquote(repo))
 
                 references do
-                  unless unquote(reference_source?) do
+                  if !unquote(reference_source?) do
                     reference(:version_source, ignore?: true)
                   end
 
@@ -200,7 +200,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
                 repo(unquote(repo))
 
                 references do
-                  unless unquote(reference_source?) do
+                  if !unquote(reference_source?) do
                     reference(:version_source, ignore?: true)
                   end
 
