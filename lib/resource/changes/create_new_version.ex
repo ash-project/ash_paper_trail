@@ -51,6 +51,8 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     Enum.map(changesets_and_results, fn {_, result} -> {:ok, result} end)
   end
 
+  defp valid_for_tracking?(nil), do: false
+
   defp valid_for_tracking?(%Ash.Changeset{} = changeset) do
     changeset.action.name not in AshPaperTrail.Resource.Info.ignore_actions(changeset.resource) &&
       (changeset.action_type in [:create, :destroy] ||
