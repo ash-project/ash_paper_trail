@@ -20,7 +20,7 @@ defmodule AshPaperTrail.Resource do
     examples: [
       "belongs_to_actor :user, MyApp.Users.User, domain: MyApp.Users"
     ],
-    no_depend_modules: [:destination],
+    no_depend_modules: [:destination, :domain],
     target: AshPaperTrail.Resource.BelongsToActor,
     args: [:name, :destination],
     schema: AshPaperTrail.Resource.BelongsToActor.schema()
