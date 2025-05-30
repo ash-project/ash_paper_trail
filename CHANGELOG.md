@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.5.4](https://github.com/ash-project/ash_paper_trail/compare/v0.5.3...v0.5.4) (2025-05-30)
+
+
+
+
+### Bug Fixes:
+
+* don't depend on `domain` in `belongs_to_actor`
+
 ## [v0.5.3](https://github.com/ash-project/ash_paper_trail/compare/v0.5.2...v0.5.3) (2025-04-15)
 
 
