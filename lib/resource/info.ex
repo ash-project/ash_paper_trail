@@ -102,4 +102,9 @@ defmodule AshPaperTrail.Resource.Info do
       Module.concat([Spark.Dsl.Extension.get_persisted(resource, :module), Version])
     end
   end
+
+  @spec public_timestamps?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
+  def public_timestamps?(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :public_timestamps?, false)
+  end
 end

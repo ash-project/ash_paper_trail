@@ -15,6 +15,7 @@ defmodule AshPaperTrail.Test.Articles.Article do
     attributes_as_attributes [:subject, :body]
     ignore_actions [:destroy]
     change_tracking_mode :snapshot
+    public_timestamps?(true)
   end
 
   code_interface do
