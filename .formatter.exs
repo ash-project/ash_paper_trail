@@ -15,6 +15,7 @@ spark_locals_without_parens = [
   only_when_changed?: 1,
   primary_key_type: 1,
   public?: 1,
+  public_timestamps?: 1,
   reference_source?: 1,
   relationship_opts: 1,
   resource_identifier: 1,
