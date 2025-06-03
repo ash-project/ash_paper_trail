@@ -147,7 +147,6 @@ defmodule AshPaperTrail.Resource do
         Whether of not to make the version resource's timestamps public
         """
       ]
-
     ]
   }
 
