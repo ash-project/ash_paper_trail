@@ -139,7 +139,15 @@ defmodule AshPaperTrail.Resource do
         doc: """
         The table to use to store versions if using a SQL-based data layer, derived if not set
         """
+      ],
+      public_timestamps?: [
+        type: :boolean,
+        default: false,
+        doc: """
+        Whether of not to make the version resource's timestamps public
+        """
       ]
+
     ]
   }
 

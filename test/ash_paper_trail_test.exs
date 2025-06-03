@@ -749,4 +749,21 @@ defmodule AshPaperTrailTest do
       refute is_map_key(version.changes, :secret)
     end
   end
+
+  describe "public_timestamps?" do
+    test "when public_timestamps? is false, timestamps are not public on the version resource" do
+      assert AshPaperTrail.Resource.Info.public_timestamps?(AshPaperTrail.Test.Articles.Article) == true
+
+      Ash.Resource.Info.attributes(AshPaperTrail.Test.Articles.Article)
+      |> Enum.filter(& &1.name in [:version_updated_at, :version_inserted_at])
+      |> Enum.each(& assert(&1.public? == false))
+    end
+    test "when public_timestamps? is true, timestamps are public on the version resource" do
+      assert AshPaperTrail.Resource.Info.public_timestamps?(AshPaperTrail.Test.Posts.Post) == false
+      Ash.Resource.Info.attributes(AshPaperTrail.Test.Posts.Post)
+      |> Enum.filter(& &1.name in [:version_updated_at, :version_inserted_at])
+      |> Enum.each(& assert(&1.public? == true))
+
+    end
+  end
 end

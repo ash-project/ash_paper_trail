@@ -17,6 +17,8 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     store_action_inputs? = AshPaperTrail.Resource.Info.store_action_inputs?(dsl_state)
     store_resource_identifier? = AshPaperTrail.Resource.Info.store_resource_identifier?(dsl_state)
     version_extensions = AshPaperTrail.Resource.Info.version_extensions(dsl_state)
+    public_timestamps? =
+      AshPaperTrail.Resource.Info.public_timestamps?(dsl_state)
 
     resource_identifier =
       if store_resource_identifier? do
@@ -292,8 +294,8 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
             sensitive? unquote(sensitive_changes?)
           end
 
-          create_timestamp :version_inserted_at
-          update_timestamp :version_updated_at
+          create_timestamp :version_inserted_at, public?: unquote(public_timestamps?)
+          update_timestamp :version_updated_at, public?: unquote(public_timestamps?)
         end
 
         actions do
