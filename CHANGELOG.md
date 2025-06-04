@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.5.5](https://github.com/ash-project/ash_paper_trail/compare/v0.5.4...v0.5.5) (2025-06-04)
+
+
+
+
+### Improvements:
+
+* expose optional flag to make version resource's timestamps public (#186)
+
 ## [v0.5.4](https://github.com/ash-project/ash_paper_trail/compare/v0.5.3...v0.5.4) (2025-05-30)
 
 
