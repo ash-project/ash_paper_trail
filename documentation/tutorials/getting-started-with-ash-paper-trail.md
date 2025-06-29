@@ -6,6 +6,15 @@ First, add the dependency to your `mix.exs`
 {:ash_paper_trail, "~> 0.5.5"}
 ```
 
+Next add `:ash_ paper_trail` to your `.formatter.exs` under `import_deps`.
+
+```elixir
+  [
+    import_deps: [
+      :ash_paper_trail,
+  ]
+```
+
 Then, add the `AshPaperTrail.Resource` extension to any resource you would like to version and configure the change tracking mode
 
 ```elixir
