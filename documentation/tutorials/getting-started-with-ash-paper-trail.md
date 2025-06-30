@@ -86,7 +86,9 @@ defmodule MyApp.MyResource.PaperTrailMixin do
     # calling module
     quote do
       postgres do
-        reference :version_source, on_delete: :delete
+        references do
+          reference :version_source, on_delete: :delete
+        end
       end
     end
   end
