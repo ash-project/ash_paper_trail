@@ -71,7 +71,7 @@ end
 
 If you are using `AshPostgres`, and you want to support destroy actions, you need to do one of two things:
 
-1. (preferred) use the version mixin to set `on_delete: :delete_all` on the ference.
+1. (preferred) use the version mixin to set `on_delete: :delete` on the ference.
 
 ```elixir
 paper_trail do
@@ -86,7 +86,7 @@ defmodule MyApp.MyResource.PaperTrailMixin do
     # calling module
     quote do
       postgres do
-        reference :version_source, on_delete: :delete_all
+        reference :version_source, on_delete: :delete
       end
     end
   end
