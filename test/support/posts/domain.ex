@@ -11,5 +11,7 @@ defmodule AshPaperTrail.Test.Posts.Domain do
     resource AshPaperTrail.Test.Posts.FullDiffPost.Version
     resource AshPaperTrail.Test.Posts.StoreInputsPost
     resource AshPaperTrail.Test.Posts.StoreInputsPost.Version
+    resource AshPaperTrail.Test.Posts.NoDestroyVersionPost
+    resource AshPaperTrail.Test.Posts.NoDestroyVersionPost.Version
   end
 end

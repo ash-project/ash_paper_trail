@@ -107,4 +107,9 @@ defmodule AshPaperTrail.Resource.Info do
   def public_timestamps?(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :public_timestamps?, false)
   end
+
+  @spec create_version_on_destroy?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
+  def create_version_on_destroy?(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :create_version_on_destroy?, true)
+  end
 end

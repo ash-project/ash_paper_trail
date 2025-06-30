@@ -734,6 +734,98 @@ defmodule AshPaperTrailTest do
     end
   end
 
+  describe "create_version_on_destroy?" do
+    test "when create_version_on_destroy? is false, no version is created on destroy" do
+      assert %{subject: "subject", body: "body", id: post_id} =
+               post = Posts.NoDestroyVersionPost.create!(%{subject: "subject", body: "body"})
+
+      assert :ok = Posts.NoDestroyVersionPost.destroy!(post)
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               }
+             ] = Ash.read!(Posts.NoDestroyVersionPost.Version)
+
+      refute Enum.any?(Ash.read!(Posts.NoDestroyVersionPost.Version), &(&1.version_action_type == :destroy))
+    end
+
+    test "when create_version_on_destroy? is false, no version is created on bulk destroy with enumerable" do
+      %{subject: "subject", body: "body", id: post_id} =
+        post = Posts.NoDestroyVersionPost.create!(%{subject: "subject", body: "body"})
+
+      %Ash.BulkResult{
+        status: :success
+      } =
+        Ash.bulk_destroy!([post], :destroy, %{},
+          strategy: :stream,
+          return_errors?: true
+        )
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               }
+             ] = Ash.read!(Posts.NoDestroyVersionPost.Version)
+
+      refute Enum.any?(Ash.read!(Posts.NoDestroyVersionPost.Version), &(&1.version_action_type == :destroy))
+    end
+
+    test "when create_version_on_destroy? is false, no version is created on bulk destroy with query" do
+      %{subject: "subject", body: "body", id: post_id} =
+        Posts.NoDestroyVersionPost.create!(%{subject: "subject", body: "body"})
+
+      %Ash.BulkResult{
+        status: :success
+      } =
+        Posts.NoDestroyVersionPost
+        |> Ash.Query.filter(id: post_id)
+        |> Ash.bulk_destroy!(:destroy, %{},
+          strategy: :stream,
+          return_errors?: true
+        )
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               }
+             ] = Ash.read!(Posts.NoDestroyVersionPost.Version)
+
+      refute Enum.any?(Ash.read!(Posts.NoDestroyVersionPost.Version), &(&1.version_action_type == :destroy))
+    end
+
+    test "when create_version_on_destroy? is true (default), a version is created on destroy" do
+      assert %{subject: "subject", body: "body", id: post_id} =
+               post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      assert :ok = Posts.Post.destroy!(post, tenant: "acme")
+
+      versions = 
+        Ash.read!(Posts.Post.Version, tenant: "acme")
+        |> Enum.sort_by(& &1.version_inserted_at)
+
+      assert [
+               %{
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               },
+               %{
+                 version_action_type: :destroy,
+                 version_source_id: ^post_id
+               }
+             ] = versions
+    end
+  end
+
   describe "public_timestamps?" do
     test "when public_timestamps? is false, timestamps are not public on the version resource" do
       assert AshPaperTrail.Resource.Info.public_timestamps?(AshPaperTrail.Test.Articles.Article) ==

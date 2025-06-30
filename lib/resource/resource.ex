@@ -115,6 +115,12 @@ defmodule AshPaperTrail.Resource do
         doc:
           "Whether or not to add the `version_action_inputs` attribute to the version resource, which will store all attributes and arguments for the called action, redacting any sensitive values. This is useful for auditing purposes. The `version_action_inputs` attribute is always stored."
       ],
+      create_version_on_destroy?: [
+        type: :boolean,
+        default: true,
+        doc:
+          "Whether or not to create a version on destroy. You will need to set this to `false` unless you are doing soft destroys (like with `AshArchival`)"
+      ],
       store_resource_identifier?: [
         type: :boolean,
         default: false,

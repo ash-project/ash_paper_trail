@@ -53,7 +53,9 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp valid_for_tracking?(%Ash.Changeset{} = changeset) do
     changeset.action.name not in AshPaperTrail.Resource.Info.ignore_actions(changeset.resource) &&
-      (changeset.action_type in [:create, :destroy] ||
+      (changeset.action_type == :create ||
+         (changeset.action_type == :destroy &&
+            AshPaperTrail.Resource.Info.create_version_on_destroy?(changeset.resource)) ||
          (changeset.action_type == :update &&
             changeset.action.name in AshPaperTrail.Resource.Info.on_actions(changeset.resource)))
   end
@@ -62,7 +64,9 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     Ash.Changeset.after_action(changeset, fn changeset, result ->
       changed? = changed?(changeset)
 
-      if changeset.action_type in [:create, :destroy] ||
+      if changeset.action_type == :create ||
+           (changeset.action_type == :destroy &&
+              AshPaperTrail.Resource.Info.create_version_on_destroy?(changeset.resource)) ||
            (changeset.action_type == :update && changed?) do
         {version_changeset, input, actor} = build_notifications(changeset, result)
         create!(changeset, version_changeset, input, actor)
@@ -78,7 +82,9 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     |> Enum.filter(fn {changeset, _result} ->
       changed? = changed?(changeset)
 
-      changeset.action_type in [:create, :destroy] ||
+      changeset.action_type == :create ||
+        (changeset.action_type == :destroy &&
+           AshPaperTrail.Resource.Info.create_version_on_destroy?(changeset.resource)) ||
         (changeset.action_type == :update && changed?)
     end)
     |> Enum.map(fn {changeset, result} -> build_notifications(changeset, result, bulk?: true) end)

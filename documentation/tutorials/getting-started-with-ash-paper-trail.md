@@ -69,17 +69,25 @@ end
 
 ## Destroy Actions
 
-If you are using `AshPostgres`, and you want to support destroy actions, you need to do one of two things:
+If you are using `AshPostgres`, and you want to support destroy actions, you will need to do one of the following:
 
-1. (preferred) use the version mixin to set `on_delete: :delete` on the ference.
+<!-- tabs-open -->
+
+### Don't version destroys
+
+1. configure versions not to be created on destroy actions
 
 ```elixir
 paper_trail do
-  mixin {MyApp.MyResource.PaperTrailMixin, :mixin, []}
+  create_version_on_destroy? false
 end
+```
 
-...
+2. use the version mixin to set `on_delete: :delete` on the underlying reference to the parent resource.
 
+First, create a paper trail mixin if you haven't already
+
+```elixir
 defmodule MyApp.MyResource.PaperTrailMixin do
   def mixin do
     # quote here is because we are returning code to be evaluated inside of the
@@ -96,9 +104,22 @@ end
 ```
 
 
-2.  use something like `AshArchival` in conjunction with this resource to ensure that destroy actions are `soft?` and do not actually result in row deletion
+Second, configure it in the resource
 
-3. configure `AshPaperTrail` to ignore the reference, via:
+```elixir
+paper_trail do
+  mixin {MyApp.MyResource.PaperTrailMixin, :mixin, []}
+end
+```
+
+
+### Soft Destroys
+
+Manually implement soft deletion, or use something like [`AshArchival`](https://hexdocs.pm/ash_archival) to ensure that destroy actions are `soft?` and do not actually result in row deletion
+
+### Disable Foreign Keys (not recommended)
+
+configure `AshPaperTrail` to ignore the reference, like so:
 
 ```elixir
 paper_trail do
@@ -106,7 +127,10 @@ paper_trail do
 end
 ```
 
-and you could then use the `mixin` described below to add `on_delete` options to the reference.
+This will make it skip creating a foreign key for the version source attribute
+
+
+<!-- tabs-close -->
 
 ## Attributes
 
