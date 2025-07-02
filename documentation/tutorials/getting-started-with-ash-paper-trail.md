@@ -3,7 +3,7 @@
 First, add the dependency to your `mix.exs`
 
 ```elixir
-{:ash_paper_trail, "~> 0.5.5"}
+{:ash_paper_trail, "~> 0.5.6"}
 ```
 
 Next add `:ash_ paper_trail` to your `.formatter.exs` under `import_deps`.
