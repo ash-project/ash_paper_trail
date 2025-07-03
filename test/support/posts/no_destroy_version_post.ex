@@ -15,7 +15,7 @@ defmodule AshPaperTrail.Test.Posts.NoDestroyVersionPost do
 
   paper_trail do
     attributes_as_attributes [:subject, :body]
-    create_version_on_destroy? false
+    create_version_on_destroy?(false)
   end
 
   code_interface do

@@ -750,7 +750,10 @@ defmodule AshPaperTrailTest do
                }
              ] = Ash.read!(Posts.NoDestroyVersionPost.Version)
 
-      refute Enum.any?(Ash.read!(Posts.NoDestroyVersionPost.Version), &(&1.version_action_type == :destroy))
+      refute Enum.any?(
+               Ash.read!(Posts.NoDestroyVersionPost.Version),
+               &(&1.version_action_type == :destroy)
+             )
     end
 
     test "when create_version_on_destroy? is false, no version is created on bulk destroy with enumerable" do
@@ -774,7 +777,10 @@ defmodule AshPaperTrailTest do
                }
              ] = Ash.read!(Posts.NoDestroyVersionPost.Version)
 
-      refute Enum.any?(Ash.read!(Posts.NoDestroyVersionPost.Version), &(&1.version_action_type == :destroy))
+      refute Enum.any?(
+               Ash.read!(Posts.NoDestroyVersionPost.Version),
+               &(&1.version_action_type == :destroy)
+             )
     end
 
     test "when create_version_on_destroy? is false, no version is created on bulk destroy with query" do
@@ -800,7 +806,10 @@ defmodule AshPaperTrailTest do
                }
              ] = Ash.read!(Posts.NoDestroyVersionPost.Version)
 
-      refute Enum.any?(Ash.read!(Posts.NoDestroyVersionPost.Version), &(&1.version_action_type == :destroy))
+      refute Enum.any?(
+               Ash.read!(Posts.NoDestroyVersionPost.Version),
+               &(&1.version_action_type == :destroy)
+             )
     end
 
     test "when create_version_on_destroy? is true (default), a version is created on destroy" do
@@ -809,7 +818,7 @@ defmodule AshPaperTrailTest do
 
       assert :ok = Posts.Post.destroy!(post, tenant: "acme")
 
-      versions = 
+      versions =
         Ash.read!(Posts.Post.Version, tenant: "acme")
         |> Enum.sort_by(& &1.version_inserted_at)
 
