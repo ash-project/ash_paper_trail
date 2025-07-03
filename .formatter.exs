@@ -5,6 +5,7 @@ spark_locals_without_parens = [
   belongs_to_actor: 2,
   belongs_to_actor: 3,
   change_tracking_mode: 1,
+  create_version_on_destroy?: 1,
   define_attribute?: 1,
   domain: 1,
   ignore_actions: 1,
