@@ -62,9 +62,10 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp create_new_version(changeset) do
     Ash.Changeset.after_action(changeset, fn changeset, result ->
-      changed? = changed?(changeset)
+      changed? = changed?(changeset, result)
 
-      if changeset.action_type == :create ||
+      if (changeset.action_type == :create && !changeset.context[:private][:upsert?]) ||
+           (changeset.action_type == :create && changeset.context[:private][:upsert?] && changed?) ||
            (changeset.action_type == :destroy &&
               AshPaperTrail.Resource.Info.create_version_on_destroy?(changeset.resource)) ||
            (changeset.action_type == :update && changed?) do
@@ -79,8 +80,8 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp bulk_build_notifications(changesets_and_results) do
     changesets_and_results
-    |> Enum.filter(fn {changeset, _result} ->
-      changed? = changed?(changeset)
+    |> Enum.filter(fn {changeset, result} ->
+      changed? = changed?(changeset, result)
 
       changeset.action_type == :create ||
         (changeset.action_type == :destroy &&
@@ -91,15 +92,25 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     |> Enum.reduce([], fn input, inputs -> [input | inputs] end)
   end
 
-  defp changed?(changeset) do
-    if changeset.action_type == :update do
-      if AshPaperTrail.Resource.Info.only_when_changed?(changeset.resource) do
-        changeset.context.changed?
-      else
-        !(changeset.context[:skip_version_when_unchanged?] && !changeset.context.changed?)
-      end
-    else
-      true
+  defp changed?(changeset, result) do
+    cond do
+      changeset.action_type == :update ->
+        if AshPaperTrail.Resource.Info.only_when_changed?(changeset.resource) do
+          changeset.context.changed?
+        else
+          !changeset.context[:skip_version_when_unchanged?] || changeset.context.changed?
+        end
+
+      changeset.action_type == :create ->
+        if AshPaperTrail.Resource.Info.only_when_changed?(changeset.resource) do
+          !Ash.Resource.get_metadata(result, :upsert_skipped)
+        else
+          !changeset.context[:skip_version_when_unchanged?] ||
+            !Ash.Resource.get_metadata(result, :upsert_skipped)
+        end
+
+      true ->
+        true
     end
   end
 

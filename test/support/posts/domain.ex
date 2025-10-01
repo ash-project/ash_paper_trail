@@ -13,5 +13,7 @@ defmodule AshPaperTrail.Test.Posts.Domain do
     resource AshPaperTrail.Test.Posts.StoreInputsPost.Version
     resource AshPaperTrail.Test.Posts.NoDestroyVersionPost
     resource AshPaperTrail.Test.Posts.NoDestroyVersionPost.Version
+    resource AshPaperTrail.Test.Posts.UpsertPost
+    resource AshPaperTrail.Test.Posts.UpsertPost.Version
   end
 end

@@ -35,11 +35,20 @@ defmodule AshPaperTrail.Test.Posts.BlogPost do
     define :update
     define :destroy
     define :publish
+    define :upsert
   end
 
   actions do
     default_accept :*
     defaults [:create, :read, :update, :destroy]
+
+    create :upsert do
+      upsert? true
+      upsert_identity :unique_subject_per_tenant
+      upsert_fields [:body, :tags, :author, :published, :secret]
+      upsert_condition expr(body != ^atomic_ref(:body))
+      return_skipped_upsert? true
+    end
 
     update :publish do
       require_atomic? false
@@ -56,6 +65,11 @@ defmodule AshPaperTrail.Test.Posts.BlogPost do
     strategy :attribute
     attribute :tenant
     parse_attribute {AshPaperTrail.Test.Tenant, :parse_tenant, []}
+  end
+
+  identities do
+    identity :unique_subject_per_tenant, [:subject, :tenant],
+      pre_check_with: AshPaperTrail.Test.Posts.Domain
   end
 
   attributes do
