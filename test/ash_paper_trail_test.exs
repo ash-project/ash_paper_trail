@@ -854,4 +854,108 @@ defmodule AshPaperTrailTest do
       |> Enum.each(&assert(&1.public? == true))
     end
   end
+
+  describe "upsert operations" do
+    test "upsert creates version when record doesn't exist" do
+      assert %{subject: "subject", body: "body", id: post_id} =
+               Posts.UpsertPost.upsert!(%{subject: "subject", body: "body"})
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               }
+             ] = Ash.read!(Posts.UpsertPost.Version)
+    end
+
+    test "upsert with only_when_changed? true doesn't create version when record exists unchanged" do
+      assert %{subject: "subject", body: "body", id: post_id} =
+               Posts.UpsertPost.upsert!(%{subject: "subject", body: "body"})
+
+      assert %{subject: "subject", body: "body"} =
+               Posts.UpsertPost.upsert!(%{subject: "subject", body: "body"})
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               }
+             ] = Ash.read!(Posts.UpsertPost.Version)
+    end
+
+    test "upsert with only_when_changed? true creates version when record exists but changes" do
+      assert %{subject: "subject", body: "body", id: post_id} =
+               Posts.UpsertPost.upsert!(%{subject: "subject", body: "body"})
+
+      assert %{subject: "subject", body: "new body"} =
+               Posts.UpsertPost.upsert!(%{subject: "subject", body: "new body"})
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               },
+               %{
+                 subject: "subject",
+                 body: "new body",
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               }
+             ] =
+               Ash.read!(Posts.UpsertPost.Version)
+               |> Enum.sort_by(& &1.version_inserted_at)
+    end
+
+    test "upsert with only_when_changed? false creates version even when unchanged" do
+      assert %{subject: "subject", body: "body", id: post_id} =
+               Posts.BlogPost.upsert!(%{subject: "subject", body: "body"}, tenant: "acme")
+
+      assert %{subject: "subject", body: "body"} =
+               Posts.BlogPost.upsert!(%{subject: "subject", body: "body"}, tenant: "acme")
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               },
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               }
+             ] =
+               Ash.read!(Posts.BlogPost.Version, tenant: "acme")
+               |> Enum.sort_by(& &1.version_inserted_at)
+    end
+
+    test "upsert with skip_version_when_unchanged? context doesn't create version when unchanged" do
+      assert %{subject: "subject", body: "body", id: post_id} =
+               Posts.BlogPost.upsert!(%{subject: "subject", body: "body"}, tenant: "acme")
+
+      assert %{subject: "subject", body: "body"} =
+               Posts.BlogPost.upsert!(
+                 %{subject: "subject", body: "body"},
+                 tenant: "acme",
+                 context: %{skip_version_when_unchanged?: true}
+               )
+
+      assert [
+               %{
+                 subject: "subject",
+                 body: "body",
+                 version_action_type: :create,
+                 version_source_id: ^post_id
+               }
+             ] = Ash.read!(Posts.BlogPost.Version, tenant: "acme")
+    end
+  end
 end

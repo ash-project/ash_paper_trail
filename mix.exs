@@ -95,7 +95,7 @@ defmodule AshPaperTrail.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, ash_version("~> 3.5")},
+      {:ash, ash_version("~> 3.5 and >= 3.5.43")},
       {:igniter, "~> 0.5", only: [:dev, :test]},
       {:ex_doc, "~> 0.37-rc", only: [:dev, :test], runtime: false},
       {:ex_check, "~> 0.12", only: [:dev, :test]},
@@ -104,7 +104,8 @@ defmodule AshPaperTrail.MixProject do
       {:sobelow, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:git_ops, "~> 2.5", only: [:dev, :test]},
       {:excoveralls, "~> 0.13", only: [:dev, :test]},
-      {:mix_audit, ">= 0.0.0", only: [:dev, :test], runtime: false}
+      {:mix_audit, ">= 0.0.0", only: [:dev, :test], runtime: false},
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test]}
     ]
   end
 
