@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.Resource.Transformers.VersionOnChange do
   @moduledoc "Adds the `CreateNewVersion` change to the resource."
   use Spark.Dsl.Transformer

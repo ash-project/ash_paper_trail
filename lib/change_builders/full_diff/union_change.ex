@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
   @moduledoc """
     A non-embedded union attribute change will be represented as a map:

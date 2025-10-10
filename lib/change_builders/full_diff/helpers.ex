@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   @moduledoc """
   Misc helpers for building a full diff of a changeset.

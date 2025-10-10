@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.Resource.Transformers.ValidateBelongsToActor do
   @moduledoc "Validates that when multiple belongs_to_actor options are defined that they all allow_nil? true"
   use Spark.Dsl.Transformer

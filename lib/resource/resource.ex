@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.Resource do
   @moduledoc """
   Documentation for `AshPaperTrail.Resource`.

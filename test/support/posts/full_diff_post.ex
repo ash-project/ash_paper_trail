@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.Test.Posts.FullDiffPost do
   @moduledoc """
     A page is like a post but uses the change_tracking_mode :full_diff

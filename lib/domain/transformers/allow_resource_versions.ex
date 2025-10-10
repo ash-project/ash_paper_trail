@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.Domain.Transformers.AllowResourceVersions do
   @moduledoc """
   Adds any version resources to the domain for any resources.

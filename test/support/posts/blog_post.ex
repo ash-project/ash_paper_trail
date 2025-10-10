@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.Test.Posts.BlogPost do
   @moduledoc """
   A blog_post is like a post but uses `only_when_changed? false`

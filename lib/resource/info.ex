@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.Resource.Info do
   @moduledoc "Introspection helpers for `AshPaperTrail.Resource`"
 

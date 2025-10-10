@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.ChangeBuilders.FullDiff.SimpleChange do
   @moduledoc """
   A simple attribute change will be represented as a map:

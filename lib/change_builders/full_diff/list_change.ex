@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
   @moduledoc """
   A list of changes represented as a map:

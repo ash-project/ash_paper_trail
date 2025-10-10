@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.Test.Posts.UpsertPost do
   @moduledoc """
   A test resource for upsert operations with only_when_changed? true

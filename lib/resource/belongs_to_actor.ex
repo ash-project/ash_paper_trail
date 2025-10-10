@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.Resource.BelongsToActor do
   @moduledoc "Represents a belongs_to_actor relationship on a version resource"
 
