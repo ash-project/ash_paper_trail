@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.Test.Posts.Reaction do
   @moduledoc """
   A FeatureVariant is possible value/setting for a Feature. There are multiple types of

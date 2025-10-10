@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
   @moduledoc "Creates a version resource for a given resource"
   use Spark.Dsl.Transformer

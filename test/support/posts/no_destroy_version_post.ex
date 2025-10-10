@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.Test.Posts.NoDestroyVersionPost do
   @moduledoc """
   A post resource that doesn't create versions on destroy

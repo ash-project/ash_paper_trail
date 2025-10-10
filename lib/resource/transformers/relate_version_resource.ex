@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.Resource.Transformers.RelateVersionResource do
   @moduledoc "Relates the resource to its created version resource"
   use Spark.Dsl.Transformer

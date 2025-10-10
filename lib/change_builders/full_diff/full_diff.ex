@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.ChangeBuilders.FullDiff do
   @moduledoc """
     Builds a diff of the changeset that is both fairly easy read and includes a complete

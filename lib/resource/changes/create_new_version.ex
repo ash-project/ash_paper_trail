@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
   @moduledoc "Creates a new version whenever a resource is created, deleted, or updated"
   use Ash.Resource.Change

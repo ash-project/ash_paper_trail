@@ -1,7 +1,12 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.Resource.BelongsToActor do
   @moduledoc "Represents a belongs_to_actor relationship on a version resource"
 
   defstruct [
+    :__spark_metadata__,
     :allow_nil?,
     :domain,
     :attribute_type,
@@ -12,6 +17,7 @@ defmodule AshPaperTrail.Resource.BelongsToActor do
   ]
 
   @type t :: %__MODULE__{
+          __spark_metadata__: Spark.Dsl.Entity.spark_meta(),
           allow_nil?: boolean,
           public?: boolean,
           domain: atom,

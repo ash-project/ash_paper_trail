@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 Zach Daniel
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshPaperTrail.ChangeBuilders.FullDiff.EmbeddedChange do
   import AshPaperTrail.ChangeBuilders.FullDiff.Helpers
 
