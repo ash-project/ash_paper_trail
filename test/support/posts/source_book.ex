@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2020 Zach Daniel
+# SPDX-FileCopyrightText: 2022 ash_paper_trail contributors <https://github.com/ash-project/ash_paper_trail/graphs.contributors>
 #
 # SPDX-License-Identifier: MIT
 
