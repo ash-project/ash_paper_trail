@@ -11,6 +11,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.5.7](https://github.com/ash-project/ash_paper_trail/compare/v0.5.6...v0.5.7) (2025-10-21)
+
+
+
+
+### Bug Fixes:
+
+* send shared context to version changesets by [@zachdaniel](https://github.com/zachdaniel)
+
+* if only changed version should be tracked do not create them for skipped records on upsert (#205) by [@barnabasJ](https://github.com/barnabasJ) [(#205)](https://github.com/ash-project/ash_paper_trail/pull/205)
+
 ## [v0.5.6](https://github.com/ash-project/ash_paper_trail/compare/v0.5.5...v0.5.6) (2025-07-02)
 
 
