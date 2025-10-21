@@ -102,7 +102,8 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
         if AshPaperTrail.Resource.Info.only_when_changed?(changeset.resource) do
           changeset.context.changed?
         else
-          !changeset.context[:skip_version_when_unchanged?] || changeset.context.changed?
+          !changeset.context[:skip_version_when_unchanged?] ||
+            changeset.context.changed?
         end
 
       changeset.action_type == :create ->
@@ -309,7 +310,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp bulk_create!(changeset, version_changeset, inputs, actor) do
     opts = [
-      context: %{ash_paper_trail?: true},
+      context: %{ash_paper_trail?: true, shared: changeset.context[:shared] || %{}},
       authorize?: authorize?(changeset.domain),
       actor: actor,
       tenant: changeset.tenant,
@@ -327,7 +328,10 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp create!(changeset, version_changeset, input, actor) do
     version_changeset
-    |> Ash.Changeset.set_context(%{ash_paper_trail?: true})
+    |> Ash.Changeset.set_context(%{
+      ash_paper_trail?: true,
+      shared: changeset.context[:shared] || %{}
+    })
     |> Ash.Changeset.for_create(:create, input,
       tenant: changeset.tenant,
       authorize?: authorize?(changeset.domain),
