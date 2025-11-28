@@ -104,5 +104,10 @@ defmodule AshPaperTrail.Test.Posts.FullDiffPost do
       public? true
       allow_nil? true
     end
+
+    attribute :times, {:array, :time} do
+      public? true
+      allow_nil? true
+    end
   end
 end

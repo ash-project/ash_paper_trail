@@ -932,4 +932,30 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.domain, ctx.version_resource)
     end
   end
+
+  describe "full_diff with primitive struct types" do
+    test "creating a record with {:array, :time} attribute", ctx do
+      assert {:ok, _post} =
+               ctx.resource
+               |> Ash.Changeset.for_create(:create, %{
+                 subject: "Schedule",
+                 times: [~T[08:00:00], ~T[12:00:00], ~T[17:00:00]]
+               })
+               |> Ash.create()
+    end
+
+    test "updating a record to add {:array, :time} values", ctx do
+      {:ok, post} =
+        ctx.resource
+        |> Ash.Changeset.for_create(:create, %{subject: "Schedule", times: nil})
+        |> Ash.create()
+
+      assert {:ok, _updated} =
+               post
+               |> Ash.Changeset.for_update(:update, %{
+                 times: [~T[09:00:00], ~T[14:00:00]]
+               })
+               |> Ash.update()
+    end
+  end
 end
