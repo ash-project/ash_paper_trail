@@ -98,13 +98,19 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   def unique_id(%Ash.Union{}, dumped_value), do: dumped_value
   def unique_id(nil, _dumped_value), do: nil
 
-  def unique_id(%{__struct__: resource}, dump_value) do
-    case Ash.Resource.Info.primary_key(resource) do
-      [] ->
-        nil
+  def unique_id(%{__struct__: resource} = struct, dump_value) do
+    if Ash.Resource.Info.resource?(resource) do
+      case Ash.Resource.Info.primary_key(resource) do
+        [] ->
+          nil
 
-      primary_keys ->
-        Enum.reduce(primary_keys, [resource], &(&2 ++ [Map.get(dump_value, &1)]))
+        primary_keys ->
+          Enum.reduce(primary_keys, [resource], &(&2 ++ [Map.get(dump_value, &1)]))
+      end
+    else
+      # For non-Ash structs (Time, Date, DateTime, Decimal, etc.),
+      # return the struct itself for value-based equality matching
+      struct
     end
   end
 
