@@ -932,4 +932,39 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.domain, ctx.version_resource)
     end
   end
+
+  describe "full_diff with primitive struct types" do
+    test "create with {:array, :time} attribute", ctx do
+      ctx.resource.create!(%{
+        subject: "Schedule",
+        times: [~T[08:00:00], ~T[10:00:00], ~T[12:00:00]]
+      })
+
+      assert %{
+               times: %{
+                 to: [
+                   %{added: ~T[08:00:00], index: %{to: 0}},
+                   %{added: ~T[10:00:00], index: %{to: 1}},
+                   %{added: ~T[12:00:00], index: %{to: 2}}
+                 ]
+               }
+             } = last_version_changes(ctx.domain, ctx.version_resource)
+    end
+
+    test "update {:array, :time} with reorder, add, and remove", ctx do
+      post = ctx.resource.create!(%{subject: "Schedule", times: [~T[08:00:00], ~T[10:00:00]]})
+
+      ctx.resource.update!(post, %{times: [~T[10:00:00], ~T[08:00:00], ~T[14:00:00]]})
+
+      assert %{
+               times: %{
+                 to: [
+                   %{unchanged: ~T[10:00:00], index: %{from: 1, to: 0}},
+                   %{unchanged: ~T[08:00:00], index: %{from: 0, to: 1}},
+                   %{added: ~T[14:00:00], index: %{to: 2}}
+                 ]
+               }
+             } = last_version_changes(ctx.domain, ctx.version_resource)
+    end
+  end
 end
