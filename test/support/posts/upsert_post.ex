@@ -26,13 +26,14 @@ defmodule AshPaperTrail.Test.Posts.UpsertPost do
 
   code_interface do
     define :create
+    define :update
     define :read
     define :upsert
   end
 
   actions do
     default_accept :*
-    defaults [:create, :read]
+    defaults [:create, :update, :read]
 
     create :upsert do
       upsert? true

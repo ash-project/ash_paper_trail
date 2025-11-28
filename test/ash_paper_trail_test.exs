@@ -438,10 +438,11 @@ defmodule AshPaperTrailTest do
   describe "only_when_changed?" do
     test "when set to `true` to versions are not generated when nothing has changed" do
       assert %{subject: "subject", body: "body", id: post_id} =
-               post = Posts.BlogPost.create!(@valid_attrs, tenant: "acme")
+               post =
+               Posts.UpsertPost.create!(%{subject: "subject", body: "body"}, tenant: "acme")
 
       assert %{subject: "subject", body: "body"} =
-               Posts.BlogPost.update!(post, %{subject: "subject", body: "body"}, tenant: "acme")
+               Posts.UpsertPost.update!(post, %{subject: "subject", body: "body"}, tenant: "acme")
 
       assert [
                %{
@@ -449,15 +450,9 @@ defmodule AshPaperTrailTest do
                  body: "body",
                  version_action_type: :create,
                  version_source_id: ^post_id
-               },
-               %{
-                 subject: "subject",
-                 body: "body",
-                 version_action_type: :update,
-                 version_source_id: ^post_id
                }
              ] =
-               Ash.read!(Posts.BlogPost.Version, tenant: "acme")
+               Ash.read!(Posts.UpsertPost.Version, tenant: "acme")
                |> Enum.sort_by(& &1.version_inserted_at)
     end
 
