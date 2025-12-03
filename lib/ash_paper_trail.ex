@@ -13,21 +13,36 @@ defmodule AshPaperTrail do
 
   @regex ~r/\.Version$/
   def allow_resource_versions(nil, resource) do
-    resource_name = to_string(resource)
+    cond do
+      is_atom(resource) and function_exported?(resource, :resource_version?, 0) and
+          resource.resource_version?() ->
+        relationships = Ash.Resource.Info.relationships(resource)
 
-    if String.match?(resource_name, @regex) do
-      original_resource =
-        try do
-          resource_name
-          |> String.replace(@regex, "")
-          |> String.to_existing_atom()
-        rescue
-          ArgumentError -> false
+        case Enum.find(relationships, &(&1.name == :version_source and &1.type == :belongs_to)) do
+          nil ->
+            false
+
+          relationship ->
+            AshPaperTrail.Resource in Spark.extensions(relationship.destination)
         end
 
-      original_resource && AshPaperTrail.Resource in Spark.extensions(original_resource)
-    else
-      false
+      true ->
+        resource_name = to_string(resource)
+
+        if String.match?(resource_name, @regex) do
+          original_resource =
+            try do
+              resource_name
+              |> String.replace(@regex, "")
+              |> String.to_existing_atom()
+            rescue
+              ArgumentError -> false
+            end
+
+          original_resource && AshPaperTrail.Resource in Spark.extensions(original_resource)
+        else
+          false
+        end
     end
   end
 end
