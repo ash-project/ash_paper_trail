@@ -11,29 +11,20 @@ defmodule AshPaperTrail do
     apply(m, f, a) || allow_resource_versions(nil, resource)
   end
 
-  @regex ~r/\.Version$/
   def allow_resource_versions(nil, resource) when not is_atom(resource), do: false
 
   def allow_resource_versions(nil, resource) when is_atom(resource) do
-    if Code.ensure_loaded?(resource) do
-      cond do
-        function_exported?(resource, :resource_version?, 0) and safe_resource_version?(resource) ->
-          cond do
-            function_exported?(resource, :version_of, 0) ->
-              case safe_version_of(resource) do
-                {:ok, original_resource} ->
-                  AshPaperTrail.Resource in Spark.extensions(original_resource)
+    if safe_resource_version?(resource) do
+      if function_exported?(resource, :version_of, 0) do
+        case safe_version_of(resource) do
+          {:ok, original_resource} ->
+            AshPaperTrail.Resource in Spark.extensions(original_resource)
 
-                :error ->
-                  false
-              end
-
-            true ->
-              relationship_fallback(resource) || regex_fallback(resource)
-          end
-
-        true ->
-          regex_fallback(resource)
+          :error ->
+            false
+        end
+      else
+        relationship_fallback(resource)
       end
     else
       false
@@ -41,21 +32,17 @@ defmodule AshPaperTrail do
   end
 
   defp safe_resource_version?(resource) do
-    try do
-      resource.resource_version?()
-    rescue
-      _ ->
-        false
-    end
+    resource.resource_version?()
+  rescue
+    _ ->
+      false
   end
 
   defp safe_version_of(resource) do
-    try do
-      {:ok, resource.version_of()}
-    rescue
-      _ ->
-        :error
-    end
+    {:ok, resource.version_of()}
+  rescue
+    _ ->
+      :error
   end
 
   defp relationship_fallback(resource) do
@@ -67,25 +54,6 @@ defmodule AshPaperTrail do
 
       relationship ->
         AshPaperTrail.Resource in Spark.extensions(relationship.destination)
-    end
-  end
-
-  defp regex_fallback(resource) do
-    resource_name = to_string(resource)
-
-    if String.match?(resource_name, @regex) do
-      original_resource =
-        try do
-          resource_name
-          |> String.replace(@regex, "")
-          |> String.to_existing_atom()
-        rescue
-          ArgumentError -> false
-        end
-
-      original_resource && AshPaperTrail.Resource in Spark.extensions(original_resource)
-    else
-      false
     end
   end
 end

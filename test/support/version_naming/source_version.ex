@@ -1,4 +1,7 @@
 defmodule AshPaperTrail.Test.VersionNaming.Source.Version do
+  @moduledoc """
+  Test version resource for version naming tests.
+  """
   use Ash.Resource,
     domain: AshPaperTrail.Test.VersionNaming.Domain,
     data_layer: Ash.DataLayer.Ets,
