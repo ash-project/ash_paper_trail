@@ -11,12 +11,6 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
-## Unreleased
-
-### Bug Fixes:
-
-* full_diff no longer crashes when attributes contain `%Ash.ForbiddenField{}` from field policies; such values are now recorded as `nil` in diffs. (Issue #215)
-
 ## [v0.5.7](https://github.com/ash-project/ash_paper_trail/compare/v0.5.6...v0.5.7) (2025-10-21)
 
 
