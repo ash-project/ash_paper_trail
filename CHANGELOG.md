@@ -11,17 +11,6 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
-## Unreleased
-
-- Add explicit `version_resource` support for `paper_trail` to avoid name clashes when an app defines its own `X.Version` resource.
-  - By default, version resources are still derived as `X.Version` for a resource `X`.
-  - When `paper_trail` is configured with a full module name via `version_resource`, versions are written to that module instead, and any app-defined `X.Version` remains a normal resource.
-  - Behavior is covered by [`AshPaperTrail.VersionResourceNamingTest`](test/ash_paper_trail/version_resource_naming_test.exs:1) and the `AshPaperTrail.Test.VersionNaming` fixtures.
-
-### Bug Fixes:
-
-* full_diff no longer crashes when attributes contain `%Ash.ForbiddenField{}` from field policies; such values are now recorded as `nil` in diffs. (Issue #215)
-
 ## [v0.5.7](https://github.com/ash-project/ash_paper_trail/compare/v0.5.6...v0.5.7) (2025-10-21)
 
 
