@@ -5,6 +5,7 @@
 defmodule AshPaperTrail.FullDiffTest do
   use ExUnit.Case
 
+  alias AshPaperTrail.ChangeBuilders.FullDiff.Helpers
   alias AshPaperTrail.Test.Posts
   import TestHelper
 
@@ -965,6 +966,24 @@ defmodule AshPaperTrail.FullDiffTest do
                  ]
                }
              } = last_version_changes(ctx.domain, ctx.version_resource)
+    end
+  end
+
+  describe "ForbiddenField handling in full_diff" do
+    test "dump_value treats ForbiddenField in data as nil for scalar attributes" do
+      attribute = %{type: :string, constraints: %{}}
+
+      value = %Ash.ForbiddenField{field: :note, type: :attribute}
+
+      assert Helpers.dump_value(value, attribute) == nil
+    end
+
+    test "dump_value treats ForbiddenField inside arrays as nil elements" do
+      attribute = %{type: {:array, :string}, constraints: %{items: %{}}}
+
+      values = ["visible", %Ash.ForbiddenField{field: :note, type: :attribute}, "also visible"]
+
+      assert Helpers.dump_value(values, attribute) == ["visible", nil, "also visible"]
     end
   end
 end
