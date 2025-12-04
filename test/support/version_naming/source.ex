@@ -1,4 +1,6 @@
 defmodule AshPaperTrail.Test.VersionNaming.Source do
+  @moduledoc false
+
   use Ash.Resource,
     domain: AshPaperTrail.Test.VersionNaming.Domain,
     data_layer: Ash.DataLayer.Ets,
