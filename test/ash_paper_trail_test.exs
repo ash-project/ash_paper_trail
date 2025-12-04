@@ -122,7 +122,7 @@ defmodule AshPaperTrailTest do
                }
              ] =
                Ash.read!(Posts.Post.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               |> TestHelper.sort_versions()
     end
 
     test "a new version is created on a bulk update with enumerable" do
@@ -169,7 +169,7 @@ defmodule AshPaperTrailTest do
                }
              ] =
                Ash.read!(Posts.Post.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_action_type)
+               |> TestHelper.sort_versions()
     end
 
     test "a new version is created on a bulk update with enumerable and after_transaction" do
@@ -198,7 +198,7 @@ defmodule AshPaperTrailTest do
                }
              ] =
                Ash.read!(Posts.Post.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_action_type)
+               |> TestHelper.sort_versions()
     end
 
     test "a new version is created on a bulk update with query" do
@@ -247,7 +247,7 @@ defmodule AshPaperTrailTest do
                }
              ] =
                Ash.read!(Posts.Post.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_action_type)
+               |> TestHelper.sort_versions()
     end
 
     test "the action name is stored" do
@@ -357,7 +357,7 @@ defmodule AshPaperTrailTest do
                }
              ] =
                Ash.read!(Posts.Post.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               |> TestHelper.sort_versions()
     end
 
     test "a new version is created on destroy with enumerable" do
@@ -388,7 +388,7 @@ defmodule AshPaperTrailTest do
                }
              ] =
                Ash.read!(Posts.Post.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               |> TestHelper.sort_versions()
     end
 
     test "a new version is created on destroy with query" do
@@ -421,7 +421,7 @@ defmodule AshPaperTrailTest do
                }
              ] =
                Ash.read!(Posts.Post.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               |> TestHelper.sort_versions()
     end
   end
 
@@ -453,7 +453,7 @@ defmodule AshPaperTrailTest do
                }
              ] =
                Ash.read!(Posts.UpsertPost.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               |> TestHelper.sort_versions()
     end
 
     test "can be set to `false` to generate versions even when nothing has changed" do
@@ -478,7 +478,7 @@ defmodule AshPaperTrailTest do
                }
              ] =
                Ash.read!(Posts.BlogPost.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               |> TestHelper.sort_versions()
     end
 
     test "if set to `false` and the context `:skip_version_when_unchanged?` is set to `true`, a version is not created" do
@@ -500,7 +500,7 @@ defmodule AshPaperTrailTest do
                }
              ] =
                Ash.read!(Posts.BlogPost.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               |> TestHelper.sort_versions()
     end
   end
 
@@ -603,7 +603,7 @@ defmodule AshPaperTrailTest do
           }
         ] =
           Ash.read!(Posts.Post.Version, tenant: "acme")
-          |> Enum.sort_by(& &1.version_inserted_at)
+          |> TestHelper.sort_versions()
       )
     end
   end
@@ -633,7 +633,7 @@ defmodule AshPaperTrailTest do
              }
            ] =
              Ash.read!(Posts.Post.Version, tenant: "acme")
-             |> Enum.sort_by(& &1.version_inserted_at)
+             |> TestHelper.sort_versions()
   end
 
   describe ":primary_key_type options" do
@@ -675,7 +675,7 @@ defmodule AshPaperTrailTest do
 
       assert :ok = Articles.Article.destroy!(article)
 
-      versions = Ash.read!(Articles.Article.Version) |> Enum.sort_by(& &1.version_inserted_at)
+      versions = Ash.read!(Articles.Article.Version) |> TestHelper.sort_versions()
 
       assert [
                %{
@@ -819,7 +819,7 @@ defmodule AshPaperTrailTest do
 
       versions =
         Ash.read!(Posts.Post.Version, tenant: "acme")
-        |> Enum.sort_by(& &1.version_inserted_at)
+        |> TestHelper.sort_versions()
 
       assert [
                %{
@@ -908,7 +908,7 @@ defmodule AshPaperTrailTest do
                }
              ] =
                Ash.read!(Posts.UpsertPost.Version)
-               |> Enum.sort_by(& &1.version_inserted_at)
+               |> TestHelper.sort_versions()
     end
 
     test "upsert with only_when_changed? false creates version even when unchanged" do
@@ -933,7 +933,7 @@ defmodule AshPaperTrailTest do
                }
              ] =
                Ash.read!(Posts.BlogPost.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               |> TestHelper.sort_versions()
     end
 
     test "upsert with skip_version_when_unchanged? context doesn't create version when unchanged" do
