@@ -143,6 +143,12 @@ defmodule AshPaperTrail.Resource do
         Extensions that should be used by the version resource. For example: `extensions: [AshGraphql.Resource], notifier: [Ash.Notifiers.PubSub]`
         """
       ],
+      version_resource: [
+        type: :atom,
+        doc: """
+        The explicit module to use for the generated version resource. By default, the version resource is named `X.Version` for a given resource `X`. Use this option when your application already defines `X.Version` and you want the paper trail versions to live in a different module.
+        """
+      ],
       table_name: [
         type: :string,
         required: false,

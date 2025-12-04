@@ -38,6 +38,7 @@ A section for configuring how versioning is derived for the resource.
 | [`store_resource_identifier?`](#paper_trail-store_resource_identifier?){: #paper_trail-store_resource_identifier? } | `boolean` | `false` | Whether or not to add the `version_resource_identifier` attribute to the version resource. This is useful for auditing purposes. |
 | [`resource_identifier`](#paper_trail-resource_identifier){: #paper_trail-resource_identifier } | `atom` |  | A name to use for this resource in the `version_resource_identifier`. Defaults to `Ash.Resource.Info.short_name/1`. |
 | [`version_extensions`](#paper_trail-version_extensions){: #paper_trail-version_extensions } | `keyword` | `[]` | Extensions that should be used by the version resource. For example: `extensions: [AshGraphql.Resource], notifier: [Ash.Notifiers.PubSub]` |
+| [`version_resource`](#paper_trail-version_resource){: #paper_trail-version_resource } | `atom` |  | The explicit module to use for the generated version resource. By default, the version resource is named `X.Version` for a given resource `X`. Use this option when your application already defines `X.Version` and you want the paper trail versions to live in a different module. |
 | [`table_name`](#paper_trail-table_name){: #paper_trail-table_name } | `String.t` |  | The table to use to store versions if using a SQL-based data layer, derived if not set |
 | [`public_timestamps?`](#paper_trail-public_timestamps?){: #paper_trail-public_timestamps? } | `boolean` | `false` | Whether of not to make the version resource's timestamps public |
 
