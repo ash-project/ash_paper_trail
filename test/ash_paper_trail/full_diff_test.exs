@@ -5,8 +5,8 @@
 defmodule AshPaperTrail.FullDiffTest do
   use ExUnit.Case
 
-  alias AshPaperTrail.Test.Posts
   alias AshPaperTrail.ChangeBuilders.FullDiff.Helpers
+  alias AshPaperTrail.Test.Posts
   import TestHelper
 
   setup do
