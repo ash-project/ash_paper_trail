@@ -152,6 +152,8 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
         def resource_version?, do: true
 
+        def version_of, do: unquote(module)
+
         if unquote(multitenant?) do
           multitenancy do
             strategy(unquote(Ash.Resource.Info.multitenancy_strategy(dsl_state)))
