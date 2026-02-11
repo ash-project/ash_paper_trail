@@ -9,6 +9,41 @@ defmodule AshPaperTrailTest do
 
   alias AshPaperTrail.Test.{Accounts, Articles, Posts}
 
+  defp sort_versions(versions) do
+    action_order = %{create: 0, publish: 1, update: 2, destroy: 3}
+    type_order = %{create: 0, update: 1, destroy: 2}
+
+    Enum.sort(versions, fn a, b ->
+      cond do
+        a.version_inserted_at != b.version_inserted_at ->
+          DateTime.compare(a.version_inserted_at, b.version_inserted_at) == :lt
+
+        a.version_action_type != b.version_action_type ->
+          (type_order[a.version_action_type] || 99) < (type_order[b.version_action_type] || 99)
+
+        true ->
+          name_a = Map.get(a, :version_action_name, a.version_action_type)
+          name_b = Map.get(b, :version_action_name, b.version_action_type)
+          order_a = Map.get(action_order, name_a, 99)
+          order_b = Map.get(action_order, name_b, 99)
+
+          if order_a != order_b do
+            order_a < order_b
+          else
+            # Same type and name (e.g. two creates) - use body then id
+            body_a = Map.get(a, :body, "") |> to_string()
+            body_b = Map.get(b, :body, "") |> to_string()
+
+            if body_a != body_b do
+              body_a < body_b
+            else
+              to_string(a.id) < to_string(b.id)
+            end
+          end
+      end
+    end)
+  end
+
   @valid_attrs %{
     subject: "subject",
     body: "body",
@@ -121,8 +156,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Ash.read!(Posts.Post.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
     end
 
     test "a new version is created on a bulk update with enumerable" do
@@ -168,8 +202,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Ash.read!(Posts.Post.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_action_type)
+               Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
     end
 
     test "a new version is created on a bulk update with enumerable and after_transaction" do
@@ -197,8 +230,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Ash.read!(Posts.Post.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_action_type)
+               Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
     end
 
     test "a new version is created on a bulk update with query" do
@@ -246,8 +278,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Ash.read!(Posts.Post.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_action_type)
+               Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
     end
 
     test "the action name is stored" do
@@ -356,8 +387,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Ash.read!(Posts.Post.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
     end
 
     test "a new version is created on destroy with enumerable" do
@@ -387,8 +417,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Ash.read!(Posts.Post.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
     end
 
     test "a new version is created on destroy with query" do
@@ -420,8 +449,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Ash.read!(Posts.Post.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
     end
   end
 
@@ -452,8 +480,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Ash.read!(Posts.UpsertPost.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               Ash.read!(Posts.UpsertPost.Version, tenant: "acme") |> sort_versions()
     end
 
     test "can be set to `false` to generate versions even when nothing has changed" do
@@ -477,8 +504,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Ash.read!(Posts.BlogPost.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               Ash.read!(Posts.BlogPost.Version, tenant: "acme") |> sort_versions()
     end
 
     test "if set to `false` and the context `:skip_version_when_unchanged?` is set to `true`, a version is not created" do
@@ -499,8 +525,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Ash.read!(Posts.BlogPost.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               Ash.read!(Posts.BlogPost.Version, tenant: "acme") |> sort_versions()
     end
   end
 
@@ -602,8 +627,7 @@ defmodule AshPaperTrailTest do
             news_feed_id: nil
           }
         ] =
-          Ash.read!(Posts.Post.Version, tenant: "acme")
-          |> Enum.sort_by(& &1.version_inserted_at)
+          Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
       )
     end
   end
@@ -614,7 +638,7 @@ defmodule AshPaperTrailTest do
 
     Ash.bulk_destroy!([post], :destroy, %{},
       strategy: [:atomic],
-      return_errors?: true,
+      return_errors?: true, 
       tenant: "acme"
     )
 
@@ -632,8 +656,7 @@ defmodule AshPaperTrailTest do
                version_source_id: ^post_id
              }
            ] =
-             Ash.read!(Posts.Post.Version, tenant: "acme")
-             |> Enum.sort_by(& &1.version_inserted_at)
+             Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
   end
 
   describe ":primary_key_type options" do
@@ -675,7 +698,7 @@ defmodule AshPaperTrailTest do
 
       assert :ok = Articles.Article.destroy!(article)
 
-      versions = Ash.read!(Articles.Article.Version) |> Enum.sort_by(& &1.version_inserted_at)
+      versions = Ash.read!(Articles.Article.Version) |> sort_versions()
 
       assert [
                %{
@@ -730,6 +753,166 @@ defmodule AshPaperTrailTest do
 
       refute version.secret
       refute is_map_key(version.changes, :secret)
+    end
+  end
+
+  describe "ash_paper_trail_disabled? context" do
+    test "no version is created on create when context ash_paper_trail_disabled? is true" do
+      assert %{subject: "subject", body: "body", id: _post_id} =
+               Posts.Post.create!(@valid_attrs, tenant: "acme",
+                 context: %{ash_paper_trail_disabled?: true}
+               )
+
+      assert [] = Ash.read!(Posts.Post.Version, tenant: "acme")
+    end
+
+    test "no version is created on update when context ash_paper_trail_disabled? is true" do
+      assert %{subject: "subject", body: "body", id: _post_id} =
+               post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      assert [%{version_action_type: :create}] =
+               Ash.read!(Posts.Post.Version, tenant: "acme")
+
+      assert %{subject: "new subject", body: "new body"} =
+               Posts.Post.update!(post, %{subject: "new subject", body: "new body"},
+                 tenant: "acme",
+                 context: %{ash_paper_trail_disabled?: true}
+               )
+
+      assert [%{version_action_type: :create}] =
+               Ash.read!(Posts.Post.Version, tenant: "acme")
+    end
+
+    test "no version is created on destroy when context ash_paper_trail_disabled? is true" do
+      assert %{subject: "subject", body: "body", id: _post_id} =
+               post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      assert :ok =
+               Posts.Post.destroy!(post, tenant: "acme", context: %{ash_paper_trail_disabled?: true})
+
+      assert [%{version_action_type: :create}] =
+               Ash.read!(Posts.Post.Version, tenant: "acme")
+    end
+
+    test "no version is created on bulk create when context ash_paper_trail_disabled? is true" do
+      %Ash.BulkResult{status: :success} =
+        Ash.bulk_create!([@valid_attrs], Posts.Post, :create,
+          tenant: "acme",
+          context: %{ash_paper_trail_disabled?: true}
+        )
+
+      assert [] = Ash.read!(Posts.Post.Version, tenant: "acme")
+    end
+
+    test "no version is created on bulk update when context ash_paper_trail_disabled? is true" do
+      %{subject: "subject", body: "body", id: _post_id} =
+        post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      %Ash.BulkResult{status: :success} =
+        Ash.bulk_update!([post], :update, %{subject: "new subject", body: "new body"},
+          tenant: "acme",
+          strategy: :stream,
+          return_records?: true,
+          return_errors?: true,
+          context: %{ash_paper_trail_disabled?: true}
+        )
+
+      assert [%{version_action_type: :create}] =
+               Ash.read!(Posts.Post.Version, tenant: "acme")
+    end
+
+    test "no version is created on bulk destroy when context ash_paper_trail_disabled? is true" do
+      %{subject: "subject", body: "body", id: _post_id} =
+        post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      %Ash.BulkResult{status: :success} =
+        Ash.bulk_destroy!([post], :destroy, %{},
+          strategy: :stream,
+          tenant: "acme",
+          return_errors?: true,
+          context: %{ash_paper_trail_disabled?: true}
+        )
+
+      assert [%{version_action_type: :create}] =
+               Ash.read!(Posts.Post.Version, tenant: "acme")
+    end
+
+    test "no version is created when action has set_context(ash_paper_trail_disabled?: true)" do
+      assert %{subject: "subject", body: "body", id: _post_id} =
+               post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      assert %{subject: "silent subject"} =
+               Posts.Post.silent_update!(post, %{subject: "silent subject"}, tenant: "acme")
+
+      assert [%{version_action_type: :create}] =
+               Ash.read!(Posts.Post.Version, tenant: "acme")
+    end
+
+    test "versions are created when ash_paper_trail_disabled? is nil or false" do
+      assert %{subject: "subject", body: "body", id: _post_id} =
+               post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      assert %{subject: "new subject"} =
+               Posts.Post.update!(post, %{subject: "new subject"},
+                 tenant: "acme",
+                 context: %{ash_paper_trail_disabled?: false}
+               )
+
+      versions = Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
+
+      assert [%{version_action_type: :create}, %{version_action_type: :update, subject: "new subject"}] =
+               versions
+    end
+
+    test "no version is created on bulk destroy with atomic strategy when context ash_paper_trail_disabled? is true" do
+      %{subject: "subject", body: "body", id: post_id} =
+        post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      %Ash.BulkResult{status: :success} =
+        Ash.bulk_destroy!([post], :destroy, %{},
+          strategy: :atomic,
+          tenant: "acme",
+          return_errors?: true,
+          context: %{ash_paper_trail_disabled?: true}
+        )
+
+      assert [%{version_action_type: :create, version_source_id: ^post_id}] =
+               Ash.read!(Posts.Post.Version, tenant: "acme")
+    end
+
+    test "no version is created on bulk update via query when context ash_paper_trail_disabled? is true" do
+      %{subject: "subject", body: "body", id: post_id} =
+        Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      %Ash.BulkResult{status: :success} =
+        Posts.Post
+        |> Ash.Query.filter(id: post_id)
+        |> Ash.bulk_update!(:update, %{subject: "new subject", body: "new body"},
+          tenant: "acme",
+          strategy: :stream,
+          return_records?: true,
+          return_errors?: true,
+          context: %{ash_paper_trail_disabled?: true}
+        )
+
+      assert [%{version_action_type: :create}] =
+               Ash.read!(Posts.Post.Version, tenant: "acme")
+    end
+
+    test "no version is created on upsert when context ash_paper_trail_disabled? is true" do
+      assert %{subject: "subject", body: "body", id: _post_id} =
+               Posts.UpsertPost.upsert!(%{subject: "subject", body: "body"},
+                 context: %{ash_paper_trail_disabled?: true}
+               )
+
+      assert [] = Ash.read!(Posts.UpsertPost.Version)
+
+      assert %{subject: "subject", body: "new body"} =
+               Posts.UpsertPost.upsert!(%{subject: "subject", body: "new body"},
+                 context: %{ash_paper_trail_disabled?: true}
+               )
+
+      assert [] = Ash.read!(Posts.UpsertPost.Version)
     end
   end
 
@@ -818,8 +1001,7 @@ defmodule AshPaperTrailTest do
       assert :ok = Posts.Post.destroy!(post, tenant: "acme")
 
       versions =
-        Ash.read!(Posts.Post.Version, tenant: "acme")
-        |> Enum.sort_by(& &1.version_inserted_at)
+          Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
 
       assert [
                %{
@@ -907,8 +1089,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Ash.read!(Posts.UpsertPost.Version)
-               |> Enum.sort_by(& &1.version_inserted_at)
+               Ash.read!(Posts.UpsertPost.Version) |> sort_versions()
     end
 
     test "upsert with only_when_changed? false creates version even when unchanged" do
@@ -932,8 +1113,7 @@ defmodule AshPaperTrailTest do
                  version_source_id: ^post_id
                }
              ] =
-               Ash.read!(Posts.BlogPost.Version, tenant: "acme")
-               |> Enum.sort_by(& &1.version_inserted_at)
+               Ash.read!(Posts.BlogPost.Version, tenant: "acme") |> sort_versions()
     end
 
     test "upsert with skip_version_when_unchanged? context doesn't create version when unchanged" do

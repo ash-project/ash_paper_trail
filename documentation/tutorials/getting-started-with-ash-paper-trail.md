@@ -12,13 +12,14 @@ First, add the dependency to your `mix.exs`
 {:ash_paper_trail, "~> 0.5.7"}
 ```
 
-Next add `:ash_ paper_trail` to your `.formatter.exs` under `import_deps`.
+Next add `:ash_paper_trail` to your `.formatter.exs` under `import_deps`.
 
 ```elixir
-  [
-    import_deps: [
-      :ash_paper_trail,
+[
+  import_deps: [
+    :ash_paper_trail
   ]
+]
 ```
 
 Then, add the `AshPaperTrail.Resource` extension to any resource you would like to version and configure the change tracking mode
@@ -244,4 +245,24 @@ For example, one specific action might have a change like this:
 change set_context(%{skip_version_when_unchanged?: true})
 ```
 
-to instruct `AshPaperTrail` not to create a version if there are no changed for this particular action.
+to instruct `AshPaperTrail` not to create a version if there are no changes for this particular action.
+
+## Disabling Versioning at Runtime
+
+You can disable versioning for specific actions at runtime using the `ash_paper_trail_disabled?` context key. When set to a truthy value, no version will be created for that action.
+
+**Via action change** – add `set_context(%{ash_paper_trail_disabled?: true})` to any action:
+
+```elixir
+update :my_action do
+  change set_context(%{ash_paper_trail_disabled?: true})
+end
+```
+
+**Via context at call site** – pass the context when calling the action:
+
+```elixir
+Post.update!(post, %{subject: "new subject"}, context: %{ash_paper_trail_disabled?: true})
+```
+
+This is useful when you need to skip versioning for migrations, imports, or other operations where audit history is not desired.
