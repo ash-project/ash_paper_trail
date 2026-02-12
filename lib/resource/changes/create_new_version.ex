@@ -11,7 +11,11 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   @impl true
   def change(changeset, _, _) do
-    create_new_version(changeset)
+    if valid_for_tracking?(changeset) do
+      create_new_version(changeset)
+    else
+      changeset
+    end
   end
 
   @impl true
@@ -63,12 +67,14 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp create_new_version(changeset) do
     Ash.Changeset.after_action(changeset, fn changeset, result ->
-      if valid_for_tracking?(changeset) do
-        changed? = changed?(changeset, result)
+      unless changeset.context[:ash_paper_trail_disabled?] do
+        if valid_for_tracking?(changeset) do
+          changed? = changed?(changeset, result)
 
-        if should_record_version_for_action?(changeset, changed?) do
-          {version_changeset, input, actor} = build_notifications(changeset, result)
-          create!(changeset, version_changeset, input, actor)
+          if should_record_version_for_action?(changeset, changed?) do
+            {version_changeset, input, actor} = build_notifications(changeset, result)
+            create!(changeset, version_changeset, input, actor)
+          end
         end
       end
 
