@@ -47,7 +47,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       if Enum.any?(inputs) do
         version_resource = AshPaperTrail.Resource.Info.version_resource(changeset.resource)
         version_changeset = Ash.Changeset.new(version_resource)
-        actor = changeset.context[:private][:actor]
+        actor = get_in(changeset.context, [:private, :actor])
         bulk_create!(changeset, version_changeset, inputs, actor)
       end
     end
@@ -56,7 +56,8 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
   end
 
   defp valid_for_tracking?(%Ash.Changeset{} = changeset) do
-    changeset.action.name not in AshPaperTrail.Resource.Info.ignore_actions(changeset.resource) &&
+    !changeset.context[:ash_paper_trail_disabled?] &&
+      changeset.action.name not in AshPaperTrail.Resource.Info.ignore_actions(changeset.resource) &&
       (changeset.action_type == :create ||
          (changeset.action_type == :destroy &&
             AshPaperTrail.Resource.Info.create_version_on_destroy?(changeset.resource)) ||
@@ -66,31 +67,43 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp create_new_version(changeset) do
     Ash.Changeset.after_action(changeset, fn changeset, result ->
-      changed? = changed?(changeset, result)
+      if !changeset.context[:ash_paper_trail_disabled?] do
+        if valid_for_tracking?(changeset) do
+          changed? = changed?(changeset, result)
 
-      if (changeset.action_type == :create && !changeset.context[:private][:upsert?]) ||
-           (changeset.action_type == :create && changeset.context[:private][:upsert?] && changed?) ||
-           (changeset.action_type == :destroy &&
-              AshPaperTrail.Resource.Info.create_version_on_destroy?(changeset.resource)) ||
-           (changeset.action_type == :update && changed?) do
-        {version_changeset, input, actor} = build_notifications(changeset, result)
-        create!(changeset, version_changeset, input, actor)
-        {:ok, result}
-      else
-        {:ok, result}
+          if should_record_version_for_action?(changeset, changed?) do
+            {version_changeset, input, actor} = build_notifications(changeset, result)
+            create!(changeset, version_changeset, input, actor)
+          end
+        end
       end
+
+      {:ok, result}
     end)
+  end
+
+  defp should_record_version_for_action?(changeset, changed?) do
+    case changeset.action_type do
+      :create ->
+        upsert? = get_in(changeset.context, [:private, :upsert?])
+        !upsert? || (upsert? && changed?)
+
+      :destroy ->
+        AshPaperTrail.Resource.Info.create_version_on_destroy?(changeset.resource)
+
+      :update ->
+        changed?
+
+      _ ->
+        false
+    end
   end
 
   defp bulk_build_notifications(changesets_and_results) do
     changesets_and_results
     |> Enum.filter(fn {changeset, result} ->
       changed? = changed?(changeset, result)
-
-      changeset.action_type == :create ||
-        (changeset.action_type == :destroy &&
-           AshPaperTrail.Resource.Info.create_version_on_destroy?(changeset.resource)) ||
-        (changeset.action_type == :update && changed?)
+      should_record_version_for_action?(changeset, changed?)
     end)
     |> Enum.map(fn {changeset, result} -> build_notifications(changeset, result, bulk?: true) end)
     |> Enum.reduce([], fn input, inputs -> [input | inputs] end)
@@ -137,7 +150,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     belongs_to_actors =
       AshPaperTrail.Resource.Info.belongs_to_actor(changeset.resource)
 
-    actor = changeset.context[:private][:actor]
+    actor = get_in(changeset.context, [:private, :actor])
 
     sensitive_mode =
       changeset.context[:sensitive_attributes] ||
@@ -310,7 +323,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp bulk_create!(changeset, version_changeset, inputs, actor) do
     opts = [
-      context: %{ash_paper_trail?: true, shared: changeset.context[:shared] || %{}},
+      context: version_context(changeset),
       authorize?: authorize?(changeset.domain),
       actor: actor,
       tenant: changeset.tenant,
@@ -328,10 +341,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp create!(changeset, version_changeset, input, actor) do
     version_changeset
-    |> Ash.Changeset.set_context(%{
-      ash_paper_trail?: true,
-      shared: changeset.context[:shared] || %{}
-    })
+    |> Ash.Changeset.set_context(version_context(changeset))
     |> Ash.Changeset.for_create(:create, input,
       tenant: changeset.tenant,
       authorize?: authorize?(changeset.domain),
@@ -352,6 +362,10 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp build_changes(attributes, :full_diff, changeset, result) do
     AshPaperTrail.ChangeBuilders.FullDiff.build_changes(attributes, changeset, result)
+  end
+
+  defp version_context(changeset) do
+    %{ash_paper_trail?: true, shared: changeset.context[:shared] || %{}}
   end
 
   defp authorize?(domain), do: Ash.Domain.Info.authorize(domain) == :always

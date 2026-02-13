@@ -38,11 +38,16 @@ defmodule AshPaperTrail.Test.Posts.Post do
     define :update
     define :destroy
     define :publish
+    define :silent_update
   end
 
   actions do
     default_accept :*
     defaults [:create, :read, :update, :destroy]
+
+    update :silent_update do
+      change set_context(%{ash_paper_trail_disabled?: true})
+    end
 
     update :publish do
       require_atomic? false
