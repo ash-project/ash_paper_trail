@@ -759,7 +759,8 @@ defmodule AshPaperTrailTest do
   describe "ash_paper_trail_disabled? context" do
     test "no version is created on create when context ash_paper_trail_disabled? is true" do
       assert %{subject: "subject", body: "body", id: _post_id} =
-               Posts.Post.create!(@valid_attrs, tenant: "acme",
+               Posts.Post.create!(@valid_attrs,
+                 tenant: "acme",
                  context: %{ash_paper_trail_disabled?: true}
                )
 
@@ -788,7 +789,10 @@ defmodule AshPaperTrailTest do
                post = Posts.Post.create!(@valid_attrs, tenant: "acme")
 
       assert :ok =
-               Posts.Post.destroy!(post, tenant: "acme", context: %{ash_paper_trail_disabled?: true})
+               Posts.Post.destroy!(post,
+                 tenant: "acme",
+                 context: %{ash_paper_trail_disabled?: true}
+               )
 
       assert [%{version_action_type: :create}] =
                Ash.read!(Posts.Post.Version, tenant: "acme")
@@ -860,7 +864,10 @@ defmodule AshPaperTrailTest do
 
       versions = Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
 
-      assert [%{version_action_type: :create}, %{version_action_type: :update, subject: "new subject"}] =
+      assert [
+               %{version_action_type: :create},
+               %{version_action_type: :update, subject: "new subject"}
+             ] =
                versions
     end
   end
@@ -950,7 +957,7 @@ defmodule AshPaperTrailTest do
       assert :ok = Posts.Post.destroy!(post, tenant: "acme")
 
       versions =
-          Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
+        Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
 
       assert [
                %{
