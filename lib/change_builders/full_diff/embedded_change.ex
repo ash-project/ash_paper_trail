@@ -29,6 +29,12 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.EmbeddedChange do
           nil ->
             nil
 
+          %Ash.NotLoaded{} ->
+            nil
+
+          %Ash.ForbiddenField{} ->
+            nil
+
           data ->
             dumped_data = dump_value(data, attribute)
             uid = unique_id(data, dumped_data)
