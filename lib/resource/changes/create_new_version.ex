@@ -67,7 +67,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
   defp create_new_version(changeset) do
     Ash.Changeset.after_action(changeset, fn changeset, result ->
-      unless changeset.context[:ash_paper_trail_disabled?] do
+      if !changeset.context[:ash_paper_trail_disabled?] do
         if valid_for_tracking?(changeset) do
           changed? = changed?(changeset, result)
 

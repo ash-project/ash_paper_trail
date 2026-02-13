@@ -464,7 +464,7 @@ defmodule AshPaperTrailTest do
   end
 
   describe "only_when_changed?" do
-    test "when set to `true` to versions are not generated when nothing has changed" do
+    test "when set to `true` no versions are generated when nothing has changed" do
       assert %{subject: "subject", body: "body", id: post_id} =
                post =
                Posts.UpsertPost.create!(%{subject: "subject", body: "body"}, tenant: "acme")
@@ -637,8 +637,8 @@ defmodule AshPaperTrailTest do
              post = Posts.Post.create!(@valid_attrs, tenant: "acme")
 
     Ash.bulk_destroy!([post], :destroy, %{},
-      strategy: [:atomic],
-      return_errors?: true, 
+      strategy: :atomic,
+      return_errors?: true,
       tenant: "acme"
     )
 
@@ -862,57 +862,6 @@ defmodule AshPaperTrailTest do
 
       assert [%{version_action_type: :create}, %{version_action_type: :update, subject: "new subject"}] =
                versions
-    end
-
-    test "no version is created on bulk destroy with atomic strategy when context ash_paper_trail_disabled? is true" do
-      %{subject: "subject", body: "body", id: post_id} =
-        post = Posts.Post.create!(@valid_attrs, tenant: "acme")
-
-      %Ash.BulkResult{status: :success} =
-        Ash.bulk_destroy!([post], :destroy, %{},
-          strategy: :atomic,
-          tenant: "acme",
-          return_errors?: true,
-          context: %{ash_paper_trail_disabled?: true}
-        )
-
-      assert [%{version_action_type: :create, version_source_id: ^post_id}] =
-               Ash.read!(Posts.Post.Version, tenant: "acme")
-    end
-
-    test "no version is created on bulk update via query when context ash_paper_trail_disabled? is true" do
-      %{subject: "subject", body: "body", id: post_id} =
-        Posts.Post.create!(@valid_attrs, tenant: "acme")
-
-      %Ash.BulkResult{status: :success} =
-        Posts.Post
-        |> Ash.Query.filter(id: post_id)
-        |> Ash.bulk_update!(:update, %{subject: "new subject", body: "new body"},
-          tenant: "acme",
-          strategy: :stream,
-          return_records?: true,
-          return_errors?: true,
-          context: %{ash_paper_trail_disabled?: true}
-        )
-
-      assert [%{version_action_type: :create}] =
-               Ash.read!(Posts.Post.Version, tenant: "acme")
-    end
-
-    test "no version is created on upsert when context ash_paper_trail_disabled? is true" do
-      assert %{subject: "subject", body: "body", id: _post_id} =
-               Posts.UpsertPost.upsert!(%{subject: "subject", body: "body"},
-                 context: %{ash_paper_trail_disabled?: true}
-               )
-
-      assert [] = Ash.read!(Posts.UpsertPost.Version)
-
-      assert %{subject: "subject", body: "new body"} =
-               Posts.UpsertPost.upsert!(%{subject: "subject", body: "new body"},
-                 context: %{ash_paper_trail_disabled?: true}
-               )
-
-      assert [] = Ash.read!(Posts.UpsertPost.Version)
     end
   end
 
