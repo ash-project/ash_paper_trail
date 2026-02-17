@@ -30,6 +30,9 @@ defmodule AshPaperTrail.Test.Posts.Post do
 
     belongs_to_actor :news_feed, AshPaperTrail.Test.Accounts.NewsFeed,
       domain: AshPaperTrail.Test.Accounts.Domain
+
+    metadata :reason_for_change, :string
+    metadata :client_ip, :string
   end
 
   code_interface do
