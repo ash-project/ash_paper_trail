@@ -270,6 +270,14 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
         changes: changes
       })
 
+    metadata_entities = AshPaperTrail.Resource.Info.metadata(changeset.resource)
+    paper_trail_metadata = changeset.context[:paper_trail_metadata] || %{}
+
+    input =
+      Enum.reduce(metadata_entities, input, fn meta, input ->
+        Map.put(input, meta.name, Map.get(paper_trail_metadata, meta.name))
+      end)
+
     if Keyword.get(opts, :bulk?) do
       input
     else

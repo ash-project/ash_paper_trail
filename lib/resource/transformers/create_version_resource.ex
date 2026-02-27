@@ -16,6 +16,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     ignore_attributes = AshPaperTrail.Resource.Info.ignore_attributes(dsl_state)
     attributes_as_attributes = AshPaperTrail.Resource.Info.attributes_as_attributes(dsl_state)
     belongs_to_actors = AshPaperTrail.Resource.Info.belongs_to_actor(dsl_state)
+    metadata_entities = AshPaperTrail.Resource.Info.metadata(dsl_state)
     reference_source? = AshPaperTrail.Resource.Info.reference_source?(dsl_state)
     store_action_name? = AshPaperTrail.Resource.Info.store_action_name?(dsl_state)
     store_action_inputs? = AshPaperTrail.Resource.Info.store_action_inputs?(dsl_state)
@@ -95,7 +96,8 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
         attributes |> Enum.map(& &1.name),
         :version_source_id,
         :changes,
-        belongs_to_actors |> Enum.map(&String.to_atom("#{&1.name}_id"))
+        belongs_to_actors |> Enum.map(&String.to_atom("#{&1.name}_id")),
+        metadata_entities |> Enum.map(& &1.name)
       ]
       |> List.flatten()
       |> Enum.reject(&is_nil/1)
@@ -269,6 +271,14 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           if unquote(store_resource_identifier?) do
             attribute :version_resource_identifier, :atom do
               allow_nil? false
+              public? true
+            end
+          end
+
+          for meta <- unquote(Macro.escape(metadata_entities)) do
+            attribute meta.name, meta.type do
+              constraints(meta.constraints)
+              allow_nil?(meta.allow_nil?)
               public? true
             end
           end

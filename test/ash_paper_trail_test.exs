@@ -1093,4 +1093,104 @@ defmodule AshPaperTrailTest do
              ] = Ash.read!(Posts.BlogPost.Version, tenant: "acme")
     end
   end
+
+  describe "metadata" do
+    test "metadata is stored on version when set via context" do
+      post =
+        Posts.Post
+        |> Ash.Changeset.for_create(:create, @valid_attrs)
+        |> Ash.Changeset.set_context(%{
+          paper_trail_metadata: %{reason_for_change: "initial creation", client_ip: "127.0.0.1"}
+        })
+        |> Ash.create!(tenant: "acme")
+
+      assert [
+               %{
+                 reason_for_change: "initial creation",
+                 client_ip: "127.0.0.1",
+                 version_action_type: :create,
+                 version_source_id: version_source_id
+               }
+             ] = Ash.read!(Posts.Post.Version, tenant: "acme")
+
+      assert version_source_id == post.id
+    end
+
+    test "metadata defaults to nil when not set in context" do
+      Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      assert [
+               %{
+                 reason_for_change: nil,
+                 client_ip: nil,
+                 version_action_type: :create
+               }
+             ] = Ash.read!(Posts.Post.Version, tenant: "acme")
+    end
+
+    test "metadata is stored on version for update actions" do
+      post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      post
+      |> Ash.Changeset.for_update(:update, %{subject: "new subject"})
+      |> Ash.Changeset.set_context(%{
+        paper_trail_metadata: %{reason_for_change: "fix typo"}
+      })
+      |> Ash.update!(tenant: "acme")
+
+      versions = Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
+
+      assert [
+               %{version_action_type: :create, reason_for_change: nil},
+               %{version_action_type: :update, reason_for_change: "fix typo", client_ip: nil}
+             ] = versions
+    end
+
+    test "metadata works with bulk create" do
+      %Ash.BulkResult{status: :success} =
+        Ash.bulk_create!([@valid_attrs], Posts.Post, :create,
+          tenant: "acme",
+          return_records?: true,
+          return_errors?: true,
+          context: %{paper_trail_metadata: %{reason_for_change: "bulk import"}}
+        )
+
+      assert [
+               %{
+                 reason_for_change: "bulk import",
+                 version_action_type: :create
+               }
+             ] = Ash.read!(Posts.Post.Version, tenant: "acme")
+    end
+
+    test "metadata works with bulk update" do
+      post = Posts.Post.create!(@valid_attrs, tenant: "acme")
+
+      %Ash.BulkResult{status: :success} =
+        Ash.bulk_update!([post], :update, %{subject: "new subject", body: "new body"},
+          tenant: "acme",
+          strategy: :stream,
+          return_records?: true,
+          return_errors?: true,
+          context: %{paper_trail_metadata: %{reason_for_change: "bulk edit"}}
+        )
+
+      versions = Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
+
+      assert [
+               %{version_action_type: :create, reason_for_change: nil},
+               %{version_action_type: :update, reason_for_change: "bulk edit"}
+             ] = versions
+    end
+
+    test "metadata attributes exist on version resource" do
+      attributes =
+        Posts.Post.Version
+        |> Ash.Resource.Info.attributes()
+        |> Enum.map(& &1.name)
+
+      assert :reason_for_change in attributes
+      assert :client_ip in attributes
+    end
+  end
 end

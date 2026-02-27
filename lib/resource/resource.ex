@@ -30,12 +30,30 @@ defmodule AshPaperTrail.Resource do
     schema: AshPaperTrail.Resource.BelongsToActor.schema()
   }
 
+  @metadata %Spark.Dsl.Entity{
+    name: :metadata,
+    describe: """
+    Defines a metadata attribute on the version resource. The value is extracted from
+    the changeset context at `context[:paper_trail_metadata][name]` when creating a version.
+
+    This is useful for storing auditing information like `reason_for_change` or `client_ip`.
+    """,
+    examples: [
+      "metadata :reason_for_change, :string",
+      "metadata :client_ip, :string, allow_nil?: true"
+    ],
+    target: AshPaperTrail.Resource.Metadata,
+    args: [:name, :type],
+    schema: AshPaperTrail.Resource.Metadata.schema(),
+    transform: {Ash.Type, :set_type_transformation, []}
+  }
+
   @paper_trail %Spark.Dsl.Section{
     name: :paper_trail,
     describe: """
     A section for configuring how versioning is derived for the resource.
     """,
-    entities: [@belongs_to_actor],
+    entities: [@belongs_to_actor, @metadata],
     schema: [
       primary_key_type: [
         type: :atom,

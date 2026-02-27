@@ -29,6 +29,15 @@ defmodule AshPaperTrail.Resource.Info do
     end)
   end
 
+  @spec metadata(Spark.Dsl.t() | Ash.Resource.t()) :: [AshPaperTrail.Resource.Metadata.t()]
+  def metadata(resource) do
+    Spark.Dsl.Extension.get_entities(resource, [:paper_trail])
+    |> Enum.filter(fn
+      %AshPaperTrail.Resource.Metadata{} -> true
+      _ -> false
+    end)
+  end
+
   @spec change_tracking_mode(Spark.Dsl.t() | Ash.Resource.t()) :: atom
   def change_tracking_mode(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :change_tracking_mode, [])

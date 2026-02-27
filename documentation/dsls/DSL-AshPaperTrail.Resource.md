@@ -12,6 +12,7 @@ A section for configuring how versioning is derived for the resource.
 
 ### Nested DSLs
  * [belongs_to_actor](#paper_trail-belongs_to_actor)
+ * [metadata](#paper_trail-metadata)
 
 
 
@@ -93,6 +94,52 @@ belongs_to_actor :user, MyApp.Users.User, domain: MyApp.Users
 ### Introspection
 
 Target: `AshPaperTrail.Resource.BelongsToActor`
+
+### paper_trail.metadata
+```elixir
+metadata name, type
+```
+
+
+Defines a metadata attribute on the version resource. The value is extracted from
+the changeset context at `context[:paper_trail_metadata][name]` when creating a version.
+
+This is useful for storing auditing information like `reason_for_change` or `client_ip`.
+
+
+
+
+### Examples
+```
+metadata :reason_for_change, :string
+```
+
+```
+metadata :client_ip, :string, allow_nil?: true
+```
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`name`](#paper_trail-metadata-name){: #paper_trail-metadata-name .spark-required} | `atom` |  | The name of the metadata attribute on the version resource. |
+| [`type`](#paper_trail-metadata-type){: #paper_trail-metadata-type .spark-required} | `any` |  | The type of the metadata attribute. See `Ash.Type` for more. |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`constraints`](#paper_trail-metadata-constraints){: #paper_trail-metadata-constraints } | `keyword` | `[]` | Type constraints for the metadata attribute. |
+| [`allow_nil?`](#paper_trail-metadata-allow_nil?){: #paper_trail-metadata-allow_nil? } | `boolean` | `true` | Whether or not the metadata may be `nil`. |
+
+
+
+
+
+### Introspection
+
+Target: `AshPaperTrail.Resource.Metadata`
 
 
 
