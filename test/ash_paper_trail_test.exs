@@ -585,6 +585,16 @@ defmodule AshPaperTrailTest do
       end)
     end
 
+    test "on_delete defaults to :nothing" do
+      [_, news_feed_actor] = AshPaperTrail.Resource.Info.belongs_to_actor(Posts.Post)
+      assert news_feed_actor.on_delete == :nothing
+    end
+
+    test "on_delete can be configured" do
+      [user_actor | _] = AshPaperTrail.Resource.Info.belongs_to_actor(Posts.Post)
+      assert user_actor.on_delete == :delete
+    end
+
     test "sets a relationship on the versions" do
       user = Accounts.User.create!(%{name: "bob"})
       user_id = user.id

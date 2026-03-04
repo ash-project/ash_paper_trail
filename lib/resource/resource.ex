@@ -14,7 +14,7 @@ defmodule AshPaperTrail.Resource do
     matches the resource type, the version will be related to the actor. If your actors are polymorphic or varying types, declare a
     belongs_to_actor for each type.
 
-    A reference is also created with `on_delete: :nilify` and `on_update: :update`
+    A reference is also created with `on_delete: :nothing` (configurable via the `on_delete` option) and `on_update: :update`
 
     If you need more complex relationships, set `define_attribute? false` and add the relationship via a mixin.
 

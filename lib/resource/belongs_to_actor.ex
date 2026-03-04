@@ -13,7 +13,8 @@ defmodule AshPaperTrail.Resource.BelongsToActor do
     :destination,
     :define_attribute?,
     :public?,
-    :name
+    :name,
+    :on_delete
   ]
 
   @type t :: %__MODULE__{
@@ -24,7 +25,8 @@ defmodule AshPaperTrail.Resource.BelongsToActor do
           attribute_type: term,
           destination: Ash.Resource.t(),
           define_attribute?: boolean,
-          name: atom
+          name: atom,
+          on_delete: :nothing | :nilify | :delete | :restrict | {:nilify, list(atom)}
         }
 
   @schema [
@@ -64,6 +66,17 @@ defmodule AshPaperTrail.Resource.BelongsToActor do
     destination: [
       type: Ash.OptionsHelpers.ash_resource(),
       doc: "The resource of the actor (e.g. MyApp.Users.User)"
+    ],
+    on_delete: [
+      type:
+        {:or,
+         [
+           {:one_of, [:delete, :nilify, :nothing, :restrict]},
+           {:tagged_tuple, :nilify, {:wrap_list, :atom}}
+         ]},
+      default: :nothing,
+      doc:
+        "The action to take on the version row when the actor is deleted. Can also be `{:nilify, columns}` to nilify specific columns (Postgres 15+ only). Only relevant for resources using a SQL data layer."
     ]
   ]
 

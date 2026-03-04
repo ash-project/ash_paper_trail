@@ -20,6 +20,7 @@ spark_locals_without_parens = [
   metadata: 3,
   mixin: 1,
   on_actions: 1,
+  on_delete: 1,
   only_when_changed?: 1,
   primary_key_type: 1,
   public?: 1,
