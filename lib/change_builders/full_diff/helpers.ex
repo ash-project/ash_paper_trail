@@ -7,15 +7,21 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   Misc helpers for building a full diff of a changeset.
   """
 
+  def dump_value(%Ash.ForbiddenField{}, _attribute), do: nil
+
   def dump_value(nil, _attribute), do: nil
 
   def dump_value(values, %{type: {:array, attr_type}} = attribute) do
     item_constraints = attribute.constraints[:items]
 
     # This is a work around for a bug in Ash.Type.dump_to_embedded/3
-    Enum.map(values, fn value ->
-      {:ok, dumped_value} = Ash.Type.dump_to_embedded(attr_type, value, item_constraints)
-      dumped_value
+    Enum.map(values, fn
+      %Ash.ForbiddenField{} ->
+        nil
+
+      value ->
+        {:ok, dumped_value} = Ash.Type.dump_to_embedded(attr_type, value, item_constraints)
+        dumped_value
     end)
   end
 

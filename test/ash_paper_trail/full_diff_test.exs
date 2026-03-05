@@ -967,4 +967,59 @@ defmodule AshPaperTrail.FullDiffTest do
              } = last_version_changes(ctx.domain, ctx.version_resource)
     end
   end
+
+  describe "Helpers.dump_value/2 ForbiddenField handling" do
+    alias AshPaperTrail.ChangeBuilders.FullDiff.Helpers
+
+    test "leaves normal scalar values unchanged" do
+      attribute = %{type: :string, constraints: []}
+
+      assert Helpers.dump_value("visible", attribute) == "visible"
+    end
+
+    test "treats ForbiddenField scalar values as nil" do
+      attribute = %{type: :string, constraints: []}
+      forbidden = %Ash.ForbiddenField{field: :note, type: :attribute}
+
+      assert Helpers.dump_value(forbidden, attribute) == nil
+    end
+
+    test "treats ForbiddenField elements inside arrays as nil" do
+      attribute = %{type: {:array, :string}, constraints: [items: []]}
+
+      values = [
+        "visible",
+        %Ash.ForbiddenField{field: :note, type: :attribute},
+        "also visible"
+      ]
+
+      assert Helpers.dump_value(values, attribute) == ["visible", nil, "also visible"]
+    end
+
+    test "treats ForbiddenField elements as nil in non-string arrays" do
+      attribute = %{type: {:array, :integer}, constraints: [items: []]}
+
+      values = [
+        1,
+        %Ash.ForbiddenField{field: :secret_code, type: :attribute},
+        3
+      ]
+
+      assert Helpers.dump_value(values, attribute) == [1, nil, 3]
+    end
+
+    test "treats ForbiddenField elements as nil in arrays of embedded structs" do
+      attribute = %{type: {:array, AshPaperTrail.Test.Posts.Author}, constraints: [items: []]}
+
+      values = [
+        %AshPaperTrail.Test.Posts.Author{first_name: "Bob", last_name: "Jones"},
+        %Ash.ForbiddenField{field: :author, type: :attribute}
+      ]
+
+      [first, second] = Helpers.dump_value(values, attribute)
+
+      assert is_map(first)
+      assert second == nil
+    end
+  end
 end
