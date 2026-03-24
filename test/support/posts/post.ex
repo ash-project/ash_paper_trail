@@ -26,7 +26,8 @@ defmodule AshPaperTrail.Test.Posts.Post do
     relationship_opts public?: true
 
     belongs_to_actor :user, AshPaperTrail.Test.Accounts.User,
-      domain: AshPaperTrail.Test.Accounts.Domain
+      domain: AshPaperTrail.Test.Accounts.Domain,
+      on_delete: :delete
 
     belongs_to_actor :news_feed, AshPaperTrail.Test.Accounts.NewsFeed,
       domain: AshPaperTrail.Test.Accounts.Domain

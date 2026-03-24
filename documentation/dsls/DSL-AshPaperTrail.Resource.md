@@ -54,7 +54,7 @@ Creates a belongs_to relationship for the actor resource. When creating a new ve
 matches the resource type, the version will be related to the actor. If your actors are polymorphic or varying types, declare a
 belongs_to_actor for each type.
 
-A reference is also created with `on_delete: :nilify` and `on_update: :update`
+A reference is also created with `on_delete: :nothing` (configurable via the `on_delete` option) and `on_update: :update`
 
 If you need more complex relationships, set `define_attribute? false` and add the relationship via a mixin.
 
@@ -86,6 +86,7 @@ belongs_to_actor :user, MyApp.Users.User, domain: MyApp.Users
 | [`attribute_type`](#paper_trail-belongs_to_actor-attribute_type){: #paper_trail-belongs_to_actor-attribute_type } | `any` | `:uuid` | The type of the generated created attribute. See `Ash.Type` for more. |
 | [`public?`](#paper_trail-belongs_to_actor-public?){: #paper_trail-belongs_to_actor-public? } | `boolean` | `false` | Whether this relationship should be included in public interfaces |
 | [`define_attribute?`](#paper_trail-belongs_to_actor-define_attribute?){: #paper_trail-belongs_to_actor-define_attribute? } | `boolean` | `true` | If set to `false` an attribute is not created on the resource for this relationship, and one must be manually added in `attributes`, invalidating many other options. |
+| [`on_delete`](#paper_trail-belongs_to_actor-on_delete){: #paper_trail-belongs_to_actor-on_delete } | `:delete \| :nilify \| :nothing \| :restrict \| {:nilify, atom \| list(atom)}` | `:nothing` | The action to take on the version row when the actor is deleted. Can also be `{:nilify, columns}` to nilify specific columns (Postgres 15+ only). Only relevant for resources using a SQL data layer. |
 
 
 
