@@ -6,6 +6,8 @@ defmodule AshPaperTrail.Resource.PrimaryKey do
   @moduledoc false
   # Shared version-source primary key mapping for single and composite keys.
 
+  import Ash.Expr
+
   @version_source_id :version_source_id
 
   @doc "Returns `{source_pk, version_attr}` pairs for a resource or DSL state."
@@ -15,7 +17,7 @@ defmodule AshPaperTrail.Resource.PrimaryKey do
     |> Enum.map(&{&1, version_source_attribute_name(resource, &1)})
   end
 
-  #Returns true when the resource has more than one primary key attribute.
+  # Returns true when the resource has more than one primary key attribute.
   def composite?(resource) do
     resource |> Ash.Resource.Info.primary_key() |> length() > 1
   end
@@ -58,67 +60,20 @@ defmodule AshPaperTrail.Resource.PrimaryKey do
   # Filter for `has_many :paper_trail_versions` on the source resource.
   def source_versions_filter(resource) do
     resource
-    |> source_versions_filter_ast()
-    |> build_filter()
+    |> pairs()
+    |> Enum.map(fn {source_key, version_attr} ->
+      expr(^ref(version_attr) == parent(^ref(source_key)))
+    end)
+    |> Enum.reduce(fn right, left -> expr(^left and ^right) end)
   end
 
   # Filter for `has_one :version_source` on the version resource.
   def version_source_filter(resource) do
     resource
-    |> version_source_filter_ast()
-    |> build_filter()
-  end
-
-  # Returns quoted AST for the source-side filter (e.g. version_source_team_id == parent(team_id)),
-  # used when embedding expr(...) in generated code.
-  def source_versions_filter_ast(resource) do
-    resource
     |> pairs()
     |> Enum.map(fn {source_key, version_attr} ->
-      quote do
-        unquote(Macro.var(version_attr, nil)) == parent(unquote(Macro.var(source_key, nil)))
-      end
+      expr(^ref(source_key) == parent(^ref(version_attr)))
     end)
-    |> combine_and()
-  end
-
-  # Returns quoted AST for the version-side filter (e.g. team_id == parent(version_source_team_id)),
-  # used when embedding expr(...) in generated code.
-  def version_source_filter_ast(resource) do
-    resource
-    |> pairs()
-    |> Enum.map(fn {source_key, version_attr} ->
-      quote do
-        unquote(Macro.var(source_key, nil)) == parent(unquote(Macro.var(version_attr, nil)))
-      end
-    end)
-    |> combine_and()
-  end
-
-  # Converts quoted filter AST into a runtime Ash filter struct via Ash.Expr.expr/1.
-  # sobelow_skip ["RCE.CodeModule"]
-  defp build_filter(ast) do
-    {filter, _} =
-      Code.eval_quoted(
-        quote do
-          require Ash.Expr
-          Ash.Expr.expr(unquote(ast))
-        end,
-        [],
-        __ENV__
-      )
-
-    filter
-  end
-
-  # Joins one or more quoted filter conditions into a single and expression.
-  defp combine_and([single]), do: single
-
-  defp combine_and([first | rest]) do
-    Enum.reduce(rest, first, fn right, left ->
-      quote do
-        unquote(left) and unquote(right)
-      end
-    end)
+    |> Enum.reduce(fn right, left -> expr(^left and ^right) end)
   end
 end

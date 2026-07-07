@@ -91,7 +91,11 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResourceTest do
       source = AshPaperTrail.Test.Posts.TeamMember
       version = AshPaperTrail.Test.Posts.TeamMember.Version
 
-      assert_composite_pk_support(source, version, AshPaperTrail.Test.Posts.TeamMember.composite_keys())
+      assert_composite_pk_support(
+        source,
+        version,
+        AshPaperTrail.Test.Posts.TeamMember.composite_keys()
+      )
     end
   end
 end

@@ -90,8 +90,8 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     version_source_mappings = AshPaperTrail.Resource.PrimaryKey.mappings(dsl_state)
     composite_primary_key? = AshPaperTrail.Resource.PrimaryKey.composite?(dsl_state)
 
-    version_source_filter_ast =
-      AshPaperTrail.Resource.PrimaryKey.version_source_filter_ast(dsl_state)
+    version_source_filter =
+      AshPaperTrail.Resource.PrimaryKey.version_source_filter(dsl_state)
 
     accept =
       [
@@ -328,7 +328,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
               public? true
               allow_nil?(false)
               no_attributes?(true)
-              filter expr(unquote(version_source_filter_ast))
+              filter unquote(Macro.escape(version_source_filter))
             end
           else
             {_source_key, version_attr, source_attr} =
