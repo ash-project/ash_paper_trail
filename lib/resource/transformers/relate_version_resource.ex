@@ -36,7 +36,7 @@ defmodule AshPaperTrail.Resource.Transformers.RelateVersionResource do
       case primary_keys do
         [key] ->
           {[
-             name: :paper_trail_versions,
+             name: AshPaperTrail.Resource.Info.versions_relationship_name(dsl_state),
              destination: AshPaperTrail.Resource.Info.version_resource(dsl_state),
              destination_attribute: :version_source_id,
              source_attribute: key
@@ -44,7 +44,7 @@ defmodule AshPaperTrail.Resource.Transformers.RelateVersionResource do
 
         _keys ->
           {[
-             name: :paper_trail_versions,
+             name: AshPaperTrail.Resource.Info.versions_relationship_name(dsl_state),
              destination: AshPaperTrail.Resource.Info.version_resource(dsl_state),
              no_attributes?: true
            ], AshPaperTrail.Resource.PrimaryKey.source_versions_filter(dsl_state)}
