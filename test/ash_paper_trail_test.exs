@@ -434,6 +434,20 @@ defmodule AshPaperTrailTest do
     end
   end
 
+  describe "versions_relationship_name" do
+    test "defaults to :paper_trail_versions" do
+      assert AshPaperTrail.Resource.Info.versions_relationship_name(Articles.Article) ==
+               :paper_trail_versions
+
+      assert Ash.Resource.Info.relationship(Articles.Article, :paper_trail_versions)
+    end
+
+    test "uses configured name on the has_many relationship" do
+      assert %{name: :versions} =
+               Ash.Resource.Info.relationship(Posts.VersionsRelationshipPost, :versions)
+    end
+  end
+
   describe "only_when_changed?" do
     test "when set to `true` no versions are generated when nothing has changed" do
       assert %{subject: "subject", body: "body", id: post_id} =

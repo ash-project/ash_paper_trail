@@ -37,7 +37,7 @@ defmodule AshPaperTrail.Resource.Transformers.RelateVersionResource do
 
   defp build_has_many(dsl_state, source_attribute) do
     default_opts = [
-      name: :paper_trail_versions,
+      name: AshPaperTrail.Resource.Info.versions_relationship_name(dsl_state),
       destination: AshPaperTrail.Resource.Info.version_resource(dsl_state),
       destination_attribute: :version_source_id,
       source_attribute: source_attribute
