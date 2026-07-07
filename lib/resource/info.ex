@@ -74,7 +74,12 @@ defmodule AshPaperTrail.Resource.Info do
 
   @spec versions_relationship_name(Spark.Dsl.t() | Ash.Resource.t()) :: atom
   def versions_relationship_name(resource) do
-    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :versions_relationship_name, :paper_trail_versions)
+    Spark.Dsl.Extension.get_opt(
+      resource,
+      [:paper_trail],
+      :versions_relationship_name,
+      :paper_trail_versions
+    )
   end
 
   @spec relationship_opts(Spark.Dsl.t() | Ash.Resource.t()) :: Keyword.t()
