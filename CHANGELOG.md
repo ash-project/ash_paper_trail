@@ -11,6 +11,33 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.6.0](https://github.com/ash-project/ash_paper_trail/compare/v0.5.7...v0.6.0) (2026-06-08)
+
+
+
+
+### Features:
+
+* add on_delete option to belongs_to_actor (#232) by Alan Heywood [(#232)](https://github.com/ash-project/ash_paper_trail/pull/232)
+
+* add metadata support (#51) (#229) by [@frankdugan3](https://github.com/frankdugan3) [(#229)](https://github.com/ash-project/ash_paper_trail/pull/229)
+
+* Add a flag for disabling ash_paper_trail via context (#228) by dallingson [(#228)](https://github.com/ash-project/ash_paper_trail/pull/228)
+
+### Bug Fixes:
+
+* use correct value for attribute constraints when dumping by [@zachdaniel](https://github.com/zachdaniel)
+
+* handle ForbiddenField in full_diff (#231) by TravelCurry02 [(#231)](https://github.com/ash-project/ash_paper_trail/pull/231)
+
+* skip not loaded/forbidden values in embedded changes by [@zachdaniel](https://github.com/zachdaniel)
+
+* handle non-Ash structs in full_diff unique_id helper (#213) by Straffern [(#213)](https://github.com/ash-project/ash_paper_trail/pull/213)
+
+### Improvements:
+
+* allow customizing version resource name (#234) by samcreviston [(#234)](https://github.com/ash-project/ash_paper_trail/pull/234)
+
 ## [v0.5.7](https://github.com/ash-project/ash_paper_trail/compare/v0.5.6...v0.5.7) (2025-10-21)
 
 

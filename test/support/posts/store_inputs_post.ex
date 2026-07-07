@@ -51,6 +51,20 @@ defmodule AshPaperTrail.Test.Posts.StoreInputsPost do
       argument :opt_arg, :string, allow_nil?: true
       argument :req_sensitive_arg, :string, sensitive?: true, allow_nil?: false
       argument :opt_sensitive_arg, :string, sensitive?: true, allow_nil?: true
+
+      argument :map_arg, :map do
+        allow_nil? true
+
+        # `type` is intentionally used as a field name here: it collides with a
+        # key in the `Ash.Type.Map` constraint *schema*. This reproduces the
+        # crash that occurred when the constraint schema was passed to
+        # `dump_to_embedded/3` instead of the field's actual constraints.
+        constraints fields: [
+                      name: [type: :string],
+                      count: [type: :integer],
+                      type: [type: :string]
+                    ]
+      end
     end
 
     update :update do
@@ -60,6 +74,20 @@ defmodule AshPaperTrail.Test.Posts.StoreInputsPost do
       argument :opt_arg, :string, allow_nil?: true
       argument :req_sensitive_arg, :string, sensitive?: true, allow_nil?: false
       argument :opt_sensitive_arg, :string, sensitive?: true, allow_nil?: true
+
+      argument :map_arg, :map do
+        allow_nil? true
+
+        # `type` is intentionally used as a field name here: it collides with a
+        # key in the `Ash.Type.Map` constraint *schema*. This reproduces the
+        # crash that occurred when the constraint schema was passed to
+        # `dump_to_embedded/3` instead of the field's actual constraints.
+        constraints fields: [
+                      name: [type: :string],
+                      count: [type: :integer],
+                      type: [type: :string]
+                    ]
+      end
     end
 
     update :publish do

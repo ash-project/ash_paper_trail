@@ -18,7 +18,7 @@ defmodule AshPaperTrail.Test.Posts.UpsertPost do
   end
 
   paper_trail do
-    primary_key_type :uuid
+    primary_key_type :uuid_v7
     attributes_as_attributes [:subject, :body]
     change_tracking_mode :changes_only
     only_when_changed?(true)

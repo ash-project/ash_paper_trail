@@ -13,21 +13,28 @@ defmodule AshPaperTrail do
 
   @regex ~r/\.Version$/
   def allow_resource_versions(nil, resource) do
-    resource_name = to_string(resource)
+    cond do
+      function_exported?(resource, :version_source_resource, 0) ->
+        source = resource.version_source_resource()
+        AshPaperTrail.Resource in Spark.extensions(source)
 
-    if String.match?(resource_name, @regex) do
-      original_resource =
-        try do
-          resource_name
+      legacy_version_module?(resource) ->
+        original_resource =
+          resource
+          |> to_string()
           |> String.replace(@regex, "")
           |> String.to_existing_atom()
-        rescue
-          ArgumentError -> false
-        end
 
-      original_resource && AshPaperTrail.Resource in Spark.extensions(original_resource)
-    else
-      false
+        AshPaperTrail.Resource in Spark.extensions(original_resource)
+
+      true ->
+        false
     end
+  rescue
+    ArgumentError -> false
+  end
+
+  defp legacy_version_module?(resource) do
+    String.match?(to_string(resource), @regex)
   end
 end

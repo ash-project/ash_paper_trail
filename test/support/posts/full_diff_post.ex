@@ -18,6 +18,7 @@ defmodule AshPaperTrail.Test.Posts.FullDiffPost do
   end
 
   paper_trail do
+    primary_key_type :uuid_v7
     attributes_as_attributes [:subject, :body, :tenant]
     change_tracking_mode :full_diff
   end

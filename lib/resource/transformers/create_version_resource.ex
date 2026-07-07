@@ -145,6 +145,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
             )
 
         def resource_version?, do: true
+        def version_source_resource, do: unquote(module)
 
         if unquote(multitenant?) do
           multitenancy do

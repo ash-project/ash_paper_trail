@@ -184,6 +184,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
           name: attr_name,
           type: :attribute,
           ash_type: attr_info.type,
+          constraints: attr_info.constraints,
           present?: present,
           params_value: params_value,
           sensitive?: attr_info.sensitive?
@@ -199,6 +200,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
           name: arg.name,
           type: :argument,
           ash_type: arg.type,
+          constraints: arg.constraints,
           present?: present,
           params_value: params_value,
           sensitive?: arg.sensitive?
@@ -228,9 +230,9 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
               constraints =
                 if Ash.Type.NewType.new_type?(input.ash_type) do
-                  Ash.Type.NewType.constraints(input.ash_type, [])
+                  Ash.Type.NewType.constraints(input.ash_type, input.constraints)
                 else
-                  Ash.Type.constraints(input.ash_type)
+                  input.constraints
                 end
 
               case Ash.Type.dump_to_embedded(input.ash_type, input_value, constraints) do

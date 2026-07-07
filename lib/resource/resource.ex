@@ -120,6 +120,12 @@ defmodule AshPaperTrail.Resource do
         doc:
           "Whether or not to create a foreign key reference from the version to the source.  This should be set to `false` if you are allowing actual deletion of data. Only relevant for resources using the AshPostgres data layer."
       ],
+      versions_relationship_name: [
+        type: :atom,
+        default: :paper_trail_versions,
+        doc:
+          "The name of the has_many relationship from this resource to its version resource. Defaults to `:paper_trail_versions`."
+      ],
       relationship_opts: [
         type: :keyword_list,
         doc:
@@ -153,6 +159,13 @@ defmodule AshPaperTrail.Resource do
         type: :atom,
         doc:
           "A name to use for this resource in the `version_resource_identifier`. Defaults to `Ash.Resource.Info.short_name/1`."
+      ],
+      version_resource: [
+        type: :atom,
+        doc: """
+        Module for the auto-generated version resource. Defaults to `SourceResource.Version`.
+        Set when that name is already used by another resource in your app.
+        """
       ],
       version_extensions: [
         type: :keyword_list,
