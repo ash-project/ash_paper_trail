@@ -262,8 +262,10 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
             input
         end
       end)
+      |> Map.merge(
+        AshPaperTrail.Resource.PrimaryKey.version_source_input(result, changeset.resource)
+      )
       |> Map.merge(%{
-        version_source_id: Map.get(result, hd(Ash.Resource.Info.primary_key(changeset.resource))),
         version_action_type: changeset.action.type,
         version_action_name: changeset.action.name,
         version_action_inputs: action_inputs,

@@ -112,4 +112,44 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResourceTest do
              )
     end
   end
+
+  defp assert_composite_pk_support(source, version, source_keys) do
+    version_keys = AshPaperTrail.Resource.PrimaryKey.version_source_attribute_names(source)
+
+    assert length(version_keys) == length(source_keys)
+    refute :version_source_id in version_keys
+
+    for {source_key, version_key} <- Enum.zip(source_keys, version_keys) do
+      assert version_key ==
+               AshPaperTrail.Resource.PrimaryKey.version_source_attribute_name(source, source_key)
+
+      assert Ash.Resource.Info.attribute(version, version_key)
+    end
+
+    assert %{type: :has_one, no_attributes?: true} =
+             Ash.Resource.Info.relationship(version, :version_source)
+
+    assert %{type: :has_many, no_attributes?: true} =
+             Ash.Resource.Info.relationship(source, :paper_trail_versions)
+
+    result = Map.new(source_keys, &{&1, Ash.UUID.generate()})
+
+    assert AshPaperTrail.Resource.PrimaryKey.version_source_input(result, source) ==
+             Map.new(Enum.zip(source_keys, version_keys), fn {source_key, version_key} ->
+               {version_key, result[source_key]}
+             end)
+  end
+
+  describe "composite primary keys" do
+    test "supports ten primary key components" do
+      source = AshPaperTrail.Test.Posts.TeamMember
+      version = AshPaperTrail.Test.Posts.TeamMember.Version
+
+      assert_composite_pk_support(
+        source,
+        version,
+        AshPaperTrail.Test.Posts.TeamMember.composite_keys()
+      )
+    end
+  end
 end

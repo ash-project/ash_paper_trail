@@ -87,6 +87,12 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
     multitenant? = not is_nil(Ash.Resource.Info.multitenancy_strategy(dsl_state))
 
+    version_source_mappings = AshPaperTrail.Resource.PrimaryKey.mappings(dsl_state)
+    composite_primary_key? = AshPaperTrail.Resource.PrimaryKey.composite?(dsl_state)
+
+    version_source_filter =
+      AshPaperTrail.Resource.PrimaryKey.version_source_filter(dsl_state)
+
     accept =
       [
         :version_action_type,
@@ -94,7 +100,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
         if(store_action_inputs?, do: :version_action_inputs, else: nil),
         if(store_resource_identifier?, do: :version_resource_identifier, else: nil),
         attributes |> Enum.map(& &1.name),
-        :version_source_id,
+        AshPaperTrail.Resource.PrimaryKey.version_source_attribute_names(dsl_state),
         :changes,
         belongs_to_actors |> Enum.map(&String.to_atom("#{&1.name}_id")),
         metadata_entities |> Enum.map(& &1.name)
@@ -125,20 +131,6 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           quote do
             use unquote(module)
           end
-      end
-
-    destination_attribute =
-      case Ash.Resource.Info.primary_key(dsl_state) do
-        [key] ->
-          Ash.Resource.Info.attribute(dsl_state, key)
-
-        keys ->
-          raise Spark.Error.DslError,
-            module: module,
-            path: [:extensions, AshPaperTrail.Resource],
-            message: """
-            Resources with composite primary keys are not currently supported. Got keys #{inspect(keys)}
-            """
       end
 
     Module.create(
@@ -305,10 +297,13 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
             end
           end
 
-          attribute :version_source_id, unquote(Macro.escape(destination_attribute.type)) do
-            constraints unquote(Macro.escape(destination_attribute.constraints))
-            public? true
-            allow_nil? false
+          for {_source_key, version_attr, source_attr} <-
+                unquote(Macro.escape(version_source_mappings)) do
+            attribute version_attr, source_attr.type do
+              constraints(source_attr.constraints)
+              public? true
+              allow_nil? false
+            end
           end
 
           attribute :changes, :map do
@@ -329,12 +324,24 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
         end
 
         relationships do
-          belongs_to :version_source, unquote(module) do
-            public? true
-            destination_attribute(unquote(destination_attribute.name))
-            allow_nil?(false)
-            attribute_writable?(true)
-            source_attribute(:version_source_id)
+          if unquote(composite_primary_key?) do
+            has_one :version_source, unquote(module) do
+              public? true
+              allow_nil?(false)
+              no_attributes?(true)
+              filter unquote(Macro.escape(version_source_filter))
+            end
+          else
+            {_source_key, version_attr, source_attr} =
+              unquote(Macro.escape(List.first(version_source_mappings)))
+
+            belongs_to :version_source, unquote(module) do
+              public? true
+              destination_attribute(source_attr.name)
+              allow_nil?(false)
+              attribute_writable?(true)
+              source_attribute(version_attr)
+            end
           end
 
           for actor_relationship <- unquote(Macro.escape(belongs_to_actors)) do

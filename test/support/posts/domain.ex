@@ -19,6 +19,8 @@ defmodule AshPaperTrail.Test.Posts.Domain do
     resource AshPaperTrail.Test.Posts.NoDestroyVersionPost.Version
     resource AshPaperTrail.Test.Posts.UpsertPost
     resource AshPaperTrail.Test.Posts.UpsertPost.Version
+    resource AshPaperTrail.Test.Posts.TeamMember
+    resource AshPaperTrail.Test.Posts.TeamMember.Version
     resource AshPaperTrail.Test.Posts.VersionsRelationshipPost
     resource AshPaperTrail.Test.Posts.VersionsRelationshipPost.Version
   end

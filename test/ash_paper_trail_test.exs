@@ -1188,4 +1188,41 @@ defmodule AshPaperTrailTest do
       assert :client_ip in attributes
     end
   end
+
+  describe "composite primary keys" do
+    test "creates and destroys versions for composite primary key resources" do
+      attrs =
+        Map.new(Posts.TeamMember.composite_keys(), fn key ->
+          {key, Ash.UUID.generate()}
+        end)
+
+      assert member = Posts.TeamMember.create!(attrs)
+
+      version_source_attrs =
+        Map.new(Posts.TeamMember.composite_keys(), fn key ->
+          {String.to_atom("version_source_#{key}"), attrs[key]}
+        end)
+
+      assert [create_version] =
+               member
+               |> Ash.load!(:paper_trail_versions)
+               |> Map.get(:paper_trail_versions)
+
+      assert Map.take(create_version, Map.keys(version_source_attrs) ++ [:version_action_type]) ==
+               Map.merge(%{version_action_type: :create}, version_source_attrs)
+
+      assert :ok = Posts.TeamMember.destroy!(member)
+
+      assert [create_version, destroy_version] =
+               Posts.TeamMember.Version
+               |> Ash.read!()
+               |> sort_versions()
+
+      assert Map.take(create_version, Map.keys(version_source_attrs) ++ [:version_action_type]) ==
+               Map.merge(%{version_action_type: :create}, version_source_attrs)
+
+      assert Map.take(destroy_version, Map.keys(version_source_attrs) ++ [:version_action_type]) ==
+               Map.merge(%{version_action_type: :destroy}, version_source_attrs)
+    end
+  end
 end

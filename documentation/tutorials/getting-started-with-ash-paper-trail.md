@@ -82,6 +82,38 @@ resources do
 end
 ```
 
+## Composite primary keys
+
+Resources with a single primary key use a `version_source_id` attribute on the version resource and a `belongs_to :version_source` relationship back to the source. Resources with **more than one** primary key attribute are supported as well. AshPaperTrail maps each source primary key to a matching attribute on the version resource.
+
+For a resource like `MyApp.TeamMember` with `team_id` and `user_id` as primary keys, the generated `MyApp.TeamMember.Version` resource will have `version_source_team_id` and `version_source_user_id` attributes (same types and constraints as the source attributes). A single-key resource continues to use `version_source_id` as before.
+
+When a version is created, each `version_source_*` attribute is set from the corresponding primary key value on the source record.
+
+### Relationships
+
+On the **source resource**, `paper_trail_versions` is a `has_many` to the version resource with `no_attributes?: true` and a filter that matches each source primary key to its `version_source_*` counterpart. Load versions the same way you would for a single-key resource:
+
+```elixir
+member |> Ash.load!(:paper_trail_versions)
+```
+
+On the **version resource**, `version_source` is a `has_one` back to the source resource, also with `no_attributes?: true` and a filter across all primary key components. This differs from the single-key case, where `version_source` is a `belongs_to` through `version_source_id`.
+
+### AshPostgres and `reference_source?`
+
+For a single primary key, `reference_source?` (default `true`) creates a foreign key through the `belongs_to :version_source` relationship.
+
+For composite primary keys, `version_source` is a filter-based `has_one`, not a `belongs_to`. AshPaperTrail does **not** create a single foreign key reference to the parent the way it does for `version_source_id`. The `version_source_*` attributes are regular columns on the version table.
+
+If you do not want database-level references on the version resource, set `reference_source? false` as usual:
+
+```elixir
+paper_trail do
+  reference_source? false
+end
+```
+
 ## Destroy Actions
 
 If you are using `AshPostgres`, and you want to support destroy actions, you will need to do one of the following:
