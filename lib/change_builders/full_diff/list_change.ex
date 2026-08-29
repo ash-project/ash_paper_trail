@@ -72,6 +72,8 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
   end
 
   defp dump_data_value(attribute, changeset) do
+    sensitive_mode = sensitive_mode(changeset)
+
     data_tuples =
       if changeset.action_type == :create do
         :not_present
@@ -81,7 +83,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
             nil
 
           data ->
-            dump_array(data, attribute)
+            dump_array(data, attribute, sensitive_mode)
         end
       end
 
@@ -91,7 +93,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
           nil
 
         {:ok, values} ->
-          dump_array(values, attribute)
+          dump_array(values, attribute, sensitive_mode)
 
         :error ->
           :not_present
@@ -100,7 +102,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
     {data_tuples, value_tuples}
   end
 
-  defp dump_array(values, %{type: {:array, attr_type}} = attribute) do
+  defp dump_array(values, %{type: {:array, attr_type}} = attribute, sensitive_mode) do
     array_type =
       cond do
         union?(attr_type) -> :union
@@ -108,7 +110,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
         true -> :simple
       end
 
-    dumped_values = dump_value(values, attribute)
+    dumped_values = dump_value(values, attribute, sensitive_mode)
 
     # [{index, uid, data, dumped_data}, ...]
     Enum.zip(values, dumped_values)

@@ -7,11 +7,13 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
   Misc helpers for building a full diff of a changeset.
   """
 
-  def dump_value(%Ash.ForbiddenField{}, _attribute), do: nil
+  def dump_value(value, attribute, sensitive_mode \\ :display)
 
-  def dump_value(nil, _attribute), do: nil
+  def dump_value(%Ash.ForbiddenField{}, _attribute, _sensitive_mode), do: nil
 
-  def dump_value(values, %{type: {:array, attr_type}} = attribute) do
+  def dump_value(nil, _attribute, _sensitive_mode), do: nil
+
+  def dump_value(values, %{type: {:array, attr_type}} = attribute, sensitive_mode) do
     item_constraints = attribute.constraints[:items]
 
     # This is a work around for a bug in Ash.Type.dump_to_embedded/3
@@ -21,13 +23,133 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
 
       value ->
         {:ok, dumped_value} = Ash.Type.dump_to_embedded(attr_type, value, item_constraints)
-        dumped_value
+        redact_dumped_value(dumped_value, attr_type, item_constraints || [], sensitive_mode)
     end)
   end
 
-  def dump_value(value, attribute) do
+  def dump_value(value, attribute, sensitive_mode) do
     {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, attribute.constraints)
-    dumped_value
+    redact_dumped_value(dumped_value, attribute.type, attribute.constraints, sensitive_mode)
+  end
+
+  def sensitive_mode(changeset) do
+    changeset.context[:sensitive_attributes] ||
+      AshPaperTrail.Resource.Info.sensitive_attributes(changeset.resource)
+  end
+
+  def redact_dumped_value(value, type, constraints, sensitive_mode \\ :display)
+
+  def redact_dumped_value(value, _type, _constraints, :display), do: value
+
+  def redact_dumped_value(nil, _type, _constraints, _mode), do: nil
+
+  def redact_dumped_value(values, {:array, item_type}, constraints, mode) when is_list(values) do
+    item_constraints = (constraints || [])[:items] || []
+    Enum.map(values, &redact_dumped_value(&1, item_type, item_constraints, mode))
+  end
+
+  def redact_dumped_value(%{} = value, type, constraints, mode) do
+    cond do
+      union?(type) -> redact_union(value, type, constraints, mode)
+      embedded_resource_module(type) -> redact_embedded(value, type, mode)
+      true -> value
+    end
+  end
+
+  def redact_dumped_value(value, _type, _constraints, _mode), do: value
+
+  defp redact_embedded(%{} = dumped, type, mode) do
+    case embedded_resource_module(type) do
+      nil ->
+        dumped
+
+      resource ->
+        resource
+        |> Ash.Resource.Info.attributes()
+        |> Enum.reduce(dumped, &redact_embedded_attribute(&2, &1, mode))
+    end
+  end
+
+  defp redact_embedded_attribute(dumped, attribute, mode) do
+    case fetch_dumped_key(dumped, attribute.name) do
+      :error ->
+        dumped
+
+      {:ok, key, value} ->
+        cond do
+          attribute.sensitive? and mode == :ignore ->
+            Map.delete(dumped, key)
+
+          attribute.sensitive? ->
+            Map.put(dumped, key, "REDACTED")
+
+          true ->
+            Map.put(
+              dumped,
+              key,
+              redact_dumped_value(value, attribute.type, attribute.constraints, mode)
+            )
+        end
+    end
+  end
+
+  defp fetch_dumped_key(map, name) do
+    cond do
+      Map.has_key?(map, name) -> {:ok, name, Map.get(map, name)}
+      Map.has_key?(map, to_string(name)) -> {:ok, to_string(name), Map.get(map, to_string(name))}
+      true -> :error
+    end
+  end
+
+  defp redact_union(%{"value" => value} = dumped, type, constraints, mode) do
+    case union_subtype(type, constraints, Map.get(dumped, "type")) do
+      {subtype_type, subtype_constraints} ->
+        Map.put(
+          dumped,
+          "value",
+          redact_dumped_value(value, subtype_type, subtype_constraints, mode)
+        )
+
+      nil ->
+        dumped
+    end
+  end
+
+  defp redact_union(dumped, _type, _constraints, _mode), do: dumped
+
+  defp union_subtype(type, constraints, type_name) when is_binary(type_name) do
+    types =
+      cond do
+        is_list(constraints) and is_list(constraints[:types]) ->
+          constraints[:types]
+
+        is_atom(type) and :erlang.function_exported(type, :subtype_constraints, 0) ->
+          type.subtype_constraints()[:types] || []
+
+        true ->
+          []
+      end
+
+    Enum.find_value(types, fn {name, config} ->
+      if to_string(name) == type_name do
+        {config[:type], config[:constraints] || []}
+      end
+    end)
+  end
+
+  defp union_subtype(_type, _constraints, _type_name), do: nil
+
+  defp embedded_resource_module(type) do
+    cond do
+      Ash.Type.NewType.new_type?(type) ->
+        embedded_resource_module(Ash.Type.NewType.subtype_of(type))
+
+      is_atom(type) and Ash.Resource.Info.resource?(type) ->
+        type
+
+      true ->
+        nil
+    end
   end
 
   @doc """

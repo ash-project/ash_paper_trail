@@ -37,18 +37,20 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
   # Returns two tuples for the data and value.  Each tuple contains:
   # { present_or_embeddedness, type, value }
   defp dump_union_data_value(changeset, attribute) do
+    sensitive_mode = sensitive_mode(changeset)
+
     data_tuple =
       if changeset.action_type == :create do
         :not_present
       else
         data = Ash.Changeset.get_data(changeset, attribute.name)
-        dump_union_type_value(data, attribute)
+        dump_union_type_value(data, attribute, sensitive_mode)
       end
 
     value_tuple =
       case Ash.Changeset.fetch_change(changeset, attribute.name) do
         {:ok, value} ->
-          dump_union_type_value(value, attribute)
+          dump_union_type_value(value, attribute, sensitive_mode)
 
         :error ->
           :not_present
@@ -58,10 +60,12 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.UnionChange do
   end
 
   # Returns a tuple {embedded, type, value}
-  def dump_union_type_value(nil, _attribute), do: {:non_embedded, nil, nil}
+  def dump_union_type_value(value, attribute, sensitive_mode \\ :display)
 
-  def dump_union_type_value(value, attribute) do
-    %{"type" => type, "value" => dumped_value} = dump_value(value, attribute)
+  def dump_union_type_value(nil, _attribute, _sensitive_mode), do: {:non_embedded, nil, nil}
+
+  def dump_union_type_value(value, attribute, sensitive_mode) do
+    %{"type" => type, "value" => dumped_value} = dump_value(value, attribute, sensitive_mode)
 
     if embedded_union?(attribute.type, type) do
       uid = unique_id(value, dumped_value)

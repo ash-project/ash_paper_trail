@@ -21,6 +21,8 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.EmbeddedChange do
   end
 
   def dump_data_value(changeset, attribute) do
+    sensitive_mode = sensitive_mode(changeset)
+
     data_tuple =
       if changeset.action_type == :create do
         :not_present
@@ -36,7 +38,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.EmbeddedChange do
             nil
 
           data ->
-            dumped_data = dump_value(data, attribute)
+            dumped_data = dump_value(data, attribute, sensitive_mode)
             uid = unique_id(data, dumped_data)
             {uid, dumped_data}
         end
@@ -48,7 +50,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.EmbeddedChange do
           nil
 
         {:ok, value} ->
-          dumped_value = dump_value(value, attribute)
+          dumped_value = dump_value(value, attribute, sensitive_mode)
           uid = unique_id(value, dumped_value)
           {uid, dumped_value}
 

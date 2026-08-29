@@ -237,6 +237,14 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
 
               case Ash.Type.dump_to_embedded(input.ash_type, input_value, constraints) do
                 {:ok, value} ->
+                  value =
+                    AshPaperTrail.ChangeBuilders.FullDiff.Helpers.redact_dumped_value(
+                      value,
+                      input.ash_type,
+                      constraints,
+                      sensitive_mode
+                    )
+
                   casted_params_value = extract_casted_params_values(value, input.params_value)
                   Map.put(action_inputs, input.name, casted_params_value)
 
