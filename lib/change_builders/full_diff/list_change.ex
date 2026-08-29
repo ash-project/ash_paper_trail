@@ -288,19 +288,22 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.ListChange do
         {value_tuples, :not_present}
 
       index ->
-        Enum.reduce(value_tuples, {[], nil}, fn {i, _, _, _, _} = tuple,
-                                                {acc, matching_value_tuple} ->
-          cond do
-            matching_value_tuple ->
-              {acc ++ [tuple], matching_value_tuple}
+        {reversed_acc, matching_value_tuple} =
+          Enum.reduce(value_tuples, {[], nil}, fn {i, _, _, _, _} = tuple,
+                                                  {acc, matching_value_tuple} ->
+            cond do
+              matching_value_tuple ->
+                {[tuple | acc], matching_value_tuple}
 
-            i == index ->
-              {acc, tuple}
+              i == index ->
+                {acc, tuple}
 
-            true ->
-              {acc ++ [tuple], nil}
-          end
-        end)
+              true ->
+                {[tuple | acc], nil}
+            end
+          end)
+
+        {Enum.reverse(reversed_acc), matching_value_tuple}
     end
   end
 
