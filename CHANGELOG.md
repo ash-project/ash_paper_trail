@@ -11,6 +11,27 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.7.0](https://github.com/ash-project/ash_paper_trail/compare/v0.6.0...v0.7.0) (2026-08-29)
+
+
+
+
+### Features:
+
+* allow setting the name of the version relationship (#239) by samcreviston [(#239)](https://github.com/ash-project/ash_paper_trail/pull/239)
+
+### Bug Fixes:
+
+* redact sensitive fields nested inside embedded, union, and list values in versions by [@zachdaniel](https://github.com/zachdaniel)
+
+* avoid quadratic accumulator copying in full-diff list pairing by [@zachdaniel](https://github.com/zachdaniel)
+
+* mark version changes attribute sensitive based on tracked (not ignored) attributes by [@zachdaniel](https://github.com/zachdaniel)
+
+### Improvements:
+
+* Support composite primary keys (#238) by samcreviston [(#238)](https://github.com/ash-project/ash_paper_trail/pull/238)
+
 ## [v0.6.0](https://github.com/ash-project/ash_paper_trail/compare/v0.5.7...v0.6.0) (2026-06-08)
 
 
