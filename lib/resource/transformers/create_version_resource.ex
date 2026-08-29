@@ -52,7 +52,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     sensitive_changes? =
       dsl_state
       |> Ash.Resource.Info.attributes()
-      |> Enum.filter(&(&1.name in ignore_attributes))
+      |> Enum.reject(&(&1.name in ignore_attributes or &1.name in attributes_as_attributes))
       |> Enum.any?(& &1.sensitive?)
 
     data_layer = version_extensions[:data_layer] || Ash.DataLayer.data_layer(dsl_state)
