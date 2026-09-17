@@ -27,3 +27,5 @@ if Mix.env() == :test do
   config :ash, :disable_async?, true
   config :ash_paper_trail, :change_tracking_mode, :changes_only
 end
+
+config :ash, default_string_length_count: :codepoints
