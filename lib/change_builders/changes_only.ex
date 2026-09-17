@@ -8,7 +8,12 @@ defmodule AshPaperTrail.ChangeBuilders.ChangesOnly do
 
   def build_changes(attributes, changeset, result) do
     sensitive_mode = Helpers.sensitive_mode(changeset)
-    Enum.reduce(attributes, %{}, &build_attribute_change(&1, changeset, sensitive_mode, result, &2))
+
+    Enum.reduce(
+      attributes,
+      %{},
+      &build_attribute_change(&1, changeset, sensitive_mode, result, &2)
+    )
   end
 
   def build_attribute_change(attribute, changeset, sensitive_mode, result, changes) do

@@ -19,7 +19,7 @@ defmodule AshPaperTrail.Test.Posts.TeamMember do
   end
 
   paper_trail do
-    primary_key_type :uuid
+    primary_key_type :uuid_v7
     relationship_opts public?: true
   end
 
