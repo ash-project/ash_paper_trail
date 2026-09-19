@@ -10,13 +10,18 @@ defmodule AshPaperTrail.Resource.Transformers.RelateVersionResource do
   def transform(dsl_state) do
     primary_keys = Ash.Resource.Info.primary_key(dsl_state)
 
-    with :ok <- validate_primary_keys(primary_keys),
-         {:ok, relationship} <- build_has_many(dsl_state, primary_keys) do
-      {:ok,
-       Transformer.add_entity(dsl_state, [:relationships], %{
-         relationship
-         | source: Transformer.get_persisted(dsl_state, :module)
-       })}
+    with :ok <- validate_primary_keys(primary_keys) do
+      if AshPaperTrail.Resource.Info.temporal_inline?(dsl_state) do
+        {:ok, dsl_state}
+      else
+        with {:ok, relationship} <- build_has_many(dsl_state, primary_keys) do
+          {:ok,
+           Transformer.add_entity(dsl_state, [:relationships], %{
+             relationship
+             | source: Transformer.get_persisted(dsl_state, :module)
+           })}
+        end
+      end
     end
   end
 

@@ -5,6 +5,51 @@
 defmodule AshPaperTrail.Resource.Info do
   @moduledoc "Introspection helpers for `AshPaperTrail.Resource`"
 
+  @spec mode(Spark.Dsl.t() | Ash.Resource.t()) :: :version_resource | :temporal_inline
+  def mode(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :mode, :version_resource)
+  end
+
+  @doc "Whether versions are stored inline on the (temporal) resource rather than in a version resource"
+  @spec temporal_inline?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
+  def temporal_inline?(resource), do: mode(resource) == :temporal_inline
+
+  @doc "In `:temporal_inline` mode, the version attributes that are public"
+  @spec public_version_attributes(Spark.Dsl.t() | Ash.Resource.t()) :: [atom]
+  def public_version_attributes(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :public_version_attributes, [])
+  end
+
+  @doc """
+  The names of the version attributes added to the resource in `:temporal_inline` mode.
+
+  Includes `:version_action_type`, `:version_action_name` and `:version_action_inputs` (when
+  stored), `:changes` (unless the change tracking mode is `:snapshot`), the source attribute of
+  every `belongs_to_actor`, and every `metadata` attribute.
+  """
+  @spec temporal_inline_attributes(Spark.Dsl.t() | Ash.Resource.t()) :: [atom]
+  def temporal_inline_attributes(resource) do
+    [
+      :version_action_type,
+      if(store_action_name?(resource), do: :version_action_name),
+      if(store_action_inputs?(resource), do: :version_action_inputs),
+      if(change_tracking_mode(resource) != :snapshot, do: :changes),
+      Enum.map(belongs_to_actor(resource), &actor_source_attribute(resource, &1)),
+      Enum.map(metadata(resource), & &1.name)
+    ]
+    |> List.flatten()
+    |> Enum.reject(&is_nil/1)
+  end
+
+  @doc false
+  # sobelow_skip ["DOS.StringToAtom"]
+  def actor_source_attribute(resource, %AshPaperTrail.Resource.BelongsToActor{name: name}) do
+    case Ash.Resource.Info.relationship(resource, name) do
+      %{source_attribute: source_attribute} -> source_attribute
+      _ -> String.to_atom("#{name}_id")
+    end
+  end
+
   @spec primary_key_type(Spark.Dsl.t() | Ash.Resource.t()) :: atom
   def primary_key_type(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :primary_key_type, :uuid)

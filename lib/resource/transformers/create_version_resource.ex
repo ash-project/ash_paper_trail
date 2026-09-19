@@ -9,6 +9,14 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
   # sobelow_skip ["DOS.StringToAtom", "RCE.CodeModule"]
   def transform(dsl_state) do
+    if AshPaperTrail.Resource.Info.temporal_inline?(dsl_state) do
+      {:ok, dsl_state}
+    else
+      create_version_resource(dsl_state)
+    end
+  end
+
+  defp create_version_resource(dsl_state) do
     version_module = AshPaperTrail.Resource.Info.version_resource(dsl_state)
     module = Transformer.get_persisted(dsl_state, :module)
 
