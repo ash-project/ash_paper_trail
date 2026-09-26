@@ -14,6 +14,18 @@ defmodule AshPaperTrail.Resource.Info do
   @spec temporal_inline?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
   def temporal_inline?(resource), do: mode(resource) == :temporal_inline
 
+  @doc """
+  Whether a version resource is defined for the resource.
+
+  Always true in `:version_resource` mode; in `:temporal_inline` mode only when
+  `version_resource? true` is set.
+  """
+  @spec version_resource?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
+  def version_resource?(resource) do
+    not temporal_inline?(resource) or
+      Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :version_resource?, false)
+  end
+
   @doc "In `:temporal_inline` mode, the version attributes that are public"
   @spec public_version_attributes(Spark.Dsl.t() | Ash.Resource.t()) :: [atom]
   def public_version_attributes(resource) do

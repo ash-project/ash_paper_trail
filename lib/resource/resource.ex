@@ -62,6 +62,13 @@ defmodule AshPaperTrail.Resource do
         How versions are stored. `:version_resource` (the default) generates a separate version resource and writes a record to it on every change. `:temporal_inline` requires the resource to be `temporal` and instead adds the version attributes to the resource itself, so every period row carries the details of the write that produced it. See the getting started guide for more.
         """
       ],
+      version_resource?: [
+        type: :boolean,
+        default: false,
+        doc: """
+        In `:temporal_inline` mode, whether to also define a version resource. It is a read-only, non-temporal resource over the same table whose primary key is the resource's primary key plus its period, so reading it (or the `paper_trail_versions` relationship) lists every version of a record.
+        """
+      ],
       public_version_attributes: [
         type: {:list, :atom},
         default: [],

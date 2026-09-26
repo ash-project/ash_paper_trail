@@ -24,6 +24,7 @@ defmodule AshPaperTrail.Test.Posts.TemporalPost do
 
   paper_trail do
     mode(:temporal_inline)
+    version_resource?(true)
     change_tracking_mode :changes_only
     store_action_name? true
     ignore_attributes [:inserted_at, :updated_at]

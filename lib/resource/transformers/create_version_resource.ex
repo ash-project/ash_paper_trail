@@ -9,11 +9,212 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
   # sobelow_skip ["DOS.StringToAtom", "RCE.CodeModule"]
   def transform(dsl_state) do
-    if AshPaperTrail.Resource.Info.temporal_inline?(dsl_state) do
-      {:ok, dsl_state}
-    else
-      create_version_resource(dsl_state)
+    cond do
+      not AshPaperTrail.Resource.Info.version_resource?(dsl_state) ->
+        {:ok, dsl_state}
+
+      AshPaperTrail.Resource.Info.temporal_inline?(dsl_state) ->
+        create_inline_version_resource(dsl_state)
+
+      true ->
+        create_version_resource(dsl_state)
     end
+  end
+
+  # In `:temporal_inline` mode every period row is a version, so the version resource is a
+  # read-only, non-temporal view over the resource's own table. Its primary key is the
+  # resource's primary key plus the period, which is what makes each version a distinct
+  # record. Not being temporal, reading it is not narrowed to a point in time.
+  defp create_inline_version_resource(dsl_state) do
+    version_module = AshPaperTrail.Resource.Info.version_resource(dsl_state)
+    module = Transformer.get_persisted(dsl_state, :module)
+    belongs_to_actors = AshPaperTrail.Resource.Info.belongs_to_actor(dsl_state)
+    version_extensions = AshPaperTrail.Resource.Info.version_extensions(dsl_state)
+    primary_key = Ash.Resource.Info.primary_key(dsl_state)
+    period = Ash.Resource.Info.temporal_attribute(dsl_state)
+    key_attributes = primary_key ++ [period]
+
+    attributes =
+      dsl_state
+      |> Ash.Resource.Info.attributes()
+      |> Enum.map(fn attribute ->
+        attribute
+        |> Map.take([
+          :name,
+          :type,
+          :constraints,
+          :allow_nil?,
+          :public?,
+          :sensitive?,
+          :description,
+          :always_select?
+        ])
+        |> Map.update!(:constraints, &mirror_constraints(attribute.type, &1))
+      end)
+
+    actor_relationships =
+      Enum.map(belongs_to_actors, fn actor ->
+        %{
+          name: actor.name,
+          destination: actor.destination,
+          domain: actor.domain,
+          public?: actor.public?,
+          allow_nil?: actor.allow_nil?,
+          source_attribute: AshPaperTrail.Resource.Info.actor_source_attribute(dsl_state, actor)
+        }
+      end)
+
+    data_layer = version_extensions[:data_layer] || Ash.DataLayer.data_layer(dsl_state)
+
+    data_layer_section =
+      case data_layer do
+        AshPostgres.DataLayer ->
+          quote do
+            postgres do
+              table(unquote(apply(AshPostgres, :table, [dsl_state])))
+              repo(unquote(apply(AshPostgres, :repo, [dsl_state])))
+              migrate?(false)
+            end
+          end
+
+        AshSqlite.DataLayer ->
+          quote do
+            sqlite do
+              table(unquote(apply(AshSqlite.DataLayer.Info, :table, [dsl_state])))
+              repo(unquote(apply(AshSqlite.DataLayer.Info, :repo, [dsl_state])))
+              migrate?(false)
+            end
+          end
+
+        Ash.DataLayer.Ets ->
+          quote do
+            ets do
+              private?(unquote(Ash.DataLayer.Ets.Info.private?(dsl_state)))
+              table(unquote(Spark.Dsl.Extension.get_opt(dsl_state, [:ets], :table) || module))
+            end
+          end
+
+        _ ->
+          quote do
+          end
+      end
+
+    multitenancy =
+      if Ash.Resource.Info.multitenancy_strategy(dsl_state) do
+        quote do
+          multitenancy do
+            strategy(unquote(Ash.Resource.Info.multitenancy_strategy(dsl_state)))
+            attribute(unquote(Ash.Resource.Info.multitenancy_attribute(dsl_state)))
+            global?(unquote(Ash.Resource.Info.multitenancy_global?(dsl_state)))
+
+            parse_attribute(
+              unquote(Macro.escape(Ash.Resource.Info.multitenancy_parse_attribute(dsl_state)))
+            )
+          end
+        end
+      else
+        quote do
+        end
+      end
+
+    version_source =
+      case primary_key do
+        [key] ->
+          quote do
+            belongs_to :version_source, unquote(module) do
+              public? true
+              allow_nil? false
+              define_attribute? false
+              source_attribute(unquote(key))
+              destination_attribute(unquote(key))
+            end
+          end
+
+        _ ->
+          quote do
+            has_one :version_source, unquote(module) do
+              public? true
+              allow_nil? false
+              no_attributes? true
+
+              filter unquote(
+                       Macro.escape(AshPaperTrail.Resource.PrimaryKey.same_key_filter(dsl_state))
+                     )
+            end
+          end
+      end
+
+    mixin =
+      case AshPaperTrail.Resource.Info.mixin(dsl_state) do
+        {m, f, a} ->
+          apply(m, f, a)
+
+        nil ->
+          quote do
+          end
+
+        module when is_atom(module) ->
+          quote do
+            use unquote(module)
+          end
+      end
+
+    Module.create(
+      version_module,
+      quote do
+        use Ash.Resource,
+            unquote(
+              version_extensions
+              |> Keyword.put(:data_layer, data_layer)
+              |> Keyword.put(:domain, Ash.Resource.Info.domain(dsl_state))
+              |> Keyword.put(:validate_domain_inclusion?, false)
+            )
+
+        def resource_version?, do: true
+        def version_source_resource, do: unquote(module)
+
+        unquote(data_layer_section)
+        unquote(multitenancy)
+
+        attributes do
+          for attr <- unquote(Macro.escape(attributes)) do
+            attribute attr.name, attr.type do
+              primary_key?(attr.name in unquote(key_attributes))
+              allow_nil?(attr.allow_nil? and attr.name not in unquote(key_attributes))
+              writable?(false)
+              public?(attr.public?)
+              sensitive?(attr.sensitive?)
+              constraints(attr.constraints)
+              always_select?(attr.always_select?)
+              description(attr.description || "")
+            end
+          end
+        end
+
+        actions do
+          defaults([:read])
+        end
+
+        relationships do
+          unquote(version_source)
+
+          for actor <- unquote(Macro.escape(actor_relationships)) do
+            belongs_to actor.name, actor.destination do
+              domain(actor.domain)
+              public?(actor.public?)
+              allow_nil?(actor.allow_nil?)
+              define_attribute?(false)
+              source_attribute(actor.source_attribute)
+            end
+          end
+        end
+
+        unquote(mixin)
+      end,
+      Macro.Env.location(__ENV__)
+    )
+
+    {:ok, dsl_state}
   end
 
   defp create_version_resource(dsl_state) do
@@ -377,6 +578,20 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
     {:ok, dsl_state}
   end
+
+  # A range's `inner_type` constraint is resolved to a type module on init, but its schema
+  # only accepts the short names, so map it back before redeclaring the attribute.
+  defp mirror_constraints(Ash.Type.Range, constraints) do
+    Keyword.update(constraints, :inner_type, nil, fn type ->
+      Enum.find(
+        [:date, :integer, :naive_datetime, :datetime],
+        type,
+        &(Ash.Type.get_type(&1) == type)
+      )
+    end)
+  end
+
+  defp mirror_constraints(_type, constraints), do: constraints
 
   def after?(_), do: true
 end

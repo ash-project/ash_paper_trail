@@ -330,7 +330,7 @@ MyApp.Subscription
 |> Ash.read_one!()
 ```
 
-The following options only configure the generated version resource and are rejected in this mode: `primary_key_type`, `attributes_as_attributes`, `mixin`, `reference_source?`, `versions_relationship_name`, `relationship_opts`, `version_resource`, `version_extensions`, `table_name`, `public_timestamps?`, `store_resource_identifier?` and `resource_identifier`.
+The following options only configure a generated version resource and are rejected in this mode: `primary_key_type`, `attributes_as_attributes`, `reference_source?`, `table_name`, `public_timestamps?`, `store_resource_identifier?` and `resource_identifier`. Unless `version_resource? true` is set (see [Listing history](#listing-history)), `mixin`, `versions_relationship_name`, `relationship_opts`, `version_resource` and `version_extensions` are rejected too.
 
 ### Atomic updates
 
@@ -352,7 +352,29 @@ The stamp is added to `upsert_fields`, so that an upsert that hits an existing r
 
 ### Listing history
 
-Reads of a temporal resource are always a single point in time, so there is currently no equivalent of the `paper_trail_versions` relationship: you cannot list every version of a record in one query. This is a limitation of temporal resources in Ash rather than of this extension.
+Reads of a temporal resource are always a single point in time, so the resource itself cannot list every version of a record. Set `version_resource? true` to also define a version resource:
+
+```elixir
+paper_trail do
+  mode :temporal_inline
+  version_resource? true
+end
+```
+
+It is a read-only, *non-temporal* resource over the same table, so reading it is not narrowed to a point in time and returns every period row. Its attributes mirror the resource's, its primary key is the resource's primary key plus the period (so each version is a distinct record), and it has `version_source` and actor relationships like a regular version resource. It is excluded from migrations. The `paper_trail_versions` relationship relates a record to its *past* versions: those that ended at or before the version you read began.
+
+```elixir
+# every version of a record
+MyApp.Subscription.Version
+|> Ash.Query.filter(id == ^id)
+|> Ash.Query.sort(valid_at: :asc)
+|> Ash.read!()
+
+# the versions before the current one
+Ash.load!(subscription, :paper_trail_versions)
+```
+
+`mixin`, `version_extensions`, `version_resource`, `versions_relationship_name` and `relationship_opts` apply to it as usual.
 
 ### Ordering
 

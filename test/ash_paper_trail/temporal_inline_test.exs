@@ -41,9 +41,33 @@ defmodule AshPaperTrail.TemporalInlineTest do
   end
 
   describe "resource definition" do
-    test "no version resource is generated" do
-      refute Code.ensure_loaded?(TemporalPost.Version)
-      refute Ash.Resource.Info.relationship(TemporalPost, :paper_trail_versions)
+    test "no version resource is generated unless opted into" do
+      refute Code.ensure_loaded?(TemporalSnapshotPost.Version)
+      refute Ash.Resource.Info.relationship(TemporalSnapshotPost, :paper_trail_versions)
+    end
+
+    test "the opt-in version resource is a read-only view of the table keyed by id and period" do
+      assert Ash.Resource.Info.primary_key(TemporalPost.Version) == [:id, :valid_at]
+      refute Ash.Resource.Info.temporal?(TemporalPost.Version)
+      assert Enum.map(Ash.Resource.Info.actions(TemporalPost.Version), & &1.type) == [:read]
+      assert Ash.DataLayer.Ets.Info.table(TemporalPost.Version) == TemporalPost
+
+      for name <- [:subject, :version_action_type, :changes, :user_id, :reason_for_change] do
+        assert %{writable?: false} = Ash.Resource.Info.attribute(TemporalPost.Version, name)
+      end
+
+      assert %{destination: TemporalPost, source_attribute: :id, destination_attribute: :id} =
+               Ash.Resource.Info.relationship(TemporalPost.Version, :version_source)
+
+      assert %{destination: Accounts.User, source_attribute: :user_id} =
+               Ash.Resource.Info.relationship(TemporalPost.Version, :user)
+
+      assert %{
+               destination: TemporalPost.Version,
+               source_attribute: :id,
+               destination_attribute: :id
+             } =
+               Ash.Resource.Info.relationship(TemporalPost, :paper_trail_versions)
     end
 
     test "the version attributes are added to the resource, non-public and non-writable" do
@@ -313,6 +337,69 @@ defmodule AshPaperTrail.TemporalInlineTest do
       )
 
       assert %{changes: %{secret: "REDACTED"}} = version_at(TemporalPost, post.id, @t2)
+    end
+  end
+
+  describe "listing history through the version resource" do
+    setup %{user: user, other_user: other_user} do
+      post = TemporalPost.create!(%{subject: "subject", body: "body"}, actor: user, as_of: @t1)
+
+      TemporalPost.update!(post, %{body: "new body"},
+        actor: other_user,
+        as_of: @t2,
+        context: %{paper_trail_metadata: %{reason_for_change: "fix typo"}}
+      )
+
+      %{post: post}
+    end
+
+    test "the version resource reads every period row", %{
+      post: post,
+      user: user,
+      other_user: other_user
+    } do
+      versions =
+        TemporalPost.Version
+        |> Ash.Query.filter(id == ^post.id)
+        |> Ash.read!()
+        |> Enum.sort_by(& &1.valid_at.lower, DateTime)
+
+      assert [
+               %{
+                 body: "body",
+                 version_action_type: :create,
+                 user_id: create_user_id,
+                 valid_at: %Ash.Range{lower: @t1, upper: @t2}
+               },
+               %{
+                 body: "new body",
+                 version_action_type: :update,
+                 user_id: update_user_id,
+                 reason_for_change: "fix typo",
+                 changes: %{body: "new body"},
+                 valid_at: %Ash.Range{lower: @t2, upper: nil}
+               }
+             ] = versions
+
+      assert create_user_id == user.id
+      assert update_user_id == other_user.id
+    end
+
+    test "the versions relationship lists the past versions of the record read from, and versions load their source and actor",
+         %{post: post, user: user} do
+      current = version_at(TemporalPost, post.id, @t2)
+
+      assert %{paper_trail_versions: [past]} = Ash.load!(current, :paper_trail_versions)
+      assert %{body: "body", valid_at: %Ash.Range{lower: @t1, upper: @t2}} = past
+
+      assert %{version_source: %TemporalPost{body: "new body"}, user: %Accounts.User{name: "bob"}} =
+               Ash.load!(past, [:version_source, :user])
+
+      assert user.name == "bob"
+
+      # The first version has no past.
+      assert %{paper_trail_versions: []} =
+               TemporalPost |> Ash.get!(post.id, as_of: @t1) |> Ash.load!(:paper_trail_versions)
     end
   end
 

@@ -6,14 +6,13 @@ defmodule AshPaperTrail.Resource.Transformers.RelateVersionResource do
   @moduledoc "Relates the resource to its created version resource"
   use Spark.Dsl.Transformer
   alias Spark.Dsl.Transformer
+  require Ash.Expr
 
   def transform(dsl_state) do
     primary_keys = Ash.Resource.Info.primary_key(dsl_state)
 
     with :ok <- validate_primary_keys(primary_keys) do
-      if AshPaperTrail.Resource.Info.temporal_inline?(dsl_state) do
-        {:ok, dsl_state}
-      else
+      if AshPaperTrail.Resource.Info.version_resource?(dsl_state) do
         with {:ok, relationship} <- build_has_many(dsl_state, primary_keys) do
           {:ok,
            Transformer.add_entity(dsl_state, [:relationships], %{
@@ -21,6 +20,8 @@ defmodule AshPaperTrail.Resource.Transformers.RelateVersionResource do
              | source: Transformer.get_persisted(dsl_state, :module)
            })}
         end
+      else
+        {:ok, dsl_state}
       end
     end
   end
@@ -37,8 +38,30 @@ defmodule AshPaperTrail.Resource.Transformers.RelateVersionResource do
   defp validate_primary_keys(_keys), do: :ok
 
   defp build_has_many(dsl_state, primary_keys) do
+    inline? = AshPaperTrail.Resource.Info.temporal_inline?(dsl_state)
+
     {default_opts, filter} =
       case primary_keys do
+        # The inline version resource reads the same table, so it shares the key names. The
+        # record read from is itself the current version, so only past versions are related.
+        [key] when inline? ->
+          {[
+             name: AshPaperTrail.Resource.Info.versions_relationship_name(dsl_state),
+             destination: AshPaperTrail.Resource.Info.version_resource(dsl_state),
+             destination_attribute: key,
+             source_attribute: key
+           ], AshPaperTrail.Resource.PrimaryKey.past_versions_filter(dsl_state)}
+
+        _keys when inline? ->
+          same_keys = AshPaperTrail.Resource.PrimaryKey.same_key_filter(dsl_state)
+          past = AshPaperTrail.Resource.PrimaryKey.past_versions_filter(dsl_state)
+
+          {[
+             name: AshPaperTrail.Resource.Info.versions_relationship_name(dsl_state),
+             destination: AshPaperTrail.Resource.Info.version_resource(dsl_state),
+             no_attributes?: true
+           ], Ash.Expr.expr(^same_keys and ^past)}
+
         [key] ->
           {[
              name: AshPaperTrail.Resource.Info.versions_relationship_name(dsl_state),

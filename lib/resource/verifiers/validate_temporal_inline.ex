@@ -7,20 +7,27 @@ defmodule AshPaperTrail.Resource.Verifiers.ValidateTemporalInline do
   use Spark.Dsl.Verifier
   alias Spark.Dsl.Verifier
 
-  @version_resource_options [
+  # Options that only configure a generated version resource, with their defaults. The
+  # inline version resource mirrors the resource's own table, so these never apply to it.
+  @inline_version_resource_options [
     primary_key_type: :uuid,
     attributes_as_attributes: [],
-    mixin: nil,
     reference_source?: true,
-    versions_relationship_name: :paper_trail_versions,
-    relationship_opts: nil,
-    version_resource: nil,
-    version_extensions: [],
     table_name: nil,
     public_timestamps?: false,
     store_resource_identifier?: false,
     resource_identifier: nil
   ]
+
+  # These do apply to the inline version resource, when there is one.
+  @version_resource_options @inline_version_resource_options ++
+                              [
+                                mixin: nil,
+                                versions_relationship_name: :paper_trail_versions,
+                                relationship_opts: nil,
+                                version_resource: nil,
+                                version_extensions: []
+                              ]
 
   @impl true
   def verify(dsl_state) do
@@ -60,8 +67,9 @@ defmodule AshPaperTrail.Resource.Verifiers.ValidateTemporalInline do
              module: module,
              path: [:paper_trail, :mode],
              message: """
-             `mode :temporal_inline` does not generate a version resource, so the following
-             options have no effect and must not be set: #{Enum.map_join(offending, ", ", &"`#{&1}`")}
+             The following options have no effect in `mode :temporal_inline` and must not be set: #{Enum.map_join(offending, ", ", &"`#{&1}`")}
+
+             #{if AshPaperTrail.Resource.Info.version_resource?(dsl_state), do: "The version resource reads the resource's own table, so its keys, attributes and table are fixed.", else: "No version resource is defined unless `version_resource? true` is set."}
              """
            )}
 
@@ -79,7 +87,12 @@ defmodule AshPaperTrail.Resource.Verifiers.ValidateTemporalInline do
   end
 
   defp offending_options(dsl_state) do
-    @version_resource_options
+    options =
+      if AshPaperTrail.Resource.Info.version_resource?(dsl_state),
+        do: @inline_version_resource_options,
+        else: @version_resource_options
+
+    options
     |> Enum.filter(fn {key, default} ->
       Verifier.get_option(dsl_state, [:paper_trail], key) != default
     end)
