@@ -60,7 +60,8 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           domain: actor.domain,
           public?: actor.public?,
           allow_nil?: actor.allow_nil?,
-          source_attribute: AshPaperTrail.Resource.Info.actor_source_attribute(dsl_state, actor)
+          source_attribute: AshPaperTrail.Resource.Info.actor_source_attribute(dsl_state, actor),
+          temporal_period: actor.temporal_period
         }
       end)
 
@@ -127,6 +128,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
               define_attribute? false
               source_attribute(unquote(key))
               destination_attribute(unquote(key))
+              temporal_keys({nil, unquote(period)})
             end
           end
 
@@ -136,6 +138,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
               public? true
               allow_nil? false
               no_attributes? true
+              temporal_keys({nil, unquote(period)})
 
               filter unquote(
                        Macro.escape(AshPaperTrail.Resource.PrimaryKey.same_key_filter(dsl_state))
@@ -205,6 +208,10 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
               allow_nil?(actor.allow_nil?)
               define_attribute?(false)
               source_attribute(actor.source_attribute)
+
+              if actor.temporal_period do
+                temporal_keys({nil, actor.temporal_period})
+              end
             end
           end
         end
@@ -561,6 +568,10 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
               attribute_type(actor_relationship.attribute_type)
               public?(actor_relationship.public?)
               attribute_writable?(true)
+
+              if actor_relationship.temporal_period do
+                temporal_keys({nil, actor_relationship.temporal_period})
+              end
             end
           end
         end

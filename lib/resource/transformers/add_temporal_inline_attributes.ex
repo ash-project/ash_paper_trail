@@ -119,7 +119,9 @@ defmodule AshPaperTrail.Resource.Transformers.AddTemporalInlineAttributes do
                  dsl_state
                ),
              attribute_writable?: false,
-             public?: actor.public?
+             public?: actor.public?,
+             temporal_keys:
+               {Ash.Resource.Info.temporal_attribute(dsl_state), actor.temporal_period}
            ) do
       {:ok,
        Transformer.add_entity(dsl_state, [:relationships], %{
@@ -145,11 +147,16 @@ defmodule AshPaperTrail.Resource.Transformers.AddTemporalInlineAttributes do
         if existing? do
           {:ok, dsl_state}
         else
+          # A temporal actor is referenced by a `PERIOD` foreign key, which only supports
+          # `NO ACTION` on update.
+          on_update = if actor.temporal_period, do: [], else: [on_update: :update]
+
           with {:ok, reference} <-
-                 Transformer.build_entity(extension, path, :reference,
-                   relationship: actor.name,
-                   on_delete: actor.on_delete,
-                   on_update: :update
+                 Transformer.build_entity(
+                   extension,
+                   path,
+                   :reference,
+                   [relationship: actor.name, on_delete: actor.on_delete] ++ on_update
                  ) do
             {:ok, Transformer.add_entity(dsl_state, path, reference)}
           end
