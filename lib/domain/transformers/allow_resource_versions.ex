@@ -15,7 +15,8 @@ defmodule AshPaperTrail.Domain.Transformers.AllowResourceVersions do
       resources = Ash.Domain.Info.resources(dsl_state)
 
       Enum.reduce(resources, {:ok, dsl_state}, fn resource, {:ok, dsl_state} ->
-        if AshPaperTrail.Resource in Spark.extensions(resource) do
+        if AshPaperTrail.Resource in Spark.extensions(resource) and
+             AshPaperTrail.Resource.Info.version_resource?(resource) do
           version_resource = AshPaperTrail.Resource.Info.version_resource(resource)
 
           if version_resource in resources do

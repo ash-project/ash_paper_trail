@@ -107,7 +107,11 @@ defmodule AshPaperTrail.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, ash_version("~> 3.5 and >= 3.5.43")},
+      {:ash,
+       ash_version(
+         git: "https://github.com/ash-project/ash.git",
+         override: true
+       )},
       {:igniter, "~> 0.5", only: [:dev, :test]},
       {:ex_doc, "~> 0.37-rc", only: [:dev, :test], runtime: false},
       {:ex_check, "~> 0.12", only: [:dev, :test]},
