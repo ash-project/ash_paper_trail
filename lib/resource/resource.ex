@@ -55,6 +55,27 @@ defmodule AshPaperTrail.Resource do
     """,
     entities: [@belongs_to_actor, @metadata],
     schema: [
+      mode: [
+        type: {:one_of, [:version_resource, :temporal_inline]},
+        default: :version_resource,
+        doc: """
+        How versions are stored. `:version_resource` (the default) generates a separate version resource and writes a record to it on every change. `:temporal_inline` requires the resource to be `temporal` and instead adds the version attributes to the resource itself, so every period row carries the details of the write that produced it. See the getting started guide for more.
+        """
+      ],
+      version_resource?: [
+        type: :boolean,
+        default: false,
+        doc: """
+        In `:temporal_inline` mode, whether to also define a version resource. It is a read-only, non-temporal resource over the same table whose primary key is the resource's primary key plus its period, so reading it (or the `paper_trail_versions` relationship) lists every version of a record.
+        """
+      ],
+      public_version_attributes: [
+        type: {:list, :atom},
+        default: [],
+        doc: """
+        In `:temporal_inline` mode, which of the version attributes added to the resource should be public, e.g `[:version_action_type, :changes, :user_id]`. All are private by default.
+        """
+      ],
       primary_key_type: [
         type: :atom,
         default: :uuid,
@@ -80,10 +101,10 @@ defmodule AshPaperTrail.Resource do
         doc: "Whether to restrict version reads using the source resource's read policies."
       ],
       change_tracking_mode: [
-        type: {:one_of, [:snapshot, :changes_only, :full_diff]},
+        type: {:one_of, [:snapshot, :changes_only, :full_diff, :previous_values]},
         default: :snapshot,
         doc:
-          "Changes are stored in a map attribute called `changes`.  The `change_tracking_mode` determines what's stored. See the getting started guide for more."
+          "Changes are stored in a map attribute called `changes`.  The `change_tracking_mode` determines what's stored. `:previous_values` stores the previous values of only the attributes that changed, which suits temporal resources where the new values are on the row. See the getting started guide for more."
       ],
       ignore_attributes: [
         type: {:list, :atom},
@@ -154,6 +175,12 @@ defmodule AshPaperTrail.Resource do
         doc:
           "Whether or not to create a version on destroy. You will need to set this to `false` unless you are doing soft destroys (like with `AshArchival`)"
       ],
+      operation_id_field: [
+        type: :atom,
+        doc: """
+        When set, stores an operation id in an attribute of this name on every version. The id identifies the top-level action call that caused the version, so you can see everything that changed as a result of it. An id is generated when an action on this resource starts, unless one is already present in `context.shared.ash_paper_trail.operation_id`, and is set there so that it propagates to nested actions. See the getting started guide for more.
+        """
+      ],
       store_resource_identifier?: [
         type: :boolean,
         default: false,
@@ -201,7 +228,12 @@ defmodule AshPaperTrail.Resource do
     transformers: [
       AshPaperTrail.Resource.Transformers.ValidateBelongsToActor,
       AshPaperTrail.Resource.Transformers.RelateVersionResource,
+      AshPaperTrail.Resource.Transformers.AddTemporalInlineAttributes,
+      AshPaperTrail.Resource.Transformers.SetOperationId,
       AshPaperTrail.Resource.Transformers.CreateVersionResource,
       AshPaperTrail.Resource.Transformers.VersionOnChange
+    ],
+    verifiers: [
+      AshPaperTrail.Resource.Verifiers.ValidateTemporalInline
     ]
 end

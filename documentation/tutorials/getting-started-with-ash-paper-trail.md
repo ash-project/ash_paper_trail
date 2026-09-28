@@ -211,7 +211,7 @@ This will make your version resource have `foo` and `bar` attributes (they will 
 
 ## Change Tracking Modes
 
-Valid options are `:snapshot` and `:changes_only` and `:full_diff`.
+Valid options are `:snapshot`, `:changes_only`, `:full_diff` and `:previous_values`.
 
 ### Snapshots
 
@@ -232,6 +232,14 @@ Note if any part of an embedded attribute and array of embedded attributes, chan
 
 `{ subject: { from: "subject", to: "new subject" }, body: { unchanged: "unchanged_body" }}, author: { changes: { unchanged: "bob" }}`
 
+### Previous Values
+
+`:previous_values` will json dump the *previous* contents of only the attributes that have changed. Nothing is stored on create, since there is no previous version.
+
+`{ subject: "subject" }`
+
+This is designed for [temporal resources](#temporal-inline-mode), where the new values are on the version row itself, so storing them again would be redundant. In `mode :temporal_inline` it can be tracked atomically; with a version resource it cannot, since the previous values are only known to the data layer.
+
 ## Associating Versions with Actors
 
 You can record the actor who made the change by declaring one or more resources that can be actors.
@@ -248,6 +256,32 @@ Each `belongs_to_actor` will create a `belongs_to` relationship with the given n
 A reference is also created with `on_delete: :nilify` and `on_update: :update`
 
 If you need a more complex relationship or your actor is not a resource (e.g. String), the actor is always set on Version create and you can store it by adding `:on_create` `change` in a mixin.
+
+> ### `on_delete` in `mode :temporal_inline` {: .warning}
+>
+> In [temporal inline mode](#temporal-inline-mode) the actor reference lives on the resource's own table, so `on_delete: :delete` would delete the resource's rows (its history included) when the actor is deleted. Leave the default of `:nothing`, or use `:nilify`.
+
+## Grouping Versions by Operation
+
+A single action call often changes many records: a generic action that calls several others, a create that manages its relationships, a bulk update. Set `operation_id_field` to store an id on every version identifying the top-level action call that caused it, so you can see everything that changed as a result.
+
+```elixir
+paper_trail do
+  operation_id_field :operation_id
+end
+```
+
+When an action on the resource starts, a UUIDv7 is generated and set in `context.shared.ash_paper_trail.operation_id` unless one is already there, which also makes it available as `context.ash_paper_trail.operation_id`. It is set before anything else runs, so the action's own changes and preparations can see it. Because it lives in the shared context, it propagates to nested actions: those called with `scope: context` (or `Ash.Context.to_opts/2`), loads, and managed relationships. Every resource that sets `operation_id_field` records the same id for the same operation.
+
+You can provide your own, for example to group several action calls together or to use an id from your request:
+
+```elixir
+MyApp.Blog.update_post!(post, %{title: "new"},
+  context: %{shared: %{ash_paper_trail: %{operation_id: request_id}}}
+)
+```
+
+The attribute has type `:uuid`, so a provided id must be a UUID. Every changeset in a batch of a bulk action shares an id, but separate batches get separate ids unless you provide one.
 
 ## Multitenancy
 
@@ -285,6 +319,101 @@ defmodule MyApp.MyResource.PaperTrailMixin do
   end
 end
 ```
+
+## Temporal Inline Mode
+
+A [temporal resource](https://hexdocs.pm/ash/temporal-resources.html) already keeps every version of each record: a write never overwrites a row, it closes the current period and opens a new one. Every period row *is* a version, so a separate version resource is redundant. `mode :temporal_inline` uses that instead: the version attributes are added to the resource itself, and every write stamps them onto the new period row.
+
+```elixir
+defmodule MyApp.Subscription do
+  use Ash.Resource,
+    domain: MyApp.Billing,
+    data_layer: AshPostgres.DataLayer,
+    extensions: [AshPaperTrail.Resource]
+
+  temporal do
+    strategy :context
+    attribute :valid_at
+  end
+
+  paper_trail do
+    mode :temporal_inline
+    change_tracking_mode :previous_values
+    store_action_name? true
+
+    belongs_to_actor :user, MyApp.Accounts.User, domain: MyApp.Accounts
+    metadata :reason_for_change, :string
+  end
+
+  # ...
+end
+```
+
+This adds the following to the resource. They are `writable? false` (so never accepted as input) and `public? false` unless named in `public_version_attributes`, e.g `public_version_attributes [:version_action_type, :user_id]`:
+
+- `version_action_type` (`:create` or `:update`), and `version_action_name` / `version_action_inputs` when `store_action_name?` / `store_action_inputs?` are set
+- a `belongs_to` relationship (and its attribute) for each `belongs_to_actor`, along with a reference configured with its `on_delete`
+- an attribute for each `metadata`
+- `changes`, unless the change tracking mode is `:snapshot`. A period row is a snapshot already, so `:snapshot` stores nothing extra; `:previous_values` is the natural fit.
+
+There is no `version_inserted_at`: the lower bound of the period is when the version began. To see a version, read the record `as_of` an instant in that period:
+
+```elixir
+MyApp.Subscription
+|> Ash.Query.filter(id == ^id)
+|> Ash.Query.as_of(~U[2026-01-15 00:00:00Z])
+|> Ash.read_one!()
+```
+
+The following options only configure a generated version resource and are rejected in this mode: `primary_key_type`, `attributes_as_attributes`, `reference_source?`, `table_name`, `public_timestamps?`, `store_resource_identifier?` and `resource_identifier`. Unless `version_resource? true` is set (see [Listing history](#listing-history)), `mixin`, `versions_relationship_name`, `relationship_opts`, `version_resource` and `version_extensions` are rejected too.
+
+### Atomic updates
+
+Version attributes are literal values, so they are always stamped atomically. `changes` is built as an expression for `:changes_only` (from the atomic expressions themselves) and `:previous_values` (from references to the attributes, which the data layer resolves against the row as it was before the write). `:full_diff` cannot be tracked atomically, as before.
+
+### Destroys
+
+A temporal destroy ends the current period. It writes no row, so there is nothing to stamp: the upper bound of the last period tells you *when* the record was destroyed, but not by whom or through which action. If you need that, make destroys soft with [`AshArchival`](https://hexdocs.pm/ash_archival): an archive is an update, and is stamped like any other.
+
+### No-op updates and `only_when_changed?`
+
+Ash does not write an update that changes nothing, so no new period row appears and there is nothing to stamp. With `only_when_changed? false` the stamp itself counts as a change, so every update produces a new period row carrying it, even when nothing else changed. The `skip_version_when_unchanged?` context works as it does with a version resource.
+
+When versioning is disabled for a write (`ash_paper_trail_disabled?`, `ignore_actions`, or an update action not in `on_actions`), the new period row would otherwise carry a copy of the previous version's stamp, describing a write it did not come from. The stamp is cleared to `nil` on that row instead.
+
+### Upserts
+
+The stamp is added to `upsert_fields`, so that an upsert that hits an existing record refreshes it even when `upsert_fields` does not list the version attributes. Note that `upsert_fields` passed as an option to `Ash.create/2` or to bulk creates take precedence, and are not amended.
+
+### Listing history
+
+Reads of a temporal resource are always a single point in time, so the resource itself cannot list every version of a record. Set `version_resource? true` to also define a version resource:
+
+```elixir
+paper_trail do
+  mode :temporal_inline
+  version_resource? true
+end
+```
+
+It is a read-only, *non-temporal* resource over the same table, so reading it is not narrowed to a point in time and returns every period row. Its attributes mirror the resource's, its primary key is the resource's primary key plus the period (so each version is a distinct record), and it has `version_source` and actor relationships like a regular version resource. It is excluded from migrations. The `paper_trail_versions` relationship relates a record to its *past* versions: those that ended at or before the version you read began.
+
+```elixir
+# every version of a record
+MyApp.Subscription.Version
+|> Ash.Query.filter(id == ^id)
+|> Ash.Query.sort(valid_at: :asc)
+|> Ash.read!()
+
+# the versions before the current one
+Ash.load!(subscription, :paper_trail_versions)
+```
+
+`mixin`, `version_extensions`, `version_resource`, `versions_relationship_name` and `relationship_opts` apply to it as usual.
+
+### Ordering
+
+The stamp is computed when the changeset is built, after the action's own changes have run, so it reflects changes made by them. Attribute changes made later, in `before_action` hooks, are written to the row but not reflected in `changes`.
 
 ## Tracking Changes Conditionally
 

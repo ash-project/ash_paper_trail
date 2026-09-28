@@ -67,6 +67,22 @@ defmodule AshPaperTrail.Resource.PrimaryKey do
     |> Enum.reduce(fn right, left -> expr(^left and ^right) end)
   end
 
+  # Filter relating a resource to another that shares its primary key attribute names, as
+  # the inline version resource does. Reads the same from either side.
+  def same_key_filter(resource) do
+    resource
+    |> Ash.Resource.Info.primary_key()
+    |> Enum.map(fn key -> expr(^ref(key) == parent(^ref(key))) end)
+    |> Enum.reduce(fn right, left -> expr(^left and ^right) end)
+  end
+
+  # Filter for `has_many :paper_trail_versions` from an inline-mode resource to its version
+  # resource: the versions that ended at or before the version being read from began.
+  def past_versions_filter(resource) do
+    period = Ash.Resource.Info.temporal_attribute(resource)
+    expr(range_upper(^ref(period)) <= range_lower(parent(^ref(period))))
+  end
+
   # Filter for `has_one :version_source` on the version resource.
   def version_source_filter(resource) do
     resource

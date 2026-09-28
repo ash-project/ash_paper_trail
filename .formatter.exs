@@ -20,12 +20,14 @@ spark_locals_without_parens = [
   metadata: 2,
   metadata: 3,
   mixin: 1,
+  mode: 1,
   on_actions: 1,
   on_delete: 1,
   only_when_changed?: 1,
   primary_key_type: 1,
   public?: 1,
   public_timestamps?: 1,
+  public_version_attributes: 1,
   reference_source?: 1,
   relationship_opts: 1,
   resource_identifier: 1,
@@ -34,8 +36,10 @@ spark_locals_without_parens = [
   store_action_name?: 1,
   store_resource_identifier?: 1,
   table_name: 1,
+  temporal_period: 1,
   version_extensions: 1,
   version_resource: 1,
+  version_resource?: 1,
   versions_relationship_name: 1
 ]
 

@@ -14,7 +14,8 @@ defmodule AshPaperTrail.Resource.BelongsToActor do
     :define_attribute?,
     :public?,
     :name,
-    :on_delete
+    :on_delete,
+    :temporal_period
   ]
 
   @type t :: %__MODULE__{
@@ -26,7 +27,8 @@ defmodule AshPaperTrail.Resource.BelongsToActor do
           destination: Ash.Resource.t(),
           define_attribute?: boolean,
           name: atom,
-          on_delete: :nothing | :nilify | :delete | :restrict | {:nilify, list(atom)}
+          on_delete: :nothing | :nilify | :delete | :restrict | {:nilify, list(atom)},
+          temporal_period: atom | nil
         }
 
   @schema [
@@ -66,6 +68,11 @@ defmodule AshPaperTrail.Resource.BelongsToActor do
     destination: [
       type: Ash.OptionsHelpers.ash_resource(),
       doc: "The resource of the actor (e.g. MyApp.Users.User)"
+    ],
+    temporal_period: [
+      type: :atom,
+      doc:
+        "If the actor resource is temporal, its period attribute (e.g. `:valid_at`), so the relationship to it is read over matching periods."
     ],
     on_delete: [
       type:

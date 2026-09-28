@@ -23,5 +23,16 @@ defmodule AshPaperTrail.Test.Posts.Domain do
     resource AshPaperTrail.Test.Posts.TeamMember.Version
     resource AshPaperTrail.Test.Posts.VersionsRelationshipPost
     resource AshPaperTrail.Test.Posts.VersionsRelationshipPost.Version
+    resource AshPaperTrail.Test.Posts.TemporalPost
+    resource AshPaperTrail.Test.Posts.TemporalPost.Version
+    resource AshPaperTrail.Test.Posts.TemporalSnapshotPost
+    resource AshPaperTrail.Test.Posts.TemporalUpsertPost
+    resource AshPaperTrail.Test.Posts.TemporalPreviousValuesPost
+    resource AshPaperTrail.Test.Posts.PreviousValuesPost
+    resource AshPaperTrail.Test.Posts.PreviousValuesPost.Version
+    resource AshPaperTrail.Test.Posts.OperationIdPost
+    resource AshPaperTrail.Test.Posts.OperationIdPost.Version
+    resource AshPaperTrail.Test.Posts.TemporalOperationIdPost
+    resource AshPaperTrail.Test.Posts.TemporalOperationIdPost.Version
   end
 end
