@@ -165,6 +165,18 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       end
     end)
     |> then(fn changeset ->
+      if operation_id_field = AshPaperTrail.Resource.Info.operation_id_field(resource) do
+        put_value(
+          changeset,
+          operation_id_field,
+          AshPaperTrail.Resource.Info.operation_id(changeset.context),
+          strategy
+        )
+      else
+        changeset
+      end
+    end)
+    |> then(fn changeset ->
       resource
       |> AshPaperTrail.Resource.Info.belongs_to_actor()
       |> Enum.reduce(changeset, fn belongs_to_actor, changeset ->
@@ -427,6 +439,17 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
           AshPaperTrail.Resource.Info.resource_identifier(changeset.resource),
         changes: changes
       })
+
+    input =
+      if operation_id_field = AshPaperTrail.Resource.Info.operation_id_field(changeset.resource) do
+        Map.put(
+          input,
+          operation_id_field,
+          AshPaperTrail.Resource.Info.operation_id(changeset.context)
+        )
+      else
+        input
+      end
 
     metadata_entities = AshPaperTrail.Resource.Info.metadata(changeset.resource)
     paper_trail_metadata = changeset.context[:paper_trail_metadata] || %{}

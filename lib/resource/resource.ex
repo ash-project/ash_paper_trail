@@ -170,6 +170,12 @@ defmodule AshPaperTrail.Resource do
         doc:
           "Whether or not to create a version on destroy. You will need to set this to `false` unless you are doing soft destroys (like with `AshArchival`)"
       ],
+      operation_id_field: [
+        type: :atom,
+        doc: """
+        When set, stores an operation id in an attribute of this name on every version. The id identifies the top-level action call that caused the version, so you can see everything that changed as a result of it. An id is generated when an action on this resource starts, unless one is already present in `context.shared.ash_paper_trail.operation_id`, and is set there so that it propagates to nested actions. See the getting started guide for more.
+        """
+      ],
       store_resource_identifier?: [
         type: :boolean,
         default: false,
@@ -218,6 +224,7 @@ defmodule AshPaperTrail.Resource do
       AshPaperTrail.Resource.Transformers.ValidateBelongsToActor,
       AshPaperTrail.Resource.Transformers.RelateVersionResource,
       AshPaperTrail.Resource.Transformers.AddTemporalInlineAttributes,
+      AshPaperTrail.Resource.Transformers.SetOperationId,
       AshPaperTrail.Resource.Transformers.CreateVersionResource,
       AshPaperTrail.Resource.Transformers.VersionOnChange
     ],

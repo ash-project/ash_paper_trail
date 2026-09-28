@@ -36,8 +36,8 @@ defmodule AshPaperTrail.Resource.Info do
   The names of the version attributes added to the resource in `:temporal_inline` mode.
 
   Includes `:version_action_type`, `:version_action_name` and `:version_action_inputs` (when
-  stored), `:changes` (unless the change tracking mode is `:snapshot`), the source attribute of
-  every `belongs_to_actor`, and every `metadata` attribute.
+  stored), `:changes` (unless the change tracking mode is `:snapshot`), the `operation_id_field`
+  (when set), the source attribute of every `belongs_to_actor`, and every `metadata` attribute.
   """
   @spec temporal_inline_attributes(Spark.Dsl.t() | Ash.Resource.t()) :: [atom]
   def temporal_inline_attributes(resource) do
@@ -46,6 +46,7 @@ defmodule AshPaperTrail.Resource.Info do
       if(store_action_name?(resource), do: :version_action_name),
       if(store_action_inputs?(resource), do: :version_action_inputs),
       if(change_tracking_mode(resource) != :snapshot, do: :changes),
+      operation_id_field(resource),
       Enum.map(belongs_to_actor(resource), &actor_source_attribute(resource, &1)),
       Enum.map(metadata(resource), & &1.name)
     ]
@@ -152,6 +153,17 @@ defmodule AshPaperTrail.Resource.Info do
   @spec store_action_inputs?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
   def store_action_inputs?(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :store_action_inputs?, false)
+  end
+
+  @spec operation_id_field(Spark.Dsl.t() | Ash.Resource.t()) :: atom | nil
+  def operation_id_field(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :operation_id_field, nil)
+  end
+
+  @doc "The operation id of the action call that `context` belongs to, if one is set"
+  @spec operation_id(map) :: term | nil
+  def operation_id(context) do
+    get_in(context, [:ash_paper_trail, :operation_id])
   end
 
   @spec store_resource_identifier?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean

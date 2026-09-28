@@ -237,6 +237,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     store_action_name? = AshPaperTrail.Resource.Info.store_action_name?(dsl_state)
     store_action_inputs? = AshPaperTrail.Resource.Info.store_action_inputs?(dsl_state)
     store_resource_identifier? = AshPaperTrail.Resource.Info.store_resource_identifier?(dsl_state)
+    operation_id_field = AshPaperTrail.Resource.Info.operation_id_field(dsl_state)
     version_extensions = AshPaperTrail.Resource.Info.version_extensions(dsl_state)
 
     public_timestamps? =
@@ -315,6 +316,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
         if(store_action_name?, do: :version_action_name, else: nil),
         if(store_action_inputs?, do: :version_action_inputs, else: nil),
         if(store_resource_identifier?, do: :version_resource_identifier, else: nil),
+        operation_id_field,
         attributes |> Enum.map(& &1.name),
         AshPaperTrail.Resource.PrimaryKey.version_source_attribute_names(dsl_state),
         :changes,
@@ -486,6 +488,12 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
           if unquote(store_resource_identifier?) do
             attribute :version_resource_identifier, :atom do
               allow_nil? false
+              public? true
+            end
+          end
+
+          if unquote(operation_id_field) do
+            attribute unquote(operation_id_field), :uuid do
               public? true
             end
           end

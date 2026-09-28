@@ -248,6 +248,28 @@ If you need a more complex relationship or your actor is not a resource (e.g. St
 >
 > In [temporal inline mode](#temporal-inline-mode) the actor reference lives on the resource's own table, so `on_delete: :delete` would delete the resource's rows (its history included) when the actor is deleted. Leave the default of `:nothing`, or use `:nilify`.
 
+## Grouping Versions by Operation
+
+A single action call often changes many records: a generic action that calls several others, a create that manages its relationships, a bulk update. Set `operation_id_field` to store an id on every version identifying the top-level action call that caused it, so you can see everything that changed as a result.
+
+```elixir
+paper_trail do
+  operation_id_field :operation_id
+end
+```
+
+When an action on the resource starts, a UUIDv7 is generated and set in `context.shared.ash_paper_trail.operation_id` unless one is already there, which also makes it available as `context.ash_paper_trail.operation_id`. It is set before anything else runs, so the action's own changes and preparations can see it. Because it lives in the shared context, it propagates to nested actions: those called with `scope: context` (or `Ash.Context.to_opts/2`), loads, and managed relationships. Every resource that sets `operation_id_field` records the same id for the same operation.
+
+You can provide your own, for example to group several action calls together or to use an id from your request:
+
+```elixir
+MyApp.Blog.update_post!(post, %{title: "new"},
+  context: %{shared: %{ash_paper_trail: %{operation_id: request_id}}}
+)
+```
+
+The attribute has type `:uuid`, so a provided id must be a UUID. Every changeset in a batch of a bulk action shares an id, but separate batches get separate ids unless you provide one.
+
 ## Multitenancy
 
 If your resource uses multitenancy, then the strategy, attribute, and parse_attribute options (if any) will be applied to the version resource. If using the attribute strategy you will need to ensure this is also an attribute on the version using the `attributes_as_attributes` option (described above) or via a mixin (described below)

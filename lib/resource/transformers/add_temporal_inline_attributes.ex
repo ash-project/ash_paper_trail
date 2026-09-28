@@ -51,6 +51,10 @@ defmodule AshPaperTrail.Resource.Transformers.AddTemporalInlineAttributes do
           {:changes, :map,
            sensitive?: sensitive_changes?,
            description: "The changes made by the action that produced this version"}
+        end,
+        if Info.operation_id_field(dsl_state) do
+          {Info.operation_id_field(dsl_state), :uuid,
+           description: "The operation id of the action call that produced this version"}
         end
       ]
       |> Enum.reject(&is_nil/1)
