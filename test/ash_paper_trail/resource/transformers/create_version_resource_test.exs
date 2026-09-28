@@ -62,6 +62,36 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResourceTest do
     end
   end
 
+  defmodule TagWithCanReadPolicy do
+    use Ash.Resource,
+      domain: AshPaperTrail.Resource.Transformers.CreateVersionResourceTest.Domain,
+      data_layer: Ash.DataLayer.Ets,
+      extensions: [AshPaperTrail.Resource],
+      validate_domain_inclusion?: false
+
+    ets do
+      private? true
+    end
+
+    paper_trail do
+      apply_can_read_policy? true
+      version_extensions authorizers: [Ash.Policy.Authorizer]
+    end
+
+    actions do
+      default_accept :*
+      defaults [:create, :update, :destroy, :read]
+    end
+
+    attributes do
+      attribute :name, :string do
+        public? true
+        allow_nil? false
+        primary_key? true
+      end
+    end
+  end
+
   defmodule Domain do
     use Ash.Domain, extensions: [AshPaperTrail.Domain], validate_config_inclusion?: false
 
@@ -70,6 +100,8 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResourceTest do
       resource Tag.Version
       resource TagWithCustomVersion
       resource AshPaperTrail.Resource.Transformers.CreateVersionResourceTest.TagPaperTrailVersion
+      resource TagWithCanReadPolicy
+      resource TagWithCanReadPolicy.Version
     end
   end
 
@@ -91,6 +123,50 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResourceTest do
         AshPaperTrail.Resource.Transformers.CreateVersionResourceTest.TagPaperTrailVersion
 
       assert AshPaperTrail.allow_resource_versions(nil, version_module)
+    end
+  end
+
+  describe "apply_can_read_policy? option" do
+    test "defaults to false and does not add an authorizer" do
+      refute AshPaperTrail.Resource.Info.apply_can_read_policy?(Tag)
+
+      refute Ash.Resource.Info.authorizers(Tag.Version)
+             |> Enum.any?(&(&1 == Ash.Policy.Authorizer))
+    end
+
+    test "adds one policy authorizer and source read policies" do
+      version = TagWithCanReadPolicy.Version
+
+      assert Ash.Resource.Info.authorizers(version)
+             |> Enum.count(&(&1 == Ash.Policy.Authorizer)) == 1
+
+      policies = Ash.Policy.Info.policies(version)
+
+      assert Enum.any?(policies, fn policy ->
+               policy.bypass? == true and
+                 Enum.any?(policy.condition, fn
+                   {Ash.Policy.Check.ContextEquals, opts} ->
+                     opts[:key] == :ash_paper_trail? and opts[:value] == true
+
+                   _ ->
+                     false
+                 end)
+             end)
+
+      assert Enum.any?(policies, fn policy ->
+               Enum.any?(policy.policies, fn
+                 %Ash.Policy.Check{
+                   check_module: Ash.Policy.Check.CanRead,
+                   check_opts: opts
+                 } ->
+                   opts[:relationship_path] == [:version_source]
+
+                 _ ->
+                   false
+               end)
+             end)
+
+      assert length(policies) == 2
     end
   end
 

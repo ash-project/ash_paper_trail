@@ -73,6 +73,11 @@ defmodule AshPaperTrail.Resource.Info do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :only_when_changed?, true)
   end
 
+  @spec apply_can_read_policy?(Spark.Dsl.t() | Ash.Resource.t()) :: boolean
+  def apply_can_read_policy?(resource) do
+    Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :apply_can_read_policy?, false)
+  end
+
   @spec attributes_as_attributes(Spark.Dsl.t() | Ash.Resource.t()) :: [atom]
   def attributes_as_attributes(resource) do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :attributes_as_attributes, [])

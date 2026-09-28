@@ -112,6 +112,7 @@ defmodule AshPaperTrail.MixProject do
          git: "https://github.com/ash-project/ash.git",
          override: true
        )},
+      {:simple_sat, "~> 0.1", only: [:dev, :test]},
       {:igniter, "~> 0.5", only: [:dev, :test]},
       {:ex_doc, "~> 0.37-rc", only: [:dev, :test], runtime: false},
       {:ex_check, "~> 0.12", only: [:dev, :test]},

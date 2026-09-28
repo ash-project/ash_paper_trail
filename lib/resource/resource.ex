@@ -95,6 +95,11 @@ defmodule AshPaperTrail.Resource do
         Set to false to create version records for actions even when nothing about the data has changed.
         """
       ],
+      apply_can_read_policy?: [
+        type: :boolean,
+        default: false,
+        doc: "Whether to restrict version reads using the source resource's read policies."
+      ],
       change_tracking_mode: [
         type: {:one_of, [:snapshot, :changes_only, :full_diff, :previous_values]},
         default: :snapshot,

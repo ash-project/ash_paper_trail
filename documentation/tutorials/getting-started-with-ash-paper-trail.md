@@ -82,6 +82,19 @@ resources do
 end
 ```
 
+## Policies
+
+By default, AshPaperTrail does not apply policies to version reads. To restrict version reads to actors who can read the source record, set `apply_can_read_policy?` to `true`:
+
+```elixir
+paper_trail do
+  apply_can_read_policy? true
+end
+
+```
+
+This adds the Ash policy authorizer to the version resource. A version can be read only when its source record can be read by the actor. Note that by enabling policies, a bypass for creation by ash_paper_trail is also added.
+
 ## Composite primary keys
 
 Resources with a single primary key use a `version_source_id` attribute on the version resource and a `belongs_to :version_source` relationship back to the source. Resources with **more than one** primary key attribute are supported as well. AshPaperTrail maps each source primary key to a matching attribute on the version resource.

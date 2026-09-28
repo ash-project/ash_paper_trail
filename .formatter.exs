@@ -4,6 +4,7 @@
 
 spark_locals_without_parens = [
   allow_nil?: 1,
+  apply_can_read_policy?: 1,
   attribute_type: 1,
   attributes_as_attributes: 1,
   belongs_to_actor: 2,
