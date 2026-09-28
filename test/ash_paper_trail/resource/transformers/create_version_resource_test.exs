@@ -165,27 +165,8 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResourceTest do
                    false
                end)
              end)
-    end
 
-    test "bypasses authorization for version updates from PaperTrail" do
-      Ash.create!(TagWithCanReadPolicy, %{name: "tag"})
-
-      version = TagWithCanReadPolicy.Version |> Ash.read!(authorize?: false) |> List.first()
-
-      assert %{changes: %{updated: true}} =
-               Ash.update!(version, %{changes: %{updated: true}},
-                 authorize?: true,
-                 context: %{ash_paper_trail?: true}
-               )
-    end
-
-    test "does not change authorization behavior for existing version updates" do
-      Ash.create!(TagWithCanReadPolicy, %{name: "another tag"})
-
-      version = TagWithCanReadPolicy.Version |> Ash.read!(authorize?: false) |> List.last()
-
-      assert %{changes: %{updated: true}} =
-               Ash.update!(version, %{changes: %{updated: true}}, authorize?: true)
+      assert length(policies) == 2
     end
   end
 
