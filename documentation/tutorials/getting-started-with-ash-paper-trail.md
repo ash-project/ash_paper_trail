@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 First, add the dependency to your `mix.exs`
 
 ```elixir
-{:ash_paper_trail, "~> 0.7.0"}
+{:ash_paper_trail, "~> 0.8.0"}
 ```
 
 Next add `:ash_paper_trail` to your `.formatter.exs` under `import_deps`.

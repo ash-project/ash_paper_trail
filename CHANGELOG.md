@@ -11,6 +11,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.8.0](https://github.com/ash-project/ash_paper_trail/compare/v0.7.0...v0.8.0) (2026-10-06)
+
+
+
+
+### Features:
+
+* add temporal features by [@zachdaniel](https://github.com/zachdaniel)
+
+### Improvements:
+
+* add optional read policies (#247) by aVikingTrex [(#247)](https://github.com/ash-project/ash_paper_trail/pull/247)
+
+* add `operation_id` tracking via shared context by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v0.7.0](https://github.com/ash-project/ash_paper_trail/compare/v0.6.0...v0.7.0) (2026-08-29)
 
 
