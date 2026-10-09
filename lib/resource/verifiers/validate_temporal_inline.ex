@@ -25,6 +25,7 @@ defmodule AshPaperTrail.Resource.Verifiers.ValidateTemporalInline do
                                 mixin: nil,
                                 versions_relationship_name: :paper_trail_versions,
                                 relationship_opts: nil,
+                                public_version_source?: true,
                                 version_resource: nil,
                                 version_extensions: []
                               ]

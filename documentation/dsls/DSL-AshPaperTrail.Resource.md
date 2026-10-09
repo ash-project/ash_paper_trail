@@ -48,6 +48,7 @@ A section for configuring how versioning is derived for the resource.
 | [`version_extensions`](#paper_trail-version_extensions){: #paper_trail-version_extensions } | `keyword` | `[]` | Extensions that should be used by the version resource. For example: `extensions: [AshGraphql.Resource], notifier: [Ash.Notifiers.PubSub]` |
 | [`table_name`](#paper_trail-table_name){: #paper_trail-table_name } | `String.t` |  | The table to use to store versions if using a SQL-based data layer, derived if not set |
 | [`public_timestamps?`](#paper_trail-public_timestamps?){: #paper_trail-public_timestamps? } | `boolean` | `false` | Whether of not to make the version resource's timestamps public |
+| [`public_version_source?`](#paper_trail-public_version_source?){: #paper_trail-public_version_source? } | `boolean` | `true` | Whether or not to make the version resource's `version_source` relationship public. |
 
 
 

@@ -365,7 +365,7 @@ MyApp.Subscription
 |> Ash.read_one!()
 ```
 
-The following options only configure a generated version resource and are rejected in this mode: `primary_key_type`, `attributes_as_attributes`, `reference_source?`, `table_name`, `public_timestamps?`, `store_resource_identifier?` and `resource_identifier`. Unless `version_resource? true` is set (see [Listing history](#listing-history)), `mixin`, `versions_relationship_name`, `relationship_opts`, `version_resource` and `version_extensions` are rejected too.
+The following options only configure a generated version resource and are rejected in this mode: `primary_key_type`, `attributes_as_attributes`, `reference_source?`, `table_name`, `public_timestamps?`, `store_resource_identifier?` and `resource_identifier`. Unless `version_resource? true` is set (see [Listing history](#listing-history)), `mixin`, `versions_relationship_name`, `relationship_opts`, `public_version_source?`, `version_resource` and `version_extensions` are rejected too.
 
 ### Atomic updates
 

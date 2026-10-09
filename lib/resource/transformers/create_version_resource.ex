@@ -33,6 +33,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     primary_key = Ash.Resource.Info.primary_key(dsl_state)
     period = Ash.Resource.Info.temporal_attribute(dsl_state)
     key_attributes = primary_key ++ [period]
+    public_version_source? = AshPaperTrail.Resource.Info.public_version_source?(dsl_state)
 
     attributes =
       dsl_state
@@ -123,7 +124,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
         [key] ->
           quote do
             belongs_to :version_source, unquote(module) do
-              public? true
+              public?(unquote(public_version_source?))
               allow_nil? false
               define_attribute? false
               source_attribute(unquote(key))
@@ -135,7 +136,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
         _ ->
           quote do
             has_one :version_source, unquote(module) do
-              public? true
+              public?(unquote(public_version_source?))
               allow_nil? false
               no_attributes? true
               temporal_keys({nil, unquote(period)})
@@ -255,6 +256,9 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
 
     public_timestamps? =
       AshPaperTrail.Resource.Info.public_timestamps?(dsl_state)
+
+    public_version_source? =
+      AshPaperTrail.Resource.Info.public_version_source?(dsl_state)
 
     resource_identifier =
       if store_resource_identifier? do
@@ -581,7 +585,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
         relationships do
           if unquote(composite_primary_key?) do
             has_one :version_source, unquote(module) do
-              public? true
+              public?(unquote(public_version_source?))
               allow_nil?(false)
               no_attributes?(true)
               filter unquote(Macro.escape(version_source_filter))
@@ -591,7 +595,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
               unquote(Macro.escape(List.first(version_source_mappings)))
 
             belongs_to :version_source, unquote(module) do
-              public? true
+              public?(unquote(public_version_source?))
               destination_attribute(source_attr.name)
               allow_nil?(false)
               attribute_writable?(true)

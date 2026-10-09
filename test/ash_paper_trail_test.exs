@@ -987,6 +987,31 @@ defmodule AshPaperTrailTest do
     end
   end
 
+  describe "public_version_source?" do
+    test "the version_source relationship is public by default" do
+      assert AshPaperTrail.Resource.Info.public_version_source?(Posts.Post)
+
+      assert %{public?: true} =
+               Ash.Resource.Info.relationship(Posts.Post.Version, :version_source)
+    end
+
+    test "the version_source relationship is private when public_version_source? is false" do
+      refute AshPaperTrail.Resource.Info.public_version_source?(Articles.Article)
+
+      assert %{public?: false} =
+               Ash.Resource.Info.relationship(Articles.Article.Version, :version_source)
+
+      article = Articles.Article.create!("subject", "body")
+
+      assert [%{version_source: %{id: article_id}}] =
+               Articles.Article.Version
+               |> Ash.read!()
+               |> Ash.load!(:version_source)
+
+      assert article_id == article.id
+    end
+  end
+
   describe "upsert operations" do
     test "upsert creates version when record doesn't exist" do
       assert %{subject: "subject", body: "body", id: post_id} =

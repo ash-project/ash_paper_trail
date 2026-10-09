@@ -219,6 +219,13 @@ defmodule AshPaperTrail.Resource do
         doc: """
         Whether of not to make the version resource's timestamps public
         """
+      ],
+      public_version_source?: [
+        type: :boolean,
+        default: true,
+        doc: """
+        Whether or not to make the version resource's `version_source` relationship public.
+        """
       ]
     ]
   }

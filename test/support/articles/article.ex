@@ -19,6 +19,7 @@ defmodule AshPaperTrail.Test.Articles.Article do
     ignore_actions [:destroy]
     change_tracking_mode :snapshot
     public_timestamps?(true)
+    public_version_source?(false)
   end
 
   code_interface do
