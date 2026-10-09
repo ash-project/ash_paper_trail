@@ -225,6 +225,7 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
     {:ok, dsl_state}
   end
 
+  # sobelow_skip ["DOS.StringToAtom", "RCE.CodeModule"]
   defp create_version_resource(dsl_state) do
     version_module = AshPaperTrail.Resource.Info.version_resource(dsl_state)
     module = Transformer.get_persisted(dsl_state, :module)
