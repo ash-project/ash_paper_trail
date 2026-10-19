@@ -44,6 +44,7 @@ defmodule AshPaperTrail.Test.Posts.TemporalPost do
     define :silent_update
     define :ignored_update
     define :increment_views
+    define :archive
   end
 
   actions do
@@ -60,6 +61,12 @@ defmodule AshPaperTrail.Test.Posts.TemporalPost do
     update :increment_views do
       accept []
       change atomic_update(:views, expr(views + 1))
+    end
+
+    # Written as an update, like AshArchival's archive.
+    destroy :archive do
+      soft? true
+      change set_attribute(:archived_at, &DateTime.utc_now/0)
     end
   end
 
@@ -84,6 +91,10 @@ defmodule AshPaperTrail.Test.Posts.TemporalPost do
       public? true
       default 0
       allow_nil? false
+    end
+
+    attribute :archived_at, :utc_datetime_usec do
+      public? true
     end
 
     create_timestamp :inserted_at

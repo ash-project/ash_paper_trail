@@ -84,26 +84,29 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     Enum.map(changesets_and_results, fn {_, result} -> {:ok, result} end)
   end
 
-  defp stamp_inline_version(%Ash.Changeset{action_type: :destroy} = changeset, _strategy),
-    do: changeset
+  defp stamp_inline_version(
+         %Ash.Changeset{action_type: :destroy, action: %{soft?: false}} = changeset,
+         _strategy
+       ),
+       do: changeset
 
   defp stamp_inline_version(changeset, strategy) do
     resource = changeset.resource
     stamp_attributes = AshPaperTrail.Resource.Info.temporal_inline_attributes(resource)
+    update? = changeset.action_type in [:update, :destroy]
 
     other_changes? =
       changeset.attributes |> Map.drop(stamp_attributes) |> Enum.any?() ||
         changeset.atomics |> Keyword.drop(stamp_attributes) |> Enum.any?()
 
     cond do
-      changeset.action_type == :update && !other_changes? &&
-          skip_when_unchanged?(changeset) ->
+      update? && !other_changes? && skip_when_unchanged?(changeset) ->
         changeset
 
       !valid_for_tracking?(changeset) ->
         # The new row copies the previous version's stamp, which would describe a write
         # other than this one. Clear it rather than leave it misleading.
-        if changeset.action_type == :update && other_changes? do
+        if update? && other_changes? do
           clear_inline_version(changeset, stamp_attributes, strategy)
         else
           changeset

@@ -465,6 +465,49 @@ defmodule AshPaperTrail.TemporalInlineTest do
 
       assert %{version_action_type: :create} = version_at(TemporalPost, post.id, @t1)
     end
+
+    test "a soft destroy is written as an update, and stamped with its own actor and action",
+         %{user: user, other_user: other_user} do
+      post = TemporalPost.create!(%{subject: "subject"}, actor: user, as_of: @t1)
+      TemporalPost.archive!(post, actor: other_user, as_of: @t2)
+
+      archived = version_at(TemporalPost, post.id, @t2)
+      assert archived.archived_at == @t2
+      assert archived.version_action_type == :destroy
+      assert archived.version_action_name == :archive
+      assert archived.user_id == other_user.id
+      assert archived.changes == %{archived_at: @t2}
+
+      assert %{version_action_type: :create, user_id: user_id} =
+               version_at(TemporalPost, post.id, @t1)
+
+      assert user_id == user.id
+    end
+
+    test "a bulk atomic soft destroy is stamped", %{user: user, other_user: other_user} do
+      post = TemporalPost.create!(%{subject: "subject"}, actor: user, as_of: @t1)
+
+      TemporalPost
+      |> Ash.Query.filter(id == ^post.id)
+      |> Ash.bulk_destroy!(:archive, %{}, actor: other_user, as_of: @t2, strategy: :atomic)
+
+      assert %{version_action_name: :archive, user_id: user_id} =
+               version_at(TemporalPost, post.id, @t2)
+
+      assert user_id == other_user.id
+    end
+
+    test "a soft destroy with versioning disabled clears the stamp", %{user: user} do
+      post = TemporalPost.create!(%{subject: "subject"}, actor: user, as_of: @t1)
+
+      TemporalPost.archive!(post,
+        as_of: @t2,
+        context: %{ash_paper_trail_disabled?: true}
+      )
+
+      assert %{archived_at: @t2, version_action_type: nil, user_id: nil, changes: nil} =
+               version_at(TemporalPost, post.id, @t2)
+    end
   end
 
   describe "upsert" do

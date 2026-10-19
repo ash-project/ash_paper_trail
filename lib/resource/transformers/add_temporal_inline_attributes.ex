@@ -36,7 +36,7 @@ defmodule AshPaperTrail.Resource.Transformers.AddTemporalInlineAttributes do
     attributes =
       [
         {:version_action_type, :atom,
-         constraints: [one_of: [:create, :update]],
+         constraints: [one_of: [:create, :update, :destroy]],
          description: "The type of the action that produced this version"},
         if Info.store_action_name?(dsl_state) do
           {:version_action_name, :atom,

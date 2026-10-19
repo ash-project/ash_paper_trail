@@ -351,7 +351,7 @@ end
 
 This adds the following to the resource. They are `writable? false` (so never accepted as input) and `public? false` unless named in `public_version_attributes`, e.g `public_version_attributes [:version_action_type, :user_id]`:
 
-- `version_action_type` (`:create` or `:update`), and `version_action_name` / `version_action_inputs` when `store_action_name?` / `store_action_inputs?` are set
+- `version_action_type` (`:create`, `:update`, or `:destroy` for a [soft destroy](#destroys)), and `version_action_name` / `version_action_inputs` when `store_action_name?` / `store_action_inputs?` are set
 - a `belongs_to` relationship (and its attribute) for each `belongs_to_actor`, along with a reference configured with its `on_delete`
 - an attribute for each `metadata`
 - `changes`, unless the change tracking mode is `:snapshot`. A period row is a snapshot already, so `:snapshot` stores nothing extra; `:previous_values` is the natural fit.
@@ -373,13 +373,13 @@ Version attributes are literal values, so they are always stamped atomically. `c
 
 ### Destroys
 
-A temporal destroy ends the current period. It writes no row, so there is nothing to stamp: the upper bound of the last period tells you *when* the record was destroyed, but not by whom or through which action. If you need that, make destroys soft with [`AshArchival`](https://hexdocs.pm/ash_archival): an archive is an update, and is stamped like any other.
+A temporal destroy ends the current period. It writes no row, so there is nothing to stamp: the upper bound of the last period tells you *when* the record was destroyed, but not by whom or through which action. If you need that, make destroys soft with [`AshArchival`](https://hexdocs.pm/ash_archival): an archive is written as an update, and is stamped like one, with `version_action_type` set to `:destroy`.
 
 ### No-op updates and `only_when_changed?`
 
 Ash does not write an update that changes nothing, so no new period row appears and there is nothing to stamp. With `only_when_changed? false` the stamp itself counts as a change, so every update produces a new period row carrying it, even when nothing else changed. The `skip_version_when_unchanged?` context works as it does with a version resource.
 
-When versioning is disabled for a write (`ash_paper_trail_disabled?`, `ignore_actions`, or an update action not in `on_actions`), the new period row would otherwise carry a copy of the previous version's stamp, describing a write it did not come from. The stamp is cleared to `nil` on that row instead.
+When versioning is disabled for a write (`ash_paper_trail_disabled?`, `ignore_actions`, an update action not in `on_actions`, or a soft destroy with `create_version_on_destroy? false`), the new period row would otherwise carry a copy of the previous version's stamp, describing a write it did not come from. The stamp is cleared to `nil` on that row instead.
 
 ### Upserts
 
