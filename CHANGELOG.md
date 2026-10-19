@@ -11,6 +11,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.8.1](https://github.com/ash-project/ash_paper_trail/compare/v0.8.0...v0.8.1) (2026-10-19)
+
+
+
+
+### Improvements:
+
+* add `version_source_public?` option by [@zachdaniel](https://github.com/zachdaniel)
+
+### Bug Fixes:
+
+* properly support soft destroys in temporal inline mode by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v0.8.0](https://github.com/ash-project/ash_paper_trail/compare/v0.7.0...v0.8.0) (2026-10-06)
 
 
