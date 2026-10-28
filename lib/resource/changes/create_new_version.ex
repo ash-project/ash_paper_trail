@@ -107,7 +107,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
   defp stamp_before_write(changeset) do
     case setup_managed_belongs_to(changeset) do
       {:error, error} ->
-        {:error, error}
+        Ash.Changeset.add_error(changeset, error)
 
       {changeset, instructions} ->
         {stamp_inline_version(changeset, :force_change), instructions}
