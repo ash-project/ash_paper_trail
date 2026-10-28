@@ -33,6 +33,7 @@ defmodule AshPaperTrail.Test.Posts.TemporalPreviousValuesPost do
     define :read
     define :update
     define :increment_views
+    define :update_refetched
   end
 
   actions do
@@ -42,6 +43,11 @@ defmodule AshPaperTrail.Test.Posts.TemporalPreviousValuesPost do
     update :increment_views do
       accept [:body]
       change atomic_update(:views, expr(views + 1))
+    end
+
+    update :update_refetched do
+      require_atomic? false
+      change AshPaperTrail.Test.Posts.Refetch
     end
   end
 

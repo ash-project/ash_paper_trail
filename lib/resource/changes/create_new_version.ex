@@ -13,7 +13,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
   def change(changeset, _, _) do
     cond do
       AshPaperTrail.Resource.Info.temporal_inline?(changeset.resource) ->
-        stamp_inline_version(changeset, :force_change)
+        stamp_last(changeset, :single)
 
       valid_for_tracking?(changeset) ->
         create_new_version(changeset)
@@ -55,7 +55,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     case changesets do
       [%{resource: resource} | _] ->
         if AshPaperTrail.Resource.Info.temporal_inline?(resource) do
-          Enum.map(changesets, &stamp_inline_version(&1, :force_change))
+          Enum.map(changesets, &stamp_last(&1, :bulk))
         else
           changesets
         end
@@ -82,6 +82,55 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     end
 
     Enum.map(changesets_and_results, fn {_, result} -> {:ok, result} end)
+  end
+
+  defp stamp_last(
+         %Ash.Changeset{action_type: :destroy, action: %{soft?: false}} = changeset,
+         _
+       ),
+       do: changeset
+
+  defp stamp_last(changeset, :single) do
+    Ash.Changeset.around_action(changeset, fn changeset, callback ->
+      changeset
+      |> Ash.Changeset.before_action(&stamp_before_write/1)
+      |> callback.()
+    end)
+  end
+
+  defp stamp_last(changeset, :bulk) do
+    Ash.Changeset.before_transaction(changeset, fn changeset ->
+      Ash.Changeset.before_action(changeset, &stamp_before_write/1)
+    end)
+  end
+
+  defp stamp_before_write(changeset) do
+    case setup_managed_belongs_to(changeset) do
+      {:error, error} ->
+        {:error, error}
+
+      {changeset, instructions} ->
+        {stamp_inline_version(changeset, :force_change), instructions}
+    end
+  end
+
+  # Creates and bulk updates set the attributes of managed `belongs_to` relationships after
+  # every hook, just before the write. Set them here so the stamp sees them. This marks the
+  # inputs as handled, so Ash doesn't set them again.
+  defp setup_managed_belongs_to(%Ash.Changeset{relationships: relationships} = changeset)
+       when relationships == %{},
+       do: {changeset, %{notifications: []}}
+
+  defp setup_managed_belongs_to(changeset) do
+    actor = get_in(changeset.context, [:private, :actor])
+
+    Ash.Actions.ManagedRelationships.setup_managed_belongs_to_relationships(
+      changeset,
+      actor,
+      actor: actor,
+      authorize?: get_in(changeset.context, [:private, :authorize?]),
+      tenant: changeset.tenant
+    )
   end
 
   defp stamp_inline_version(

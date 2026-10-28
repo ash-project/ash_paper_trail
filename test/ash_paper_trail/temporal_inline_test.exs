@@ -434,6 +434,139 @@ defmodule AshPaperTrail.TemporalInlineTest do
     end
   end
 
+  describe "non-atomic writes are stamped as written" do
+    setup %{user: user} do
+      %{post: TemporalPost.create!(%{subject: "subject", body: "body"}, actor: user, as_of: @t1)}
+    end
+
+    test "including attributes set by the action's before_action hooks", %{
+      post: post,
+      other_user: other_user
+    } do
+      TemporalPost.increment_views_in_hook!(post, actor: other_user, as_of: @t2)
+
+      current = version_at(TemporalPost, post.id, @t2)
+      assert current.views == 1
+      assert current.version_action_type == :update
+      assert current.version_action_name == :increment_views_in_hook
+      assert current.user_id == other_user.id
+      assert current.changes == %{views: 1}
+    end
+
+    test "including before_action hooks added to the built changeset", %{post: post} do
+      post
+      |> Ash.Changeset.for_update(:update_nothing, %{}, as_of: @t2)
+      |> Ash.Changeset.before_action(
+        &Ash.Changeset.force_change_attribute(&1, :subject, "new subject")
+      )
+      |> Ash.update!()
+
+      current = version_at(TemporalPost, post.id, @t2)
+      assert current.subject == "new subject"
+      assert current.version_action_name == :update_nothing
+      assert current.changes == %{subject: "new subject"}
+    end
+
+    test "including the attributes of managed belongs_to relationships", %{
+      post: post,
+      user: user,
+      other_user: other_user
+    } do
+      TemporalPost.reassign!(post, other_user.id, actor: user, as_of: @t2)
+
+      current = version_at(TemporalPost, post.id, @t2)
+      assert current.editor_id == other_user.id
+      assert current.version_action_name == :reassign
+      assert current.user_id == user.id
+      assert current.changes == %{editor_id: other_user.id}
+
+      post = TemporalPost.create_with_editor!(%{subject: "subject", editor_id: user.id})
+      assert post.editor_id == user.id
+      assert post.changes.editor_id == user.id
+    end
+
+    test "using context set on the built changeset", %{post: post} do
+      post =
+        post
+        |> Ash.Changeset.for_update(:non_atomic_update, %{body: "new body"}, as_of: @t2)
+        |> Ash.Changeset.set_context(%{paper_trail_metadata: %{reason_for_change: "fix typo"}})
+        |> Ash.update!()
+
+      assert %{version_action_name: :non_atomic_update, reason_for_change: "fix typo"} =
+               version_at(TemporalPost, post.id, @t2)
+
+      post
+      |> Ash.Changeset.for_update(:non_atomic_update, %{body: "newer body"}, as_of: @t3)
+      |> Ash.Changeset.set_context(%{ash_paper_trail_disabled?: true})
+      |> Ash.update!()
+
+      assert %{body: "newer body", version_action_type: nil, changes: nil} =
+               version_at(TemporalPost, post.id, @t3)
+    end
+
+    test "with previous values taken from a record re-read by a before_action hook" do
+      post = TemporalPreviousValuesPost.create!(%{subject: "A"}, as_of: @t1)
+      TemporalPreviousValuesPost.update!(post, %{subject: "B"}, as_of: @t2)
+
+      # `post` is stale, and still says "A".
+      TemporalPreviousValuesPost.update_refetched!(post, %{subject: "C"}, as_of: @t3)
+
+      current = version_at(TemporalPreviousValuesPost, post.id, @t3)
+      assert current.subject == "C"
+      assert current.changes == %{subject: "B"}
+    end
+
+    test "a non-atomic update that changes nothing produces no new version", %{post: post} do
+      post
+      |> Ash.Changeset.for_update(:update_nothing, %{}, as_of: @t2)
+      |> Ash.update!()
+
+      assert %{version_action_type: :create, valid_at: %Ash.Range{lower: @t1, upper: nil}} =
+               version_at(TemporalPost, post.id, @t2)
+    end
+
+    test "on the bulk path too", %{post: post, user: user, other_user: other_user} do
+      %Ash.BulkResult{records: [current]} =
+        TemporalPost
+        |> Ash.Query.filter(id == ^post.id)
+        |> Ash.bulk_update!(:increment_views_in_hook, %{},
+          actor: other_user,
+          as_of: @t2,
+          strategy: :stream,
+          return_records?: true
+        )
+
+      assert current.views == 1
+      assert current.version_action_name == :increment_views_in_hook
+      assert current.user_id == other_user.id
+      assert current.changes == %{views: 1}
+
+      %Ash.BulkResult{records: [current]} =
+        TemporalPost
+        |> Ash.Query.filter(id == ^post.id)
+        |> Ash.bulk_update!(:reassign, %{editor_id: user.id},
+          as_of: @t3,
+          strategy: :stream,
+          return_records?: true
+        )
+
+      assert current.editor_id == user.id
+      assert current.version_action_name == :reassign
+      assert current.changes == %{editor_id: user.id}
+
+      %Ash.BulkResult{records: [created]} =
+        Ash.bulk_create!(
+          [%{subject: "subject", editor_id: user.id}],
+          TemporalPost,
+          :create_with_editor,
+          return_records?: true
+        )
+
+      assert created.editor_id == user.id
+      assert created.changes.editor_id == user.id
+    end
+  end
+
   describe "only_when_changed? false with snapshot tracking" do
     test "a no-op update still produces a stamped version, and inputs are stored" do
       post = TemporalSnapshotPost.create!(%{subject: "subject", body: "body"}, as_of: @t1)

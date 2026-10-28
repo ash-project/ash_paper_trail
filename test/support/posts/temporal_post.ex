@@ -44,6 +44,9 @@ defmodule AshPaperTrail.Test.Posts.TemporalPost do
     define :silent_update
     define :ignored_update
     define :increment_views
+    define :increment_views_in_hook
+    define :reassign, args: [:editor_id]
+    define :create_with_editor
     define :archive
   end
 
@@ -61,6 +64,35 @@ defmodule AshPaperTrail.Test.Posts.TemporalPost do
     update :increment_views do
       accept []
       change atomic_update(:views, expr(views + 1))
+    end
+
+    # Not atomic, so `increment` sets `views` in a `before_action` hook.
+    update :increment_views_in_hook do
+      require_atomic? false
+      accept []
+      change increment(:views)
+    end
+
+    update :non_atomic_update do
+      require_atomic? false
+    end
+
+    update :update_nothing do
+      require_atomic? false
+      accept []
+    end
+
+    # Ash sets `editor_id` just before the write.
+    update :reassign do
+      require_atomic? false
+      accept []
+      argument :editor_id, :uuid, allow_nil?: false
+      change manage_relationship(:editor_id, :editor, type: :append_and_remove)
+    end
+
+    create :create_with_editor do
+      argument :editor_id, :uuid, allow_nil?: false
+      change manage_relationship(:editor_id, :editor, type: :append_and_remove)
     end
 
     # Written as an update, like AshArchival's archive.
@@ -99,5 +131,13 @@ defmodule AshPaperTrail.Test.Posts.TemporalPost do
 
     create_timestamp :inserted_at
     update_timestamp :updated_at
+  end
+
+  relationships do
+    belongs_to :editor, AshPaperTrail.Test.Accounts.User do
+      domain AshPaperTrail.Test.Accounts.Domain
+      public? true
+      temporal_keys {:valid_at, nil}
+    end
   end
 end

@@ -413,7 +413,9 @@ Ash.load!(subscription, :paper_trail_versions)
 
 ### Ordering
 
-The stamp is computed when the changeset is built, after the action's own changes have run, so it reflects changes made by them. Attribute changes made later, in `before_action` hooks, are written to the row but not reflected in `changes`.
+An atomic write is stamped from the atomic changeset, which is the write itself. A non-atomic write is stamped in a `before_action` hook that is added when the action runs, so it runs after every other `before_action` hook: those of the action's changes, those added to the changeset after it was built, and Ash's own hook for managed `belongs_to` relationships. The stamp reflects the attributes those hooks set, a record they re-read (as `get_and_lock_for_update()` does), and context set on the changeset after it was built.
+
+The one exception is a `before_action` hook that is itself added while the action runs, by an `around_action` hook (or, on bulk actions, a `before_transaction` hook) registered after AshPaperTrail's change. A hook added that way runs after the stamp.
 
 ## Tracking Changes Conditionally
 
