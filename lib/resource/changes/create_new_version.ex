@@ -398,11 +398,11 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
   defp changed?(changeset, result) do
     cond do
       changeset.action_type == :update ->
-        if AshPaperTrail.Resource.Info.only_when_changed?(changeset.resource) do
-          changeset.context.changed?
+        if AshPaperTrail.Resource.Info.only_when_changed?(changeset.resource) ||
+             changeset.context[:skip_version_when_unchanged?] do
+          changeset.context.changed? && tracked_attributes_changing?(changeset)
         else
-          !changeset.context[:skip_version_when_unchanged?] ||
-            changeset.context.changed?
+          true
         end
 
       changeset.action_type == :create ->
@@ -416,6 +416,19 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
       true ->
         true
     end
+  end
+
+  defp tracked_attributes_changing?(changeset) do
+    to_skip =
+      Ash.Resource.Info.primary_key(changeset.resource) ++
+        AshPaperTrail.Resource.Info.ignore_attributes(changeset.resource)
+
+    changeset.resource
+    |> Ash.Resource.Info.attributes()
+    |> Enum.any?(fn attribute ->
+      attribute.name not in to_skip &&
+        Ash.Changeset.changing_attribute?(changeset, attribute.name)
+    end)
   end
 
   defp build_notifications(changeset, result, opts \\ []) do
