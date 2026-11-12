@@ -101,17 +101,18 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
     end
   end
 
-  defp redact_union(%{"value" => value} = dumped, type, constraints, mode) do
-    case union_subtype(type, constraints, Map.get(dumped, "type")) do
-      {subtype_type, subtype_constraints} ->
-        Map.put(
-          dumped,
-          "value",
-          redact_dumped_value(value, subtype_type, subtype_constraints, mode)
-        )
-
-      nil ->
-        dumped
+  defp redact_union(%{} = dumped, type, constraints, mode) do
+    with {:ok, _type_key, type_name} <- fetch_dumped_key(dumped, :type),
+         {:ok, value_key, value} <- fetch_dumped_key(dumped, :value),
+         {subtype_type, subtype_constraints} <-
+           union_subtype(type, constraints, to_string(type_name)) do
+      Map.put(
+        dumped,
+        value_key,
+        redact_dumped_value(value, subtype_type, subtype_constraints, mode)
+      )
+    else
+      _ -> dumped
     end
   end
 
