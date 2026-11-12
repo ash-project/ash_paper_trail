@@ -6,6 +6,8 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
   @moduledoc "Creates a new version whenever a resource is created, deleted, or updated"
   use Ash.Resource.Change
 
+  alias AshPaperTrail.ChangeBuilders.FullDiff.Helpers
+
   @impl true
   def temporal_safe?(_opts), do: true
 
@@ -601,7 +603,9 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
                   sensitive_mode
                 )
 
-              casted_params_value = extract_casted_params_values(value, input.params_value)
+              casted_params_value =
+                extract_casted_params_values(value, input.params_value, input.ash_type)
+
               Map.put(action_inputs, input.name, casted_params_value)
 
             :error ->
@@ -625,34 +629,114 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     end
   end
 
-  defp extract_casted_params_values(casted_value, params_value) do
+  defp extract_casted_params_values(casted_value, params_value, ash_type \\ nil)
+
+  defp extract_casted_params_values(casted_value, params_value, ash_type)
+       when is_map(casted_value) and is_map(params_value) and not is_struct(params_value) and
+              not is_struct(casted_value) do
+    if union_action_input_dump?(ash_type, casted_value) do
+      extract_union_casted_params_values(casted_value, params_value)
+    else
+      params_keys = Map.keys(params_value)
+
+      Enum.reduce(params_keys, %{}, fn key, acc ->
+        casted_key_value = get_map_value(casted_value, key)
+
+        Map.put(
+          acc,
+          key,
+          extract_casted_params_values(casted_key_value, Map.get(params_value, key))
+        )
+      end)
+    end
+  end
+
+  defp extract_casted_params_values(casted_value, params_value, _ash_type)
+       when is_list(casted_value) and is_list(params_value) do
+    Enum.zip(casted_value, params_value)
+    |> Enum.map(fn {casted_value, params_value} ->
+      extract_casted_params_values(casted_value, params_value)
+    end)
+  end
+
+  defp extract_casted_params_values(casted_value, params_value, _ash_type)
+       when is_tuple(casted_value) and is_tuple(params_value) do
+    Enum.zip(Tuple.to_list(casted_value), Tuple.to_list(params_value))
+    |> Enum.map(fn {casted_value, params_value} ->
+      extract_casted_params_values(casted_value, params_value)
+    end)
+    |> List.to_tuple()
+  end
+
+  defp extract_casted_params_values(casted_value, _params_value, _ash_type), do: casted_value
+
+  defp union_action_input_dump?(ash_type, casted_value) do
+    Helpers.union?(ash_type) && union_type_and_value_dump?(casted_value)
+  end
+
+  defp union_type_and_value_dump?(casted_value) when is_map(casted_value) do
+    map_has_key?(casted_value, :type) or map_has_key?(casted_value, "type")
+  end
+
+  defp union_type_and_value_dump?(_), do: false
+
+  defp extract_union_casted_params_values(casted_value, params_value) do
+    inner_value = union_dump_inner_value(casted_value)
+
+    Enum.reduce(params_value, %{}, fn {key, param_value}, acc ->
+      extracted =
+        if union_type_param_key?(key) do
+          union_dump_type(casted_value)
+        else
+          inner_field = get_map_value(inner_value, key)
+          extract_casted_params_values(inner_field, param_value)
+        end
+
+      Map.put(acc, key, extracted)
+    end)
+  end
+
+  defp union_type_param_key?(key), do: key == :type or key == "type"
+
+  defp union_dump_type(casted_value) do
+    get_map_value(casted_value, :type) || get_map_value(casted_value, "type")
+  end
+
+  defp union_dump_inner_value(casted_value) do
+    get_map_value(casted_value, :value) || get_map_value(casted_value, "value") || %{}
+  end
+
+  defp get_map_value(map, key) when is_map(map) do
     cond do
-      is_map(casted_value) and is_map(params_value) and not is_struct(params_value) and
-          not is_struct(casted_value) ->
-        params_keys = Map.keys(params_value)
+      Map.has_key?(map, key) ->
+        Map.get(map, key)
 
-        Map.take(casted_value, params_keys)
-        |> Enum.map(fn {key, value} ->
-          {key, extract_casted_params_values(value, Map.get(params_value, key))}
-        end)
-        |> Enum.into(%{})
+      is_atom(key) ->
+        Map.get(map, Atom.to_string(key))
 
-      is_list(casted_value) and is_list(params_value) ->
-        Enum.zip(casted_value, params_value)
-        |> Enum.map(fn {casted_value, params_value} ->
-          extract_casted_params_values(casted_value, params_value)
-        end)
-
-      is_tuple(casted_value) and is_tuple(params_value) ->
-        Enum.zip(Tuple.to_list(casted_value), Tuple.to_list(params_value))
-        |> Enum.map(fn {casted_value, params_value} ->
-          extract_casted_params_values(casted_value, params_value)
-        end)
-        |> List.to_tuple()
+      is_binary(key) ->
+        try do
+          Map.get(map, String.to_existing_atom(key))
+        rescue
+          ArgumentError -> nil
+        end
 
       true ->
-        casted_value
+        nil
     end
+  end
+
+  defp get_map_value(_, _), do: nil
+
+  defp map_has_key?(map, key) when is_map(map) do
+    Map.has_key?(map, key) ||
+      (is_atom(key) && Map.has_key?(map, Atom.to_string(key))) ||
+      (is_binary(key) &&
+         try do
+           Map.has_key?(map, String.to_existing_atom(key))
+         rescue
+           ArgumentError -> false
+         end)
   end
 
   defp bulk_create!(changeset, version_changeset, inputs, actor) do
