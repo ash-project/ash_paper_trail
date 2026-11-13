@@ -338,6 +338,22 @@ defmodule AshPaperTrailTest do
       assert not Map.has_key?(updated_version.version_action_inputs, :body)
     end
 
+    test "stores the attribute inputs of atomic updates" do
+      post =
+        Posts.StoreInputsPost.create!(
+          %{subject: "subject", body: "body", req_arg: "required", req_sensitive_arg: "secret"},
+          tenant: "acme"
+        )
+
+      Posts.StoreInputsPost.retitle!(post, %{subject: "new subject"}, tenant: "acme")
+
+      [version] =
+        Ash.read!(Posts.StoreInputsPost.Version, tenant: "acme")
+        |> Enum.filter(&(&1.version_action_name == :retitle))
+
+      assert version.version_action_inputs == %{subject: "new subject"}
+    end
+
     test "a new version is created on destroy" do
       assert %{subject: "subject", body: "body", id: post_id} =
                post = Posts.Post.create!(@valid_attrs, tenant: "acme")
