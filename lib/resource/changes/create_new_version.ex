@@ -694,11 +694,9 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
     Helpers.union?(ash_type) && union_type_and_value_dump?(casted_value)
   end
 
-  defp union_type_and_value_dump?(casted_value) when is_map(casted_value) do
+  defp union_type_and_value_dump?(casted_value) do
     map_has_key?(casted_value, :type) or map_has_key?(casted_value, "type")
   end
-
-  defp union_type_and_value_dump?(_), do: false
 
   defp extract_union_casted_params_values(casted_value, params_value) do
     inner_value = union_dump_inner_value(casted_value)

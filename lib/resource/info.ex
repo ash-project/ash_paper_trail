@@ -191,6 +191,7 @@ defmodule AshPaperTrail.Resource.Info do
     Spark.Dsl.Extension.get_opt(resource, [:paper_trail], :version_extensions, [])
   end
 
+  # sobelow_skip ["DOS.ModuleConcat"]
   @spec version_resource(Spark.Dsl.t() | Ash.Resource.t()) :: module
   def version_resource(resource) do
     source_module =

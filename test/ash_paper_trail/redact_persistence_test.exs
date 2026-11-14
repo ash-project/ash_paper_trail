@@ -108,7 +108,10 @@ defmodule AshPaperTrail.RedactPersistenceTest do
       attribute :subject, :string, public?: true, allow_nil?: false
       attribute :secret, :string, public?: true, sensitive?: true
       attribute :credential, RedactPersistenceTest.Credential, public?: true, allow_nil?: true
-      attribute :identity, RedactPersistenceTest.SensitiveIdentity, public?: true, allow_nil?: true
+
+      attribute :identity, RedactPersistenceTest.SensitiveIdentity,
+        public?: true,
+        allow_nil?: true
     end
 
     actions do
@@ -300,7 +303,10 @@ defmodule AshPaperTrail.RedactPersistenceTest do
     attributes do
       uuid_primary_key :id
       attribute :subject, :string, public?: true, allow_nil?: false
-      attribute :identity, RedactPersistenceTest.SensitiveIdentity, public?: true, allow_nil?: true
+
+      attribute :identity, RedactPersistenceTest.SensitiveIdentity,
+        public?: true,
+        allow_nil?: true
     end
 
     actions do

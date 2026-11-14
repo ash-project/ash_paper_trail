@@ -116,9 +116,7 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
     end
   end
 
-  defp redact_union(dumped, _type, _constraints, _mode), do: dumped
-
-  defp union_subtype(type, constraints, type_name) when is_binary(type_name) do
+  defp union_subtype(type, constraints, type_name) do
     types =
       cond do
         is_list(constraints) and is_list(constraints[:types]) ->
@@ -137,8 +135,6 @@ defmodule AshPaperTrail.ChangeBuilders.FullDiff.Helpers do
       end
     end)
   end
-
-  defp union_subtype(_type, _constraints, _type_name), do: nil
 
   defp embedded_resource_module(type) do
     cond do
