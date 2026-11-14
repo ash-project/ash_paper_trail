@@ -580,7 +580,7 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
           input_value =
             case input.type do
               :attribute ->
-                changeset.casted_attributes[input.name] || changeset.attributes[input.name]
+                attribute_input_value(changeset, input.name)
 
               :argument ->
                 changeset.casted_arguments[input.name] || changeset.arguments[input.name]
@@ -613,6 +613,26 @@ defmodule AshPaperTrail.Resource.Changes.CreateNewVersion do
           end
       end
     end)
+  end
+
+  # When an update runs atomically, Ash builds the atomic changeset from the casted
+  # attributes with `assume_casted?: true`, which puts them in `atomics` rather than
+  # `attributes`. Those are literal values, so we can use them as the input value.
+  defp attribute_input_value(changeset, name) do
+    cond do
+      Map.has_key?(changeset.casted_attributes, name) ->
+        changeset.casted_attributes[name]
+
+      Map.has_key?(changeset.attributes, name) ->
+        changeset.attributes[name]
+
+      Keyword.has_key?(changeset.atomics, name) and
+          not Ash.Expr.expr?(changeset.atomics[name]) ->
+        changeset.atomics[name]
+
+      true ->
+        nil
+    end
   end
 
   defp get_raw_params_value_if_present(params, key) when is_atom(key) do
