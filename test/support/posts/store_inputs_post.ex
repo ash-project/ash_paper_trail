@@ -39,6 +39,7 @@ defmodule AshPaperTrail.Test.Posts.StoreInputsPost do
     define :update
     define :destroy
     define :publish
+    define :retitle
   end
 
   actions do
@@ -88,6 +89,10 @@ defmodule AshPaperTrail.Test.Posts.StoreInputsPost do
                       type: [type: :string]
                     ]
       end
+    end
+
+    update :retitle do
+      accept [:subject]
     end
 
     update :publish do
