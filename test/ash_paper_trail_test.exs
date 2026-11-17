@@ -128,6 +128,35 @@ defmodule AshPaperTrailTest do
                Ash.read!(Posts.Post.Version, tenant: "acme") |> sort_versions()
     end
 
+    test "cross-tenant bulk updates preserve each version's tenant" do
+      posts =
+        for tenant <- ["acme", "globex"] do
+          {tenant, Posts.Post.create!(@valid_attrs, tenant: tenant)}
+        end
+
+      query = Ash.Query.for_read(Posts.Post, :read_global)
+
+      assert %Ash.BulkResult{status: :success} =
+               Ash.bulk_update!(query, :update_global, %{subject: "updated"},
+                 strategy: :atomic,
+                 return_errors?: true
+               )
+
+      for {tenant, post} <- posts do
+        assert [version] =
+                 Posts.Post.Version
+                 |> Ash.Query.filter(version_action_name == :update_global)
+                 |> Ash.read!(tenant: tenant)
+
+        assert version.version_source_id == post.id
+        assert version.tenant == tenant
+        assert version.subject == "updated"
+      end
+
+      assert {:error, %Ash.Error.Invalid{errors: [%Ash.Error.Invalid.TenantRequired{}]}} =
+               Ash.read(Posts.Post.Version)
+    end
+
     test "a new version is created on a bulk update with enumerable" do
       %{subject: "subject", body: "body", id: post_id} =
         post = Posts.Post.create!(@valid_attrs, tenant: "acme")

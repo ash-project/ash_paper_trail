@@ -354,6 +354,15 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
         end
       end)
 
+    attribute_multitenancy? = Ash.Resource.Info.multitenancy_strategy(dsl_state) == :attribute
+
+    create_accept =
+      if attribute_multitenancy? do
+        [Ash.Resource.Info.multitenancy_attribute(dsl_state) | accept]
+      else
+        accept
+      end
+
     mixin =
       case AshPaperTrail.Resource.Info.mixin(dsl_state) do
         {m, f, a} ->
@@ -558,11 +567,13 @@ defmodule AshPaperTrail.Resource.Transformers.CreateVersionResource do
         end
 
         actions do
-          defaults([
-            :read,
-            create: unquote(accept),
-            update: unquote(accept)
-          ])
+          defaults([:read, update: unquote(accept)])
+
+          create :create do
+            primary? true
+            accept unquote(create_accept)
+            multitenancy unquote(if attribute_multitenancy?, do: :allow_global, else: :enforce)
+          end
         end
 
         if unquote(apply_can_read_policy?) do
