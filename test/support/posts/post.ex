@@ -49,6 +49,15 @@ defmodule AshPaperTrail.Test.Posts.Post do
     default_accept :*
     defaults [:create, :read, :update, :destroy]
 
+    read :read_global do
+      multitenancy :allow_global
+    end
+
+    update :update_global do
+      multitenancy :allow_global
+      accept [:subject]
+    end
+
     update :silent_update do
       change set_context(%{ash_paper_trail_disabled?: true})
     end
